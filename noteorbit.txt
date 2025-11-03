@@ -1,0 +1,18 @@
+NoteOrbit/
+│
+├── frontend/
+│   └── src/
+│       ├── App.js             # All routes + components here
+│       ├── index.js
+│       ├── styles.css
+│       └── api.js             # All frontend API calls
+│
+├── backend/
+│   ├── app.py                 # Flask routes + models + DB + Gemini in one file
+│   └── uploads/               # Uploaded notes
+│
+├── database.sql               # Table creation script
+├── .env                       # DB + Gemini key
+└── README.md
+
+final folder structure :::: NoteOrbit by LeafCore Labs

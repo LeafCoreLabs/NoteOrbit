@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* This file imports Tailwind's three main layers. 
+  The 'base' layer includes the custom font definitions (Poppins) 
+  and default styles configured in tailwind.config.js, 
+  which is why we don't need to manually import the font here.
+*/
