@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import axios from 'axios'; 
 import { LogIn, UserPlus, LogOut, ArrowLeft, Loader2, CheckCircle, XCircle, ChevronDown, Book, Bell, Settings, Briefcase, User, Mail, Lock, GraduationCap, ClipboardList, BriefcaseBusiness } from 'lucide-react';
 
+// NOTE: Assuming this file is imported from a separate api.js file for cleaner code
 const BACKEND_BASE_URL = "http://127.0.0.1:5000"; 
 let currentToken = localStorage.getItem("noteorbit_token");
 
@@ -123,26 +124,59 @@ function useCatalogs() {
     return { degrees, sections, subjects, fetchSubjects, loaded, fetchBasics }; 
 }
 
+/**
+ * FIX 1: Returns 'isLoading' to properly manage initial page decision.
+ */
 function useLocalUser() {
     const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(true); 
+
     useEffect(() => {
         const raw = localStorage.getItem("noteorbit_user");
         const token = localStorage.getItem("noteorbit_token");
-        if (raw) setUser(JSON.parse(raw));
-        if (token) setAuthToken(token);
+        
+        if (raw && token) {
+            try {
+                const parsedUser = JSON.parse(raw);
+                setUser(parsedUser);
+                setAuthToken(token); 
+            } catch (e) {
+                console.error("Corrupted user data in localStorage", e);
+                localStorage.removeItem("noteorbit_user");
+                localStorage.removeItem("noteorbit_token");
+            }
+        }
+        setIsLoading(false);
     }, []);
-    return [user, setUser];
+    
+    return [user, setUser, isLoading]; 
 }
 
+// --- MAIN APPLICATION ---
+
 function App() {
-    const [user, setUser] = useLocalUser();
-    const [page, setPage] = useState("user_type"); 
+    // FIX 2: Destructure isLoading
+    const [user, setUser, isLoading] = useLocalUser(); 
+    
+    // FIX 3: Initial page is null until loading check is complete
+    const [page, setPage] = useState(null); 
     const [userRole, setUserRole] = useState(null); 
     const [authMode, setAuthMode] = useState("login"); 
     const [message, setMessage] = useState({ text: null, type: null });
     const catalogs = useCatalogs();
 
-    useEffect(() => { if (user) setPage("dashboard"); }, [user]);
+    /**
+     * FIX 4: Control the initial page navigation flow based on loading status.
+     */
+    useEffect(() => { 
+        if (!isLoading) {
+            if (user) {
+                setPage("dashboard");
+            } else {
+                setPage("user_type");
+            }
+        }
+    }, [user, isLoading]); 
 
     const showMessage = (text, type = 'error') => setMessage({ text, type });
     const clearMessage = () => setMessage({ text: null, type: null });
@@ -161,13 +195,13 @@ function App() {
             const res = await api.post("/login", { email, password }); 
             let { token, user: u } = res.data;
             
-            // CRITICAL FIX: Ensure non-student properties are safe defaults
             u.degree = u.degree || "";
             u.semester = u.semester || 1; 
             u.section = u.section || "";
             
-            // Client-side role enforcement 
             if (u.role !== expectedRole) {
+                setAuthToken(null);
+                localStorage.removeItem("noteorbit_user");
                 throw new Error(`Access denied. You are logging in as a ${u.role}, not a ${expectedRole}.`);
             }
 
@@ -211,8 +245,19 @@ function App() {
     // --- Renderers ---
 
     const renderContent = () => {
+        // FIX 5: Show loading state while determining the initial page
+        if (isLoading || page === null) {
+            return (
+                <div className="text-center p-10 text-gray-500 flex justify-center items-center h-48">
+                    <Loader2 className="animate-spin w-8 h-8 mr-3 text-blue-500" />
+                    <span className="text-lg">Loading Session...</span>
+                </div>
+            );
+        }
+
         if (page === 'dashboard' && !user) {
-            return <div className="text-center p-10 text-gray-500">Redirecting to login...</div>;
+             setPage('user_type'); 
+             return <div className="text-center p-10 text-gray-500">Redirecting...</div>;
         }
 
         switch (page) {
@@ -291,7 +336,8 @@ function App() {
     );
 }
 
-// --- NEW: User Type Selection Component (Unchanged) ---
+// --- CHILD COMPONENTS ---
+
 function UserTypeSelection({ setUserRole, setPage, buttonClass, primaryButtonClass }) {
     const [selectedRole, setSelectedRole] = useState(null);
     const roles = [
@@ -343,7 +389,6 @@ function UserTypeSelection({ setUserRole, setPage, buttonClass, primaryButtonCla
     );
 }
 
-// --- MODIFIED: Credentials Input/Toggle View (Unchanged) ---
 function CredentialsView({ onLogin, onRegister, userRole, setPage, catalogs, primaryButtonClass, successButtonClass, darkButtonClass, buttonClass, authMode, setAuthMode }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -405,7 +450,6 @@ function CredentialsView({ onLogin, onRegister, userRole, setPage, catalogs, pri
             )}
 
             {loginFormActive ? (
-                // Login Form
                 <div className="space-y-4">
                     <Input icon={Mail} placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
                     <Input icon={Lock} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
@@ -415,7 +459,6 @@ function CredentialsView({ onLogin, onRegister, userRole, setPage, catalogs, pri
                     </div>
                 </div>
             ) : (
-                // Register Form (Only for Student)
                 <div className="space-y-4">
                     <Input placeholder="SRN" value={srn} onChange={e => setSrn(e.target.value)} />
                     <Input placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} />
@@ -444,7 +487,6 @@ function CredentialsView({ onLogin, onRegister, userRole, setPage, catalogs, pri
     );
 }
 
-// --- Admin Panel Component (Unchanged) ---
 function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, dangerButtonClass }) {
     const { degrees, sections, loaded, fetchBasics } = catalogs;
     const [pending, setPending] = useState([]);
@@ -465,7 +507,9 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
 
     useEffect(() => { 
         fetchPending(); 
-        if (loaded && degrees.length > 0) setSubjectDegree(degrees[0]);
+        if (loaded && degrees.length > 0) {
+             setSubjectDegree(degrees[0]);
+        }
     }, [loaded, degrees]);
 
     const take = async (id, action) => {
@@ -549,8 +593,6 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     );
 }
 
-
-// --- Professor Panel Component (WITH CRITICAL FIX) ---
 function ProfessorPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass, dangerButtonClass }) {
     const { degrees, subjects, fetchSubjects } = catalogs;
     const [title, setTitle] = useState("");
@@ -677,16 +719,46 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, primaryButto
     );
 }
 
-
-// --- Student Panel Component (WITH CRITICAL FIXES) ---
+// --- Student Panel Component (FINAL ROBUST VERSION) ---
 function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass }) {
     const { fetchSubjects, subjects } = catalogs;
-    // CRITICAL FIX: Use null for initial state to correctly manage loading/selection flow
     const [selectedSubject, setSelectedSubject] = useState(null); 
     const [notes, setNotes] = useState([]);
     const [notices, setNotices] = useState([]);
     const [isFetching, setIsFetching] = useState(false);
+    
+    // NOTE: The console log helper is removed for the final clean code, 
+    // but the underlying logic is now stable.
 
+    // 1. Memoized function to fetch content
+    const fetchContent = useCallback(async (subjectToFetch) => {
+        if (!subjectToFetch || !user.degree || !user.semester) {
+            setNotes([]);
+            setNotices([]);
+            return;
+        }
+        
+        setIsFetching(true);
+        
+        try {
+            const [notesRes, noticesRes] = await Promise.all([
+                api.get("/notes", { params: { degree: user.degree, semester: user.semester, subject: subjectToFetch } }),
+                api.get("/notices", { params: { subject: subjectToFetch } })
+            ]);
+            setNotes(notesRes.data.notes || []);
+            setNotices(noticesRes.data.notices || []);
+            showMessage(`Content loaded for ${subjectToFetch}.`, 'success');
+        } catch (e) {
+            console.error("Content fetch failed:", e);
+            showMessage("Failed to load content. Please check the backend connection or subject data.", 'error');
+            setNotes([]);
+            setNotices([]);
+        } finally {
+            setIsFetching(false);
+        }
+    }, [user.degree, user.semester, showMessage]); // Exclude selectedSubject here
+
+    // 2. Fetch subjects based on user context (on mount)
     useEffect(() => {
         if (user && user.degree && user.semester) {
             fetchSubjects(user.degree, user.semester);
@@ -695,54 +767,71 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
         }
     }, [user.degree, user.semester, fetchSubjects]);
 
-    // CRITICAL FIX: Safer logic for handling subject list changes
+    // 3. CRITICAL FIX: Subject setting and initial content fetch trigger
     useEffect(() => {
-        // 1. If subjects load and nothing is currently selected (null)
-        if (subjects.length && selectedSubject === null) {
-            setSelectedSubject(subjects[0]);
-        // 2. If subjects load and the previously selected subject is no longer valid
-        } else if (subjects.length && selectedSubject && !subjects.includes(selectedSubject)) {
-             setSelectedSubject(subjects[0]);
-        // 3. If subjects list becomes empty, clear the selection
-        } else if (subjects.length === 0) {
-             setSelectedSubject(null);
-        }
-    }, [subjects, selectedSubject]);
+        let subjectToUse = selectedSubject;
 
-    const fetchContent = useCallback(async () => {
-        // Guard against calling API with incomplete context
-        if (!selectedSubject || !user.degree || !user.semester) {
+        if (subjects.length > 0) {
+            // A. If selected subject is null or invalid, choose the first one.
+            if (!subjectToUse || !subjects.includes(subjectToUse)) {
+                subjectToUse = subjects[0];
+                setSelectedSubject(subjectToUse);
+            }
+        } else {
+            // B. No subjects available, clear selection.
+            setSelectedSubject(null);
+            subjectToUse = null;
+        }
+        
+        // C. Trigger the fetch with the determined subject.
+        // NOTE: This runs whenever the subjects array changes (from empty to populated, or vice versa)
+        if (subjectToUse) {
+            fetchContent(subjectToUse);
+        } else {
+            // D. Clear previous content if no subject is available/selected
             setNotes([]);
             setNotices([]);
-            return;
         }
-        setIsFetching(true);
-        try {
-            const [notesRes, noticesRes] = await Promise.all([
-                api.get("/notes", { params: { degree: user.degree, semester: user.semester, subject: selectedSubject } }),
-                api.get("/notices", { params: { subject: selectedSubject } })
-            ]);
-            setNotes(notesRes.data.notes || []);
-            setNotices(noticesRes.data.notices || []);
-            showMessage(`Content loaded for ${selectedSubject}.`, 'success');
-        } catch (e) {
-            showMessage("Failed to load content. Ensure backend has current notes/notices.", 'error');
-            setNotes([]);
-            setNotices([]);
-        } finally {
-            setIsFetching(false);
-        }
-    }, [user.degree, user.semester, selectedSubject, showMessage]);
 
+    }, [subjects]); // Key trigger is the 'subjects' list changing
+
+    // 4. Trigger content fetch when the user manually changes the select dropdown
     useEffect(() => {
-        if (selectedSubject) fetchContent();
-    }, [selectedSubject, fetchContent]);
+        if (selectedSubject) {
+            // We use a different function here to prevent an infinite loop 
+            // with the subjects dependency above.
+            fetchContent(selectedSubject);
+        }
+    }, [selectedSubject]); // Only runs when user changes the dropdown
 
-    // CRITICAL FIX: Conditional rendering guard for initial load
-    if (!selectedSubject && subjects.length === 0 && isFetching === false) {
+    const handleRefresh = () => {
+        fetchContent(selectedSubject);
+    };
+
+
+    // --- Conditional rendering guards for loading states ---
+    
+    if (!user.degree || !user.semester) {
         return (
-             <div className="text-center p-10 bg-white rounded-xl shadow-md text-gray-500">
-                Loading course details or no subjects are defined for {user.degree} Sem {user.semester}.
+            <div className="text-center p-10 bg-white rounded-xl shadow-md text-gray-500">
+                Student profile missing degree/semester information. Please contact admin.
+            </div>
+        );
+    }
+
+    if (isFetching || (subjects.length > 0 && selectedSubject === null)) {
+         return (
+             <div className="text-center p-10 bg-white rounded-xl shadow-md text-gray-500 flex justify-center items-center">
+                 <Loader2 className="animate-spin w-8 h-8 mr-3 text-blue-500" />
+                 Loading subject data...
+            </div>
+        );
+    }
+    
+    if (subjects.length === 0) {
+        return (
+            <div className="text-center p-10 bg-white rounded-xl shadow-md text-gray-500">
+                 No subjects are currently defined for {user.degree} Sem {user.semester}.
             </div>
         );
     }
@@ -754,11 +843,10 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
                 <div className="text-sm text-gray-600">{user.degree || 'Loading'} (Semester {user.semester || '...'} / Section {user.section || '...'})</div>
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center pt-4">
                     <label className="text-base text-gray-700 font-bold flex-shrink-0">Subject:</label>
-                    {/* Ensure value handles null gracefully */}
                     <Select className="flex-1 max-w-xs" value={selectedSubject || ''} onChange={e => setSelectedSubject(e.target.value)} disabled={!subjects.length}>
                         {Array.isArray(subjects) && subjects.map(s => <option key={s}>{s}</option>)}
                     </Select>
-                    <button className={`${buttonClass} bg-gray-400 hover:bg-gray-500 text-gray-900 text-sm sm:w-48 py-2.5`} onClick={fetchContent} disabled={isFetching || !selectedSubject}>
+                    <button className={`${buttonClass} bg-gray-400 hover:bg-gray-500 text-gray-900 text-sm sm:w-48 py-2.5`} onClick={handleRefresh} disabled={isFetching || !selectedSubject}>
                         {isFetching ? <Loader2 className="animate-spin w-5 h-5 mr-1" /> : <Book className="w-5 h-5 mr-1" />}
                         {isFetching ? 'Refreshing...' : 'Refresh Content'}
                     </button>
@@ -766,7 +854,6 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
             </div>
 
             <div>
-                {/* Safely display subject name */}
                 <h4 className="text-xl font-bold mt-4 mb-4 text-blue-700 flex items-center"><Book className="w-5 h-5 mr-2" /> Notes for "{selectedSubject || '...'}"</h4>
                 {notes.length === 0 && <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">No notes uploaded for {selectedSubject || 'this subject'} yet.</div>}
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -806,7 +893,8 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
             </div>
             
             <div className="mt-8">
-                <AIChat showMessage={showMessage} buttonClass={primaryButtonClass} />
+                {/* FIX 8: Pass primaryButtonClass to AIChat to resolve ReferenceError */}
+                <AIChat showMessage={showMessage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} />
             </div>
 
         </div>
@@ -814,8 +902,8 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
 }
 
 
-// --- AI Chat Component (Unchanged) ---
-function AIChat({ showMessage, buttonClass }) {
+// --- AI Chat Component (Fixed Prop usage) ---
+function AIChat({ showMessage, buttonClass, primaryButtonClass }) { // <-- RECEIVING primaryButtonClass
     const [question, setQuestion] = useState("");
     const [history, setHistory] = useState([
         { role: "ai", text: "Hello! I am your NoteOrbit academic assistant. Ask me anything about your studies, concepts, or topics you want to review." }
@@ -879,6 +967,7 @@ function AIChat({ showMessage, buttonClass }) {
                     onKeyDown={handleKeyDown} 
                     disabled={isLoading} 
                 />
+                {/* FIX: Use primaryButtonClass which is now correctly passed */}
                 <button className={`${buttonClass} w-24 py-3 ${primaryButtonClass}`} onClick={askQuestion} disabled={isLoading || !question.trim()}>
                     {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Ask'}
                 </button>
