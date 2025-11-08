@@ -13,13 +13,21 @@ from werkzeug.utils import secure_filename
 import json
 import time
 
+# --- ENVIRONMENT SETUP ---
+from dotenv import load_dotenv
+# Load environment variables from the .env file
+load_dotenv() 
+
 # --- HARDCODED CONFIGURATION START ---
-JWT_SECRET_KEY = "noteorbit-secret-key-hardcoded"
-GEMINI_API_KEY = "REPLACE_ME_WITH_YOUR_ACTUAL_GEMINI_API_KEY"
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "noteorbit-secret-key-default")
 PASSWORD_SALT = "noteorbit_salt_v1"
 DEFAULT_ADMIN_EMAIL = "admin@noteorbit.edu"
 DEFAULT_ADMIN_PASSWORD = "admin123"
 # --- HARDCODED CONFIGURATION END ---
+
+# --- DYNAMIC CONFIGURATION (Read from .env) ---
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") 
+# -----------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
@@ -36,12 +44,14 @@ CORS(
     methods=["GET", "POST", "OPTIONS"]
 )
 
+# --- Database Configuration ---
 DB_PATH = os.path.join(BASE_DIR, "noteorbit.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# --- JWT and Size Configuration ---
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024 
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
@@ -55,7 +65,10 @@ def allowed_file(filename: str):
     ALLOWED = {"pdf", "doc", "docx", "ppt", "pptx", "txt"}
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED
 
-# --- Database Models ---
+# --------------------------
+## 🚀 Database Models
+# --------------------------
+
 class Degree(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
@@ -79,11 +92,11 @@ class User(db.Model):
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), default="student")  # student / professor / admin
+    role = db.Column(db.String(20), default="student") 
     degree = db.Column(db.String(50), nullable=True)
     semester = db.Column(db.Integer, nullable=True)
     section = db.Column(db.String(10), nullable=True)
-    status = db.Column(db.String(20), default="PENDING")  # PENDING / APPROVED / REJECTED
+    status = db.Column(db.String(20), default="PENDING") 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Note(db.Model):
@@ -152,7 +165,10 @@ def roles_allowed(roles):
         return wrapper
     return decorator 
 
-# --- Auth Routes ---
+# --------------------------
+## 🔑 Auth Routes
+# --------------------------
+
 @app.route("/register", methods=["POST"])
 def register():
     data = request.json or {}
@@ -224,7 +240,26 @@ def login():
         }
     })
 
-# --- Admin Routes ---
+@app.route("/me", methods=["GET"])
+@jwt_required()
+def me():
+    identity = get_jwt_identity()
+    user = User.query.get(identity)
+    return jsonify({
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "degree": user.degree,
+        "semester": user.semester,
+        "section": user.section,
+        "status": user.status
+    })
+
+# --------------------------
+## ⚙️ Admin Routes
+# --------------------------
+
 def admin_only(fn):
     from functools import wraps
     @wraps(fn)
@@ -348,7 +383,10 @@ def manage_subjects():
     items = [{"degree": s.degree, "semester": s.semester, "name": s.name} for s in q.order_by(Subject.name).all()]
     return jsonify({"success": True, "subjects": items})
 
-# --- Resource Routes ---
+# --------------------------
+## 📚 Resource Routes
+# --------------------------
+
 @app.route("/upload-note", methods=["POST"])
 @roles_allowed(["professor", "admin"])
 def upload_note():
@@ -512,7 +550,11 @@ def get_notices():
         filtered = []
         for n in items:
             sections = [s.strip().upper() for s in n.section.split(",")]
-            if user.section and user.section.upper() in sections and n.subject == subject:
+            # Only filter by subject if it is provided
+            if subject and n.subject != subject:
+                continue
+
+            if user.section and user.section.upper() in sections:
                  filtered.append(n)
         results = filtered
     else:
@@ -547,10 +589,14 @@ def get_notices():
         })
     return jsonify({"success": True, "notices": out})
 
-# --- AI Chat Route ---
+# --------------------------
+## 🤖 AI Chat Route (FIXED)
+# --------------------------
+
 def call_gemini_api(prompt: str):
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "REPLACE_ME_WITH_YOUR_ACTUAL_GEMINI_API_KEY":
-        return None, "GEMINI_API_KEY is not configured."
+    # Check if the key is loaded and present
+    if not GEMINI_API_KEY:
+        return None, "GEMINI_API_KEY environment variable is missing or empty."
         
     API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     MAX_RETRIES = 3
@@ -569,12 +615,12 @@ def call_gemini_api(prompt: str):
             if text:
                 return text, None
             else:
-                return None, "API returned an empty response."
+                return None, f"API returned an empty response. Response JSON: {result}"
         except requests.exceptions.HTTPError as e:
             if response.status_code in [429, 500, 503] and attempt < MAX_RETRIES - 1:
                 time.sleep(2 ** attempt)
                 continue
-            return None, f"HTTP Error: {e}"
+            return None, f"HTTP Error: {e} - Response Text: {response.text}"
         except requests.exceptions.RequestException as e:
             return None, f"Request failed: {e}"
         except Exception as e:
@@ -595,23 +641,9 @@ def chat():
     else:
         return jsonify({"success": False, "message": error_msg or "Failed to get response from AI model."}), 500
 
-@app.route("/me", methods=["GET"])
-@jwt_required()
-def me():
-    identity = get_jwt_identity()
-    user = User.query.get(identity)
-    return jsonify({
-        "id": user.id,
-        "name": user.name,
-        "email": user.email,
-        "role": user.role,
-        "degree": user.degree,
-        "semester": user.semester,
-        "section": user.section,
-        "status": user.status
-    })
-
 if __name__ == "__main__":
     with app.app_context():
         init_db()
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get("FLASK_RUN_PORT", 5000)))
+    # Read FLASK_RUN_PORT from environment, default to 5000
+    port = int(os.environ.get("FLASK_RUN_PORT", 5000)) 
+    app.run(debug=True, host='0.0.0.0', port=port)

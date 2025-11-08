@@ -824,8 +824,8 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
              <div className="text-center p-10 bg-white rounded-xl shadow-md text-gray-500 flex justify-center items-center">
                  <Loader2 className="animate-spin w-8 h-8 mr-3 text-blue-500" />
                  Loading subject data...
-            </div>
-        );
+             </div>
+         );
     }
     
     if (subjects.length === 0) {
@@ -902,7 +902,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
 }
 
 
-// --- AI Chat Component (Fixed Prop usage) ---
+// --- AI Chat Component (Fixed Prop usage and Footer location) ---
 function AIChat({ showMessage, buttonClass, primaryButtonClass }) { // <-- RECEIVING primaryButtonClass
     const [question, setQuestion] = useState("");
     const [history, setHistory] = useState([
@@ -939,6 +939,8 @@ function AIChat({ showMessage, buttonClass, primaryButtonClass }) { // <-- RECEI
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-blue-200">
             <h4 className="text-xl font-bold mb-4 text-blue-700 flex items-center"><Briefcase className="w-5 h-5 mr-2" /> AI Study Assistant</h4>
+            
+            {/* The chat history container with fixed height and overflow */}
             <div id="chat-history" className="h-96 overflow-y-auto border border-gray-300 rounded-xl p-4 bg-gray-50">
                 <div className="flex flex-col space-y-3">
                     {history.map((msg, index) => (
@@ -958,6 +960,8 @@ function AIChat({ showMessage, buttonClass, primaryButtonClass }) { // <-- RECEI
                     )}
                 </div>
             </div>
+            
+            {/* Elements positioned BELOW the scrollable area */}
             <div className="flex space-x-3 mt-4">
                 <Input 
                     className="flex-grow py-3 px-4 rounded-full" 
@@ -967,12 +971,16 @@ function AIChat({ showMessage, buttonClass, primaryButtonClass }) { // <-- RECEI
                     onKeyDown={handleKeyDown} 
                     disabled={isLoading} 
                 />
-                {/* FIX: Use primaryButtonClass which is now correctly passed */}
                 <button className={`${buttonClass} w-24 py-3 ${primaryButtonClass}`} onClick={askQuestion} disabled={isLoading || !question.trim()}>
                     {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Ask'}
                 </button>
             </div>
             <div className="text-xs text-center mt-2 text-gray-500">Powered by Gemini</div>
+            
+            {/* FINAL FIX: Ensure minimal margin below elements to stay within parent container p-6 */}
+            <footer className="mt-4 text-center text-gray-500 text-xs">
+                Made with ❤️ by LeafCore Labs | © 2025 LeafCore Labs. All rights reserved | UDYAM MSME Registered (Govt. of India)
+            </footer>
         </div>
     );
 }
