@@ -1,35 +1,41 @@
-// frontend/src/api.js
+// src/api.js
+import axios from "axios";
 
-import axios from 'axios';
+const BACKEND_BASE_URL = "http://127.0.0.1:5000";
 
-const BACKEND_BASE_URL = "http://127.0.0.1:5000"; 
-let currentToken = localStorage.getItem("noteorbit_token");
-
-// --- AXIOS CONFIGURATION ---
-const api = axios.create({
-    baseURL: BACKEND_BASE_URL,
+export const api = axios.create({
+  baseURL: BACKEND_BASE_URL,
 });
 
-api.interceptors.request.use(config => {
+// Attach token on *every* request
+api.interceptors.request.use(
+  (config) => {
     const token = localStorage.getItem("noteorbit_token");
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    } else {
-        delete config.headers.Authorization;
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
-}, error => {
-    return Promise.reject(error);
-});
-// --- END AXIOS CONFIGURATION ---
+  },
+  (error) => Promise.reject(error)
+);
 
-const setAuthToken = (token) => {
-    currentToken = token; // Keep track locally (though not strictly necessary for this setup)
-    if (token) {
-        localStorage.setItem("noteorbit_token", token);
-    } else {
-        localStorage.removeItem("noteorbit_token");
+// Auto-logout if token is invalid
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem("noteorbit_user");
+      localStorage.removeItem("noteorbit_token");
     }
-};
+    return Promise.reject(err);
+  }
+);
 
-export { api, setAuthToken, currentToken };
+export const setAuthToken = (token) => {
+  if (token) {
+    localStorage.setItem("noteorbit_token", token);
+  } else {
+    localStorage.removeItem("noteorbit_token");
+  }
+};
