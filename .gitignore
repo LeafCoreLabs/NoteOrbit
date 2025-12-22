@@ -1,3 +1,14 @@
 **/tmp/
 .env/
 node_modules/
+# Environment
+.env
+.env.*
+
+# MinIO / Object Storage
+minio-data/
+**/*.meta
+
+# Secrets
+*.key
+*.pem
