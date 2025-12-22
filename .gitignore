@@ -1,5 +1,5 @@
 **/tmp/
-.env/
+
 node_modules/
 # Environment
 .env
