@@ -1,67 +1,23 @@
 // NoteOrbitStudentHostel.jsx (FINAL IMPLEMENTATION - Including Live Hostel Complaint Tracking)
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import axios from 'axios';
-import { 
-    LogIn, UserPlus, LogOut, ArrowLeft, Loader2, CheckCircle, XCircle, ChevronDown, 
-    Book, Bell, Settings, Briefcase, User, Mail, Lock, GraduationCap, ClipboardList, 
-    BriefcaseBusiness, DollarSign, Award, MessageSquare, Upload, RefreshCw, 
-    Trash2, Save, Home, Search, Download, Check 
+import gsap from 'gsap';
+import {
+    LogIn, UserPlus, LogOut, ArrowLeft, Loader2, CheckCircle, XCircle, ChevronDown,
+    Book, Bell, Settings, Briefcase, User, Mail, Lock, GraduationCap, ClipboardList,
+    BriefcaseBusiness, DollarSign, Award, MessageSquare, Upload, RefreshCw,
+    Trash2, Save, Home, Search, Download, Check, Atom, Star, Sparkles, Plus, Filter, Eye, EyeOff, Edit,
+    BrainCircuit, AlertTriangle, Target, Lightbulb
 } from 'lucide-react';
 
-// --- CONFIGURATION ---
-const BACKEND_BASE_URL = "http://127.0.0.1:5000"; 
+// --- COMPONENTS IMPORT ---
+import { api, setAuthToken, sendOtp, verifyOtp, resetPassword, registerWithOtp } from "./api";
 
-// --- AXIOS CONFIGURATION ---
-const api = axios.create({
-    baseURL: BACKEND_BASE_URL,
-});
+// Compatibility shims for existing code
+// note: api.js handles tokens via interceptors automatically
+const auth = () => api;
+const unauth = () => api;
 
-/**
- * Creates an authenticated instance of the axios API object.
- * Retrieves the token from localStorage just before the request.
- * It also attaches the 401 response handler locally.
- */
-const auth = (token = null) => {
-    const currentToken = token || localStorage.getItem("noteorbit_token");
-    const authedApi = axios.create({ baseURL: BACKEND_BASE_URL });
-
-    if (currentToken) {
-        authedApi.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
-    } else {
-        delete authedApi.defaults.headers.common['Authorization'];
-    }
-
-    // Re-introduce the global 401 response logic here, applied to the temporary instance
-    authedApi.interceptors.response.use(
-        res => res,
-        err => {
-            if (err.response && err.response.status === 401) {
-                // Clear saved auth if backend says unauthorized
-                localStorage.removeItem("noteorbit_token");
-                localStorage.removeItem("noteorbit_user");
-            }
-            return Promise.reject(err);
-        }
-    );
-
-    return authedApi;
-};
-
-// The following function is ONLY for login/register/unauthenticated requests.
-const unauth = () => {
-    return api;
-}
-
-// --- END AXIOS CONFIGURATION ---
-
-// Manage auth token both in localStorage and axios defaults
-const setAuthToken = (token) => {
-    if (token) {
-        localStorage.setItem("noteorbit_token", token);
-    } else {
-        localStorage.removeItem("noteorbit_token");
-    }
-};
 
 function useCatalogs() {
     const [degrees, setDegrees] = useState([]);
@@ -138,24 +94,63 @@ function useLocalUser() {
 }
 
 // --- UI COMPONENTS (Praman Style) ---
-const Input = ({ icon: Icon, className = '', type = 'text', ...props }) => (
-    <div className="relative">
-        {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />}
-        <input
-            {...props}
-            type={type}
-            className={`w-full bg-white text-gray-800 placeholder-gray-500 border border-gray-300 rounded-full py-3 ${Icon ? 'pl-12 pr-4' : 'px-4'} focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 ${className}`}
-        />
-    </div>
-);
+const OrbitLogo = () => {
+    return (
+        <div className="flex items-center gap-3 cursor-pointer select-none">
+            <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 ring-1 ring-white/10">
+                <Book className="w-5 h-5 text-white stroke-[2.5]" />
+                <div className="absolute top-0 right-0 -mr-1 -mt-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-slate-950" />
+            </div>
+            <span className="text-xl font-bold text-white tracking-tight">
+                Note<span className="font-light text-blue-200">Orbit</span>
+            </span>
+        </div>
+    )
+}
+
+// --- COMPONENTS IMPORT ---
+// --- COMPONENTS IMPORT (Helpers imported above) ---
+
+const BACKEND_BASE_URL = "http://localhost:5000"; // Defined for payment redirection
+
+
+// --- UTILS ---
+const cents_to_rupees_str = (c) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(c / 100);
+
+// --- UI COMPONENTS (Modern Dark Glass) ---
+const Input = ({ icon: Icon, className = '', type = 'text', ...props }) => {
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = type === 'password';
+    const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
+
+    return (
+        <div className="relative group">
+            {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-400 transition-colors" />}
+            <input
+                {...props}
+                type={inputType}
+                className={`w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-gray-500 border border-white/10 rounded-xl py-3.5 ${Icon ? 'pl-12' : 'px-4'} ${isPassword ? 'pr-12' : 'pr-4'} focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition duration-300 hover:bg-slate-800/80 ${className}`}
+            />
+            {isPassword && (
+                <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+            )}
+        </div>
+    );
+};
 
 const Select = ({ icon: Icon, className = '', children, ...props }) => (
-    <div className="relative">
-        {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />}
-        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+    <div className="relative group">
+        {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-400 pointer-events-none transition-colors" />}
+        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
         <select
             {...props}
-            className={`w-full bg-white text-gray-800 border border-gray-300 rounded-full py-3 ${Icon ? 'pl-12 pr-10' : 'px-4'} appearance-none focus:ring-2 focus:ring-blue-500 outline-none transition duration-200 ${className}`}
+            className={`w-full bg-slate-800/50 backdrop-blur-xl text-white border border-white/10 rounded-xl py-3.5 ${Icon ? 'pl-12 pr-10' : 'px-4'} appearance-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition duration-300 hover:bg-slate-800/80 cursor-pointer ${className}`}
         >
             {children}
         </select>
@@ -165,19 +160,19 @@ const Select = ({ icon: Icon, className = '', children, ...props }) => (
 const MessageBar = ({ message, type, onClose }) => {
     if (!message) return null;
     const isSuccess = type === 'success';
-    const baseClasses = "p-4 rounded-xl shadow-md text-sm flex items-start mt-6 animate-in fade-in duration-500";
-    const classes = isSuccess 
-        ? "bg-green-100 border border-green-300 text-green-700" 
-        : "bg-red-100 border border-red-300 text-red-700";
+    const baseClasses = "p-4 rounded-xl shadow-lg border backdrop-blur-xl text-sm flex items-start mt-6 animate-in fade-in slide-in-from-top-2 duration-500 relative z-50";
+    const classes = isSuccess
+        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-200"
+        : "bg-red-500/10 border-red-500/20 text-red-200";
     const Icon = isSuccess ? CheckCircle : XCircle;
 
     return (
         <div className={`${baseClasses} ${classes}`}>
-            <Icon className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" />
-            <div className="flex-1 whitespace-pre-wrap">{message}</div>
+            <Icon className={`w-5 h-5 mr-3 mt-0.5 flex-shrink-0 ${isSuccess ? 'text-emerald-400' : 'text-red-400'}`} />
+            <div className="flex-1 whitespace-pre-wrap font-medium">{message}</div>
             {onClose && (
-                <button onClick={onClose} className="ml-4 text-gray-500 hover:text-gray-700">
-                    <XCircle className="w-4 h-4" />
+                <button onClick={onClose} className={`ml-4 ${isSuccess ? 'text-emerald-400 hover:text-emerald-200' : 'text-red-400 hover:text-red-200'} transition-colors`}>
+                    <XCircle className="w-5 h-5" />
                 </button>
             )}
         </div>
@@ -186,151 +181,423 @@ const MessageBar = ({ message, type, onClose }) => {
 
 // ----------------------------------------------
 // --- AUTH COMPONENTS ---
+// --- REBUILT WELCOME SCREEN (HERO + SPLIT) ---
 function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonClass }) {
     const [selectedRole, setSelectedRole] = useState(null);
+    const containerRef = useRef(null);
+
+    // REMOVED CARD ANIMATION TO ENSURE VISIBILITY
+    // GSAP Stagger Animation for Role Cards
+    // GSAP Stagger Animation for Role Cards
+    React.useLayoutEffect(() => {
+        const ctx = gsap.context(() => {
+            gsap.fromTo(".role-card",
+                { y: 50, opacity: 0, scale: 0.9 },
+                { y: 0, opacity: 1, scale: 1, duration: 0.8, stagger: 0.2, ease: "elastic.out(1, 0.75)" }
+            );
+            gsap.from(".hero-text-item", { x: -30, opacity: 0, duration: 0.8, stagger: 0.1, ease: "power2.out" });
+        }, containerRef);
+        return () => ctx.revert();
+    }, []);
+
     const roles = [
-        { ui: 'Admin', icon: BriefcaseBusiness, color: 'text-yellow-600', description: 'Institutional Management' },
-        { ui: 'Faculty', icon: ClipboardList, color: 'text-green-600', description: 'Resource Uploader & Notice Board' },
-        { ui: 'Student', icon: GraduationCap, color: 'text-blue-600', description: 'Access Notes & AI Assistant' },
+        { ui: 'Admin', icon: BriefcaseBusiness, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-500/20', description: 'Institutional Management' },
+        { ui: 'Faculty', icon: ClipboardList, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-500/20', description: 'Resource Uploader' },
+        { ui: 'Parent', icon: Home, color: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-500/20', description: 'Ward Progress & Fees' },
+        { ui: 'Student', icon: GraduationCap, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-500/20', description: 'Access Notes & AI Chat' },
     ];
 
     const handleContinue = () => {
         if (selectedRole) {
-            setUserRole(selectedRole);
-            setPage('credentials');
+            gsap.to(".welcome-container", {
+                opacity: 0, y: -20, duration: 0.3, onComplete: () => {
+                    setUserRole(selectedRole);
+                    setPage('credentials');
+                }
+            });
         }
     };
 
     return (
-        <div className="w-full max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-blue-200 animate-in fade-in duration-700">
-            <h3 className="text-3xl font-bold mb-2 text-gray-800 text-center">Select Your Access Portal</h3>
-            <p className="text-center text-gray-500 mb-6">Choose your user type to proceed with sign-in.</p>
-            
-            <div className="space-y-4">
-                {roles.map(role => (
-                    <button
-                        key={role.ui}
-                        onClick={() => setSelectedRole(role.ui)}
-                        className={`w-full p-4 rounded-xl shadow-md border transition duration-200 flex items-center ${
-                            selectedRole === role.ui 
-                                ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-500' 
-                                : 'bg-gray-50 border-gray-300 hover:bg-gray-100'
-                        }`}
-                    >
-                        <role.icon className={`w-8 h-8 mr-4 ${role.color}`} />
-                        <div className="text-left">
-                            <div className="font-bold text-lg text-gray-800">{role.ui}</div>
-                            <div className="text-sm text-gray-500">{role.description}</div>
-                        </div>
-                    </button>
-                ))}
+        <div ref={containerRef} className="welcome-container w-full min-h-[70vh] flex flex-col lg:flex-row items-center justify-between gap-12 px-4 relative z-10">
+            {/* Left: Hero Text */}
+            <div className="flex-1 text-center lg:text-left space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest hero-text-item backdrop-blur-md">
+                    <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2_beta
+                </div>
+                <h1 className="text-5xl lg:text-7xl font-bold text-white tracking-tight hero-text-item leading-tight">
+                    Academic <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Intelligence.</span>
+                </h1>
+                <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 hero-text-item leading-relaxed">
+                    Where Imagination is Redefined! | © 2025 LeafCore Labs
+                </p>
             </div>
 
-            <button
-                onClick={handleContinue}
-                disabled={!selectedRole}
-                className={`mt-8 ${buttonClass} py-3 ${selectedRole ? primaryButtonClass : 'bg-gray-400 cursor-not-allowed text-gray-800'}`}
-            >
-                Continue to Login
-            </button>
+            {/* Right: Role Selection Cards */}
+            <div className="w-full max-w-md space-y-6">
+                <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-32 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition duration-1000" />
+
+                    <h3 className="text-xl font-bold text-white mb-6 relative z-10 flex items-center gap-2">
+                        <User className="w-5 h-5 text-blue-400" /> Select User
+                    </h3>
+
+                    <div className="space-y-3 relative z-10">
+                        {roles.map(role => (
+                            <button
+                                key={role.ui}
+                                onClick={() => setSelectedRole(role.ui)}
+                                className={`role-card w-full p-4 rounded-xl border transition-all duration-300 flex items-center group/card opacity-0 ${selectedRole === role.ui
+                                    ? `bg-blue-600/20 border-blue-500 shadow-[0_0_30px_rgba(37,99,235,0.3)] ring-1 ring-blue-400`
+                                    : `bg-slate-800/50 border-white/5 hover:border-white/20 hover:bg-slate-800`
+                                    }`}
+                            >
+                                <div className={`p-3 rounded-lg ${role.bg} ${role.color} mr-4 group-hover/card:scale-110 transition-transform duration-300`}>
+                                    <role.icon className="w-6 h-6" />
+                                </div>
+                                <div className="text-left">
+                                    <div className={`font-bold text-lg ${selectedRole === role.ui ? 'text-white' : 'text-slate-200'}`}>{role.ui}</div>
+                                    <div className="text-xs text-slate-500">{role.description}</div>
+                                </div>
+                                {selectedRole === role.ui && <CheckCircle className="ml-auto w-5 h-5 text-blue-400 animate-in zoom-in" />}
+                            </button>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={handleContinue}
+                        disabled={!selectedRole}
+                        className={`mt-8 w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] ${selectedRole
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/25 border border-white/10'
+                            : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-transparent'
+                            }`}
+                    >
+                        Initialize Login
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }
 
-function CredentialsView({ onLogin, onRegister, userRole, setPage, catalogs, primaryButtonClass, successButtonClass, buttonClass, authMode, setAuthMode }) {
+const ForgotPasswordModal = ({ onClose, showMessage, primaryButtonClass, buttonClass, userRole }) => {
+    // Steps: 
+    // 1: Enter ID (Faculty) or Email (Student) -> Lookup/Direct Send
+    // 1.5: (Faculty Only) Confirm Masked Email
+    // 2: Enter OTP, New Pass, Confirm Pass
+    const [step, setStep] = useState(1);
+    const [identifier, setIdentifier] = useState("");
+    const [resolvedEmail, setResolvedEmail] = useState("");
+    const [maskedEmail, setMaskedEmail] = useState("");
+    const [otp, setOtp] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const isFaculty = userRole === 'Faculty';
+    const isParent = userRole === 'Parent';
+
+    const handleLookup = async () => {
+        if (!identifier.trim()) return showMessage("Please enter your ID.", "error");
+        setLoading(true);
+        try {
+            // Include role_type for parent lookup to fetch correctly
+            const payload = { identifier };
+            if (isParent) {
+                // For parents, identifier is Ward's SRN, but we need to tell backend to look up student and return parent email
+                // Actually the backend `lookup_parent_endpoint` handles strict SRN lookup. 
+                // We can use the generic lookup-user or separate logic.
+                // Backend has `/auth/lookup-parent` specifically for this.
+                const res = await auth().post("/auth/lookup-parent", { srn: identifier });
+                setMaskedEmail(res.data.masked_email);
+                setStep(1.5);
+                return;
+            }
+
+            const res = await auth().post("/auth/lookup-user", payload);
+            setMaskedEmail(res.data.masked_email);
+            setStep(1.5); // Move to confirmation step
+        } catch (e) {
+            showMessage(e.response?.data?.message || "User not found.", "error");
+        } finally { setLoading(false); }
+    };
+
+    const handleSendOtp = async () => {
+        setLoading(true);
+        try {
+            // Parent OTP Mode
+            let mode = "forgot_password";
+            if (isParent) mode = "parent_forgot";
+
+            const res = await sendOtp(identifier, mode);
+            const masked = res.data.masked_email || identifier;
+            showMessage(`OTP sent to ${masked}`, "success");
+
+            // Should capture the REAL email to use for reset (for Parents, identifier is SRN, so resolvedEmail is irrelevant for resetPassword call if we handle it right, but let's see)
+            setResolvedEmail(res.data.email || identifier);
+            setMaskedEmail(masked);
+            setStep(2);
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Failed to send OTP.", "error");
+        } finally { setLoading(false); }
+    };
+
+    const handleReset = async () => {
+        if (newPassword !== confirmPassword) {
+            return showMessage("Passwords do not match.", "error");
+        }
+        setLoading(true);
+        try {
+            // For parent, role_type='parent'
+            // For parent, identifier (first arg) should be the SRN or Email?
+            // Backend reset_password: user = User.query.filter_by(email=email).first()
+            // Wait, if mode was 'parent_forgot', send_otp sent to parent_email.
+            // verifying otp uses email.
+            // reset_password uses email.
+            // So we need the parent's email (resolvedEmail) here!
+            // sendOtp returns 'email' in response.
+
+            await resetPassword(resolvedEmail || identifier, otp, newPassword, isParent ? 'parent' : 'user');
+            showMessage("Password reset successfully. Please login.", "success");
+            onClose();
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Failed to reset password.", "error");
+        } finally { setLoading(false); }
+    };
+
+    const renderStep1 = () => (
+        <div className="space-y-4">
+            <p className="text-slate-400 text-sm">
+                {isFaculty ? "Enter your Employee ID to find your account." :
+                    isParent ? "Enter your Ward's SRN to find account." :
+                        "Enter your Email Address."}
+            </p>
+            <Input
+                icon={isFaculty ? User : isParent ? User : Mail}
+                placeholder={isFaculty ? "Employee ID" : isParent ? "Ward's SRN (e.g. SRN001)" : "Email Address"}
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
+            />
+
+            {isFaculty || isParent ? (
+                <button disabled={loading} onClick={handleLookup} className={`w-full ${primaryButtonClass} ${loading ? 'opacity-50' : ''} py-3 text-sm rounded-xl`}>
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Find Account"}
+                </button>
+            ) : (
+                <button disabled={loading} onClick={handleSendOtp} className={`w-full ${primaryButtonClass} ${loading ? 'opacity-50' : ''} py-3 text-sm rounded-xl`}>
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send Verification Code"}
+                </button>
+            )}
+        </div>
+    );
+
+    const renderStep1Point5 = () => (
+        <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
+            <div className="bg-slate-800/50 p-4 rounded-xl border border-white/10 text-center">
+                <p className="text-slate-400 text-sm mb-2">We found an account linked to:</p>
+                <p className="text-lg font-mono text-blue-400 font-bold tracking-wide">{maskedEmail}</p>
+            </div>
+            <button disabled={loading} onClick={handleSendOtp} className={`w-full ${primaryButtonClass} ${loading ? 'opacity-50' : ''} py-3 text-sm rounded-xl`}>
+                {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send OTP"}
+            </button>
+            <button onClick={() => setStep(1)} className="w-full text-slate-400 hover:text-white text-sm">Back</button>
+        </div>
+    );
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300">
+                <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white"><XCircle className="w-6 h-6" /></button>
+                <h3 className="text-xl font-bold text-white mb-4">Reset Password</h3>
+
+                {step === 1 && renderStep1()}
+                {step === 1.5 && renderStep1Point5()}
+                {step === 2 && (
+                    <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
+                        <p className="text-slate-400 text-sm">Enter the code sent to <b className="text-blue-400">{maskedEmail}</b>.</p>
+                        <Input placeholder="Enter 6-digit OTP" value={otp} onChange={e => setOtp(e.target.value)} maxLength={6} className="text-center tracking-widest font-mono text-lg" />
+                        <Input icon={Lock} type="password" placeholder="New Password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                        <Input icon={Lock} type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                        <button disabled={loading} onClick={handleReset} className={`w-full ${primaryButtonClass} ${loading ? 'opacity-50' : ''} py-3 text-sm rounded-xl`}>
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Reset Password"}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, catalogs, primaryButtonClass, successButtonClass, buttonClass, authMode, setAuthMode }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [loginFormActive, setLoginFormActive] = useState(authMode === "login");
+    const [showForgot, setShowForgot] = useState(false);
 
+    // Registration States
     const { degrees, sections, loaded } = catalogs;
+    const [regStep, setRegStep] = useState(1); // 1: Email/OTP, 2: Details
     const [srn, setSrn] = useState("");
     const [name, setName] = useState("");
     const [regEmail, setRegEmail] = useState("");
     const [regPassword, setRegPassword] = useState("");
+    const [regConfirmPassword, setRegConfirmPassword] = useState(""); // NEW
+    const [otp, setOtp] = useState("");
+    const [isOtpSent, setIsOtpSent] = useState(false);
+    const [isVerified, setIsVerified] = useState(false);
     const [degree, setDegree] = useState("");
     const [semester, setSemester] = useState("1");
     const [section, setSection] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const isStudent = userRole === 'Student';
-    const headerText = `${userRole} Portal`;
-    
+    const isParent = userRole === 'Parent';
+
+    const [flipRotation, setFlipRotation] = useState(0);
+    const cardRef = useRef(null);
+
     useEffect(() => {
-        setLoginFormActive(authMode === 'login');
+        if (loaded && degrees?.length > 0) !degree && setDegree(degrees[0]);
+        if (loaded && sections?.length > 0) !section && setSection(sections[0]);
+    }, [loaded, degrees, sections]);
+
+    // Flip Animation Effect
+    useEffect(() => {
+        if (cardRef.current) {
+            gsap.to(cardRef.current, {
+                rotationY: authMode === 'register' ? 180 : 0,
+                duration: 0.6,
+                ease: "power2.inOut"
+            });
+        }
+        if (authMode === 'login') {
+            setRegStep(1); setIsOtpSent(false); setIsVerified(false);
+        }
     }, [authMode]);
 
-    useEffect(() => {
-        if (loaded && Array.isArray(degrees) && degrees.length > 0 && Array.isArray(sections) && sections.length > 0) {
-            if (!degree) setDegree(degrees[0] || "");
-            if (!section) setSection(sections[0] || "");
-        }
-    }, [loaded, degrees, sections, degree, section]);
-
-    const handleRegisterSubmit = () => {
-        onRegister({ srn, name, email: regEmail, password: regPassword, degree, semester: parseInt(semester), section });
+    const handleSendSignupOtp = async () => {
+        if (!regEmail) return showMessage("Enter email first.", "error");
+        setIsLoading(true);
+        try {
+            const res = await sendOtp(regEmail, "signup");
+            showMessage(res.data.message || "OTP sent successfully", "success");
+            setIsOtpSent(true);
+        } catch (e) { showMessage(e.response?.data?.message || "Failed to send OTP", "error"); }
+        finally { setIsLoading(false); }
     };
-    
-    const handleBack = () => {
-        setPage('user_type');
-        setAuthMode('login');
-    }
+
+    const handleVerifySignupOtp = async () => {
+        if (!otp) return showMessage("Enter OTP.", "error");
+        setIsLoading(true);
+        try {
+            await verifyOtp(regEmail, otp);
+            showMessage("Email verified!", "success");
+            setIsVerified(true);
+            setRegStep(2); // Move to details
+        } catch (e) { showMessage(e.response?.data?.message || "Invalid OTP", "error"); }
+        finally { setIsLoading(false); }
+    };
+
+    const handleRegisterSubmit = async () => {
+        if (regPassword !== regConfirmPassword) return showMessage("Passwords do not match.", "error");
+        // Prepare payload with OTP for backend re-verification
+        onRegister({ srn, name, email: regEmail, password: regPassword, degree, semester: parseInt(semester), section, otp, role: userRole.toLowerCase() });
+    };
 
     return (
-        <div className="w-full bg-white p-8 rounded-2xl shadow-2xl border border-blue-200">
-            <h3 className="text-3xl font-bold mb-6 text-gray-800 text-center">{headerText}</h3>
+        <div style={{ perspective: "1000px" }} className="w-full max-w-md mx-auto">
+            <div ref={cardRef} className="relative w-full transition-all duration-500" style={{ transformStyle: "preserve-3d" }}>
 
-            {isStudent && (
-                <div className="flex justify-center mb-6">
-                    <div className="flex space-x-0 bg-gray-200 p-1 rounded-full shadow-inner">
-                        <button
-                            onClick={() => setAuthMode('login')}
-                            className={`px-6 py-2 rounded-l-full font-semibold transition duration-200 ${loginFormActive ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-300'}`}
-                        >
-                            Sign In
-                        </button>
-                        <button
-                            onClick={() => setAuthMode('register')}
-                            className={`px-6 py-2 rounded-r-full font-semibold transition duration-200 ${!loginFormActive ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-300'}`}
-                        >
-                            Sign Up
+                {/* BACK FACE (Register) */}
+                <div className="absolute inset-0 w-full h-full bg-slate-900/80 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden"
+                    style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden" }}>
+
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50" />
+                    <h3 className="text-3xl font-bold mb-6 text-white text-center tracking-tight">Join NoteOrbit</h3>
+
+                    {/* Reuse Switcher for visual consistency, but functional inside back face */}
+                    <div className="flex justify-center mb-6">
+                        <button onClick={() => setAuthMode('login')} className="text-slate-400 hover:text-white text-sm flex items-center gap-2">
+                            <ArrowLeft className="w-4 h-4" /> Back to Sign In
                         </button>
                     </div>
-                </div>
-            )}
 
-            {loginFormActive ? (
-                <div className="space-y-4">
-                    <Input icon={Mail} placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                    <Input icon={Lock} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
-                    <div className="flex gap-3 pt-4">
-                        <button className={`${buttonClass} flex-1 bg-gray-400 hover:bg-gray-500 text-gray-900`} onClick={handleBack}><ArrowLeft className="w-5 h-5 mr-1" /> Back</button>
-                        <button className={`${buttonClass} flex-1 ${primaryButtonClass}`} onClick={() => onLogin(email, password)}>Sign In</button>
+                    <div className="space-y-4">
+                        {isStudent ? (
+                            <>
+                                {regStep === 1 && (
+                                    <div className="space-y-4">
+                                        <div className="text-center text-sm text-slate-400 mb-2">Step 1: Verify your email</div>
+                                        <Input type="email" placeholder="Email Address" value={regEmail} onChange={e => setRegEmail(e.target.value)} disabled={isOtpSent} />
+                                        {!isOtpSent ? (
+                                            <button disabled={isLoading} onClick={handleSendSignupOtp} className={`w-full ${primaryButtonClass} rounded-xl py-3`}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send Verification Code"}</button>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                <Input placeholder="Enter OTP" value={otp} onChange={e => setOtp(e.target.value)} maxLength={6} className="text-center tracking-widest font-mono" />
+                                                <button disabled={isLoading} onClick={handleVerifySignupOtp} className={`w-full ${successButtonClass} rounded-xl py-3`}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Verify & Continue"}</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                {regStep === 2 && (
+                                    <div className="space-y-4">
+                                        <Input placeholder="SRN" value={srn} onChange={e => setSrn(e.target.value)} />
+                                        <Input placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} />
+                                        <Input type="password" placeholder="Password" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
+                                        <Input type="password" placeholder="Confirm Password" value={regConfirmPassword} onChange={e => setRegConfirmPassword(e.target.value)} />
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <Select value={degree} onChange={e => setDegree(e.target.value)}>
+                                                {(degrees || []).map(d => <option key={d} value={d} className="text-gray-900">{d}</option>)}
+                                            </Select>
+                                            <Select value={semester} onChange={e => setSemester(e.target.value)}>
+                                                {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-gray-900">Sem {s}</option>)}
+                                            </Select>
+                                            <Select value={section} onChange={e => setSection(e.target.value)}>
+                                                {(sections || []).map(s => <option key={s} value={s} className="text-gray-900">Sec {s}</option>)}
+                                            </Select>
+                                        </div>
+                                        <button onClick={handleRegisterSubmit} className={`w-full ${successButtonClass} rounded-xl py-3`}>Complete Registration</button>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="text-center text-slate-400">Admin/Faculty registration is restricted. Contact IT.</div>
+                        )}
                     </div>
                 </div>
-            ) : (
-                <div className="space-y-4">
-                    <Input placeholder="SRN" value={srn} onChange={e => setSrn(e.target.value)} />
-                    <Input placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} />
-                    <Input type="email" placeholder="Email" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
-                    <Input type="password" placeholder="Password" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
 
-                    <div className="grid grid-cols-3 gap-3 pt-2">
-                        <Select value={degree} onChange={e => setDegree(e.target.value)}>
-                            {(degrees || []).map(d => <option key={d} value={d}>{d}</option>)}
-                        </Select>
-                        <Select value={semester} onChange={e => setSemester(e.target.value)}>
-                            {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s}>{s}</option>)}
-                        </Select>
-                        <Select value={section} onChange={e => setSection(e.target.value)}>
-                            {(sections || []).map(s => <option key={s} value={s}>{s}</option>)}
-                        </Select>
-                    </div>
+                {/* FRONT FACE (Login) */}
+                <div className="w-full bg-slate-900/60 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 relative overflow-hidden"
+                    style={{ backfaceVisibility: "hidden" }}>
 
-                    <div className="flex gap-3 pt-4">
-                        <button className={`${buttonClass} flex-1 bg-gray-400 hover:bg-gray-500 text-gray-900`} onClick={handleBack}><ArrowLeft className="w-5 h-5 mr-1" /> Back</button>
-                        <button className={`${buttonClass} flex-1 ${successButtonClass}`} onClick={handleRegisterSubmit}>Register Account</button>
+                    {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} showMessage={showMessage} primaryButtonClass={primaryButtonClass} userRole={userRole} />}
+
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
+                    <h3 className="text-3xl font-bold mb-8 text-white text-center tracking-tight">{userRole} Portal</h3>
+
+                    {isStudent && (
+                        <div className="flex justify-center mb-8">
+                            <div className="flex space-x-1 bg-slate-950/50 p-1.5 rounded-full shadow-inner border border-white/5">
+                                <button onClick={() => setAuthMode('login')} className={`px-8 py-2.5 rounded-full font-bold text-sm bg-blue-600 text-white shadow-lg shadow-blue-500/25`}>Sign In</button>
+                                <button onClick={() => setAuthMode('register')} className={`px-8 py-2.5 rounded-full font-bold text-sm text-slate-400 hover:text-white hover:bg-white/5`}>Sign Up</button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-5">
+                        <Input icon={isParent ? User : Mail} placeholder={isParent ? "Ward's SRN" : "Email Address"} value={email} onChange={e => setEmail(e.target.value)} />
+                        <div>
+                            <Input icon={Lock} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+                            <div className="text-right mt-2"><button onClick={() => setShowForgot(true)} className="text-xs text-blue-400 hover:text-blue-300">Forgot Password?</button></div>
+                        </div>
+                        <div className="flex gap-4 pt-4">
+                            <button className={`${buttonClass} flex-1 bg-slate-800 text-slate-300`} onClick={() => setPage('user_type')}><ArrowLeft className="w-5 h-5 mr-1" /> Back</button>
+                            <button className={`${buttonClass} flex-1 ${primaryButtonClass} bg-gradient-to-r from-blue-600 to-indigo-600`} onClick={() => onLogin(email, password)}>Sign In</button>
+                        </div>
                     </div>
                 </div>
-            )}
+
+            </div>
         </div>
     );
 }
@@ -367,18 +634,18 @@ function StudentFeedback({ showMessage }) {
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-yellow-700 flex items-center"><MessageSquare className="w-6 h-6 mr-2" /> Faculty Feedback Report</h4>
-            
-            {feedback.length === 0 && <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-500">No personalized feedback has been sent by faculty yet.</div>}
+            <h4 className="text-2xl font-bold text-yellow-500 flex items-center"><MessageSquare className="w-6 h-6 mr-2" /> Faculty Feedback Report</h4>
+
+            {feedback.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-400">No personalized feedback has been sent by faculty yet.</div>}
 
             <div className="space-y-4">
                 {feedback.map((f, index) => (
-                    <div key={index} className="bg-yellow-50 p-5 rounded-xl shadow-lg border-l-4 border-yellow-500">
-                        <div className="font-bold text-lg text-gray-800 mb-2">Subject: {f.subject}</div>
-                        
-                        <p className="text-gray-700 whitespace-pre-wrap border-l-2 border-gray-200 pl-3 py-1 text-[0.95rem]">{f.text}</p>
+                    <div key={index} className="bg-yellow-900/20 p-5 rounded-xl shadow-lg border-l-4 border-yellow-500 backdrop-blur-sm">
+                        <div className="font-bold text-lg text-yellow-100 mb-2">Subject: {f.subject}</div>
 
-                        <div className="text-xs text-gray-500 mt-3 pt-2 border-t border-yellow-100">
+                        <p className="text-slate-300 whitespace-pre-wrap border-l-2 border-yellow-500/30 pl-3 py-1 text-[0.95rem]">{f.text}</p>
+
+                        <div className="text-xs text-yellow-500/60 mt-3 pt-2 border-t border-yellow-500/20">
                             Sent by Faculty ID: {f.faculty_id} on {new Date(f.created_at).toLocaleDateString()}
                         </div>
                     </div>
@@ -390,11 +657,11 @@ function StudentFeedback({ showMessage }) {
 
 function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, buttonClass }) {
     const { fetchSubjects, subjects } = catalogs;
-    const [selectedSubject, setSelectedSubject] = useState(''); 
+    const [selectedSubject, setSelectedSubject] = useState('');
     const [notes, setNotes] = useState([]);
     const [notices, setNotices] = useState([]);
     const [isFetching, setIsFetching] = useState(false);
-    
+
     const fetchContent = useCallback(async (subjectToFetch) => {
         if (!subjectToFetch || !user.degree || !user.semester) {
             setNotes([]); setNotices([]); return;
@@ -411,13 +678,13 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
         } catch (e) {
             // Only show general error if not 401 (401 handled by auth interceptor)
             if (e.response && e.response.status !== 401) {
-                showMessage("Failed to load content.", 'error'); 
+                showMessage("Failed to load content.", 'error');
             }
             setNotes([]); setNotices([]);
         } finally {
             setIsFetching(false);
         }
-    }, [user.degree, user.semester, showMessage]); 
+    }, [user.degree, user.semester, showMessage]);
 
     useEffect(() => {
         if (user && user.degree && user.semester) { fetchSubjects(user.degree, user.semester); } else { fetchSubjects(null, null); }
@@ -435,7 +702,7 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
             subjectToUse = null;
         }
         if (subjectToUse) { fetchContent(subjectToUse); } else { setNotes([]); setNotices([]); }
-    }, [subjects, selectedSubject, fetchContent]); 
+    }, [subjects, selectedSubject, fetchContent]);
 
     const handleRefresh = () => {
         if (selectedSubject) fetchContent(selectedSubject);
@@ -450,15 +717,15 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
 
     return (
         <div className="space-y-8">
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 shadow-inner">
-                <strong className="text-xl text-blue-700 block mb-1">Content Context</strong>
-                <div className="text-sm text-gray-600">{user.degree} (Semester {user.semester} / Section {user.section})</div>
+            <div className="bg-blue-900/20 p-6 rounded-xl border border-blue-500/20 shadow-inner backdrop-blur-sm">
+                <strong className="text-xl text-blue-400 block mb-1">Content Context</strong>
+                <div className="text-sm text-blue-200">{user.degree} (Semester {user.semester} / Section {user.section})</div>
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center pt-4">
-                    <label className="text-base text-gray-700 font-bold flex-shrink-0">Filter Subject:</label>
+                    <label className="text-base text-blue-100 font-bold flex-shrink-0">Filter Subject:</label>
                     <Select className="flex-1 max-w-xs" value={selectedSubject || ''} onChange={e => setSelectedSubject(e.target.value)} disabled={!subjects.length || isFetching}>
-                        {Array.isArray(subjects) && subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                        {Array.isArray(subjects) && subjects.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                     </Select>
-                    <button className={`${buttonClass} bg-gray-400 hover:bg-gray-500 text-gray-900 text-sm sm:w-48 py-2.5`} onClick={handleRefresh} disabled={isFetching || !selectedSubject}>
+                    <button className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-white text-sm sm:w-48 py-2.5`} onClick={handleRefresh} disabled={isFetching || !selectedSubject}>
                         {isFetching ? <Loader2 className="animate-spin w-5 h-5 mr-1" /> : <RefreshCw className="w-5 h-5 mr-1" />}
                         {isFetching ? 'Refreshing...' : 'Refresh Content'}
                     </button>
@@ -466,14 +733,14 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
             </div>
 
             <div>
-                <h4 className="text-xl font-bold mt-4 mb-4 text-blue-700 flex items-center"><Book className="w-5 h-5 mr-2" /> Notes for "{selectedSubject || '...'}"</h4>
+                <h4 className="text-xl font-bold mt-4 mb-4 text-blue-400 flex items-center"><Book className="w-5 h-5 mr-2" /> Notes for "{selectedSubject || '...'}"</h4>
                 {isFetching && <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-blue-500" /></div>}
-                {!isFetching && notes.length === 0 && <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">No notes uploaded for {selectedSubject} yet.</div>}
+                {!isFetching && notes.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">No notes uploaded for {selectedSubject} yet.</div>}
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {notes.map(n => (
-                        <div key={n.id} className="p-4 rounded-xl shadow-md border-l-4 border-blue-500 bg-white hover:bg-blue-50 transition duration-200">
-                            <div className="font-bold text-lg text-gray-800 truncate">{n.title} <span className="text-xs text-blue-500">({n.document_type})</span></div>
-                            <div className="text-xs text-gray-500 mt-1">{n.subject} | Uploaded: {new Date(n.timestamp).toLocaleDateString()}</div>
+                        <div key={n.id} className="p-4 rounded-xl shadow-md border-l-4 border-blue-500 bg-slate-800 hover:bg-slate-700 transition duration-200">
+                            <div className="font-bold text-lg text-white truncate">{n.title} <span className="text-xs text-blue-400">({n.document_type})</span></div>
+                            <div className="text-xs text-slate-400 mt-1">{n.subject} | Uploaded: {new Date(n.timestamp).toLocaleDateString()}</div>
                             <div className="mt-3">
                                 {n.file_url && <a className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">Download</a>}
                             </div>
@@ -483,20 +750,20 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
             </div>
 
             <div>
-                <h4 className="text-xl font-bold mt-8 mb-4 text-red-700 flex items-center"><Bell className="w-5 h-5 mr-2" /> Notices for "{selectedSubject || '...'}"</h4>
-                {!isFetching && notices.length === 0 && <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">No recent notices for {selectedSubject} matching your context.</div>}
+                <h4 className="text-xl font-bold mt-8 mb-4 text-red-400 flex items-center"><Bell className="w-5 h-5 mr-2" /> Notices for "{selectedSubject || '...'}"</h4>
+                {!isFetching && notices.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">No recent notices for {selectedSubject} matching your context.</div>}
                 <div className="space-y-4">
                     {notices.map(n => (
-                        <div key={n.id} className="p-4 bg-red-50 border-l-4 border-red-500 rounded-xl shadow-md">
-                            <div className="font-bold text-xl text-red-700">{n.title}</div>
-                            <div className="text-xs text-gray-500 mt-1">
+                        <div key={n.id} className="p-4 bg-red-900/20 border-l-4 border-red-500 rounded-xl shadow-md backdrop-blur-sm">
+                            <div className="font-bold text-xl text-red-400">{n.title}</div>
+                            <div className="text-xs text-slate-400 mt-1">
                                 Subject: {n.subject} | Target: {n.degree} Sem {n.semester} Sec {n.section}
                             </div>
-                            <p className="mt-2 text-gray-700 text-[0.95rem]">{n.message}</p>
-                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-red-100">
-                                <div className="text-xs text-gray-500">
+                            <p className="mt-2 text-slate-200 text-[0.95rem]">{n.message}</p>
+                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-red-500/20">
+                                <div className="text-xs text-slate-500">
                                     Posted by: {n.professor_name} on {new Date(n.created_at).toLocaleDateString()}
-                                    {n.deadline && <span className="font-bold text-red-600 block mt-1">Deadline: {new Date(n.deadline).toLocaleDateString()}</span>}
+                                    {n.deadline && <span className="font-bold text-red-400 block mt-1">Deadline: {new Date(n.deadline).toLocaleDateString()}</span>}
                                 </div>
                                 {n.attachment_url && <a href={n.attachment_url} className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center bg-red-600 hover:bg-red-700 text-white`} target="_blank" rel="noopener noreferrer">Attachment</a>}
                             </div>
@@ -563,33 +830,32 @@ function StudentFees({ user, showMessage, primaryButtonClass, buttonClass }) {
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-700 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Fee Payment History</h4>
-            {fees.length === 0 && <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-500">No fee notifications found for your account.</div>}
-            
+            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Fee Payment History</h4>
+            {fees.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500">No fee notifications found for your account.</div>}
+
             <div className="space-y-4">
                 {fees.map(f => (
-                    <div key={f.target_id} className={`p-4 rounded-xl shadow-lg transition duration-200 ${
-                        f.status === 'paid' 
-                            ? 'bg-green-50 border-l-4 border-green-500' 
-                            : 'bg-red-50 border-l-4 border-red-500'
-                    }`}>
+                    <div key={f.target_id} className={`p-4 rounded-xl shadow-lg transition duration-200 ${f.status === 'paid'
+                        ? 'bg-green-900/20 border-l-4 border-green-500'
+                        : 'bg-red-900/20 border-l-4 border-red-500'
+                        }`}>
                         <div className="flex justify-between items-center">
                             <div className="flex-1">
-                                <div className="font-bold text-lg text-gray-800">{f.title} <span className="text-xs font-normal">({f.category})</span></div>
-                                <div className="text-sm text-gray-600 mt-1">Amount: **₹{f.amount}** | Due: {f.due_date ? new Date(f.due_date).toLocaleDateString() : 'N/A'}</div>
+                                <div className="font-bold text-lg text-white">{f.title} <span className="text-xs font-normal text-slate-400">({f.category})</span></div>
+                                <div className="text-sm text-slate-300 mt-1">Amount: <strong className="text-white">₹{f.amount}</strong> | Due: {f.due_date ? new Date(f.due_date).toLocaleDateString() : 'N/A'}</div>
                             </div>
                             <div className="flex-shrink-0 ml-4">
                                 {f.status === 'pending' && (
-                                    <button 
-                                        className={`${buttonClass} w-32 py-2.5 ${primaryButtonClass}`} 
+                                    <button
+                                        className={`${buttonClass} w-32 py-2.5 ${primaryButtonClass}`}
                                         onClick={() => handlePay(f.target_id)}
                                     >
                                         Pay Now
                                     </button>
                                 )}
                                 {f.status === 'paid' && (
-                                    <button 
-                                        className={`${buttonClass} w-32 py-2.5 bg-green-600 hover:bg-green-700 text-white`} 
+                                    <button
+                                        className={`${buttonClass} w-32 py-2.5 bg-green-600 hover:bg-green-700 text-white`}
                                         onClick={() => handleReceipt(f.payment_id)}
                                     >
                                         Receipt
@@ -597,7 +863,7 @@ function StudentFees({ user, showMessage, primaryButtonClass, buttonClass }) {
                                 )}
                             </div>
                         </div>
-                        <div className="text-xs text-gray-500 mt-2 border-t border-gray-100 pt-1">Status: **{f.status.toUpperCase()}** {f.paid_at && `on ${new Date(f.paid_at).toLocaleDateString()}`}</div>
+                        <div className="text-xs text-slate-500 mt-2 border-t border-white/10 pt-1">Status: **{f.status.toUpperCase()}** {f.paid_at && `on ${new Date(f.paid_at).toLocaleDateString()}`}</div>
                     </div>
                 ))}
             </div>
@@ -627,7 +893,7 @@ function StudentMarks({ showMessage }) {
     }, [showMessage]);
 
     useEffect(() => { fetchMarks(); }, [fetchMarks]);
-    
+
     const calculateSubjectSummary = (subjectMarks) => {
         if (!subjectMarks || subjectMarks.length === 0) return { obtained: 0, max: 0, percent: 0 };
         // Ensure values are numbers for calculation
@@ -640,34 +906,34 @@ function StudentMarks({ showMessage }) {
     if (isLoading) {
         return <div className="text-center p-10"><Loader2 className="animate-spin w-8 h-8 mx-auto text-blue-500" /></div>;
     }
-    
+
     const subjectNames = Object.keys(marks);
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-700 flex items-center"><Award className="w-6 h-6 mr-2" /> Academic Marks Report</h4>
-            {subjectNames.length === 0 && <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-500">No marks have been recorded for your subjects yet.</div>}
+            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><Award className="w-6 h-6 mr-2" /> Academic Marks Report</h4>
+            {subjectNames.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500">No marks have been recorded for your subjects yet.</div>}
 
             <div className="space-y-6">
                 {subjectNames.map(subject => {
                     const summary = calculateSubjectSummary(marks[subject]);
                     return (
-                        <div key={subject} className="bg-white p-5 rounded-xl shadow-lg border-l-4 border-yellow-500">
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                                <h5 className="text-xl font-bold text-gray-800">{subject}</h5>
-                                <div className={`text-lg font-semibold px-3 py-1 rounded-full ${summary.percent >= 75 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        <div key={subject} className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-xl shadow-lg border-l-4 border-yellow-500">
+                            <div className="flex justify-between items-center pb-2 border-b border-white/10">
+                                <h5 className="text-xl font-bold text-white">{subject}</h5>
+                                <div className={`text-lg font-semibold px-3 py-1 rounded-full ${summary.percent >= 75 ? 'bg-green-900/40 text-green-300' : 'bg-yellow-900/40 text-yellow-300'}`}>
                                     {summary.percent}% Overall
                                 </div>
                             </div>
                             <div className="pt-3 space-y-2">
                                 {marks[subject].map((m, index) => (
-                                    <div key={index} className="flex justify-between text-sm text-gray-700 border-b border-dashed border-gray-200 last:border-b-0 py-1">
+                                    <div key={index} className="flex justify-between text-sm text-slate-300 border-b border-dashed border-white/10 last:border-b-0 py-1">
                                         <span className="font-medium capitalize">{m.exam_type}:</span>
-                                        <span className="font-semibold text-gray-900">{m.marks_obtained} / {m.max_marks}</span>
+                                        <span className="font-semibold text-white">{m.marks_obtained} / {m.max_marks}</span>
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-4 pt-3 border-t border-gray-200 text-sm font-semibold text-gray-800 flex justify-between">
+                            <div className="mt-4 pt-3 border-t border-white/10 text-sm font-semibold text-white flex justify-between">
                                 <span>Total:</span>
                                 <span>{summary.obtained} / {summary.max}</span>
                             </div>
@@ -685,19 +951,19 @@ const ComplaintAuditTimeline = ({ auditTrail }) => {
     const sortedHistory = [...auditTrail].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     return (
-        <div className="mt-4 p-4 bg-gray-100 border border-red-200 rounded-lg">
-            <h3 className="text-md font-semibold text-gray-700 mb-3">
+        <div className="mt-4 p-4 bg-slate-900 border border-red-500/20 rounded-lg">
+            <h3 className="text-md font-semibold text-slate-300 mb-3">
                 Tracking History
             </h3>
-            <div className="relative border-l border-red-500 pl-4 space-y-3">
+            <div className="relative border-l border-red-500/50 pl-4 space-y-3">
                 {sortedHistory.map((entry, index) => (
                     <div key={index} className="relative">
-                        <div className="absolute w-3 h-3 bg-red-500 rounded-full mt-1 -left-[18px] border-4 border-white"></div>
-                        <p className="text-sm font-medium text-gray-800">
-                            Status: <span className="font-bold text-red-700">{entry.status}</span>
+                        <div className="absolute w-3 h-3 bg-red-500 rounded-full mt-1 -left-[18px] border-4 border-slate-900"></div>
+                        <p className="text-sm font-medium text-slate-200">
+                            Status: <span className="font-bold text-red-400">{entry.status}</span>
                         </p>
-                        {entry.note && <p className="text-xs text-gray-600 italic">Note: {entry.note}</p>}
-                        <p className="text-xs text-gray-500 italic mt-0.5">
+                        {entry.note && <p className="text-xs text-slate-400 italic">Note: {entry.note}</p>}
+                        <p className="text-xs text-slate-500 italic mt-0.5">
                             {new Date(entry.timestamp).toLocaleString()} by {entry.by}
                         </p>
                     </div>
@@ -726,11 +992,11 @@ function HostelComplaints({ showMessage, primaryButtonClass, buttonClass }) {
             // GET /student/hostel/complaints is the new endpoint
             const res = await auth().get("/student/hostel/complaints");
             setUserComplaints(res.data.complaints || []);
-            setHostelStatus('allowed'); 
+            setHostelStatus('allowed');
 
         } catch (e) {
             if (e.response) {
-                 if (e.response.status === 403 || (e.response.data.message && e.response.data.message.includes('not allowed'))) {
+                if (e.response.status === 403 || (e.response.data.message && e.response.data.message.includes('not allowed'))) {
                     setHostelStatus('not_allowed');
                 } else if (e.response.status !== 401) {
                     showMessage(e.response?.data?.message || "Failed to load complaint history.", 'error');
@@ -749,7 +1015,7 @@ function HostelComplaints({ showMessage, primaryButtonClass, buttonClass }) {
         if (!title || !description) {
             return showMessage("Title and description are required.", 'error');
         }
-        
+
         setIsLoading(true);
         const formData = new FormData();
         formData.append('title', title);
@@ -757,79 +1023,79 @@ function HostelComplaints({ showMessage, primaryButtonClass, buttonClass }) {
         if (attachment) formData.append('attachment', attachment);
 
         try {
-            const res = await auth().post("/hostel/complaints", formData); 
+            const res = await auth().post("/hostel/complaints", formData);
             showMessage(res.data.message, 'success');
             setTitle(''); setDescription(''); setAttachment(null);
             if (document.getElementById('complaintAttachment')) document.getElementById('complaintAttachment').value = '';
-            
+
             // Refresh the list immediately after submission
-            fetchUserComplaints(); 
+            fetchUserComplaints();
 
         } catch (e) {
             const msg = e.response?.data?.message || "Failed to submit complaint. Check allocation status.";
             if (e.response && e.response.status === 403) {
-                 setHostelStatus('not_allowed'); // Explicitly block if 403
+                setHostelStatus('not_allowed'); // Explicitly block if 403
             }
             showMessage(msg, 'error');
         } finally {
             setIsLoading(false);
         }
     };
-    
+
     if (isFetching && hostelStatus === 'checking') {
         return <div className="text-center p-10"><Loader2 className="animate-spin w-8 h-8 mx-auto text-red-500" /></div>;
     }
 
     if (hostelStatus === 'not_allowed') {
         return (
-            <div className="text-center p-10 bg-red-100 rounded-xl shadow-md border border-red-300">
-                <XCircle className="w-10 h-10 mx-auto text-red-600 mb-4" />
-                <h4 className="text-2xl font-bold text-red-700">Complaint Submission Blocked</h4>
-                <p className="text-lg text-red-600 mt-2">**Not allowed for complaining as no hostel is allotted for you.**</p>
-                <p className="text-sm text-gray-600 mt-4">Please contact the administration if you believe this is an error.</p>
+            <div className="text-center p-10 bg-red-900/20 rounded-xl shadow-md border border-red-500/30">
+                <XCircle className="w-10 h-10 mx-auto text-red-500 mb-4" />
+                <h4 className="text-2xl font-bold text-red-400">Complaint Submission Blocked</h4>
+                <p className="text-lg text-red-300 mt-2">**Not allowed for complaining as no hostel is allotted for you.**</p>
+                <p className="text-sm text-slate-400 mt-4">Please contact the administration if you believe this is an error.</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-red-200 space-y-4">
-                <h4 className="text-2xl font-bold mb-4 text-red-700 flex items-center"><Home className="w-6 h-6 mr-2" /> Raise Hostel Complaint</h4>
-                <Input placeholder="Complaint Title (e.g., Water leakage in Room 101)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading}/>
-                <textarea className="w-full bg-white text-gray-800 placeholder-gray-500 border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500 outline-none transition duration-200 h-32" placeholder="Detailed description of the issue..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading}/>
-                <label className="block text-sm text-gray-700 font-medium pt-2">Attach Image/File (Optional):</label>
-                <input id="complaintAttachment" type="file" onChange={e => setAttachment(e.target.files[0])} className="w-full text-gray-600 bg-gray-100 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 transition duration-200" disabled={isLoading}/>
+            <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-red-500/20 space-y-4">
+                <h4 className="text-2xl font-bold mb-4 text-red-400 flex items-center"><Home className="w-6 h-6 mr-2" /> Raise Hostel Complaint</h4>
+                <Input placeholder="Complaint Title (e.g., Water leakage in Room 101)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
+                <textarea className="w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-slate-500 border border-white/10 rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500/50 outline-none transition duration-200 h-32" placeholder="Detailed description of the issue..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} />
+                <label className="block text-sm text-slate-300 font-medium pt-2">Attach Image/File (Optional):</label>
+                <input id="complaintAttachment" type="file" onChange={e => setAttachment(e.target.files[0])} className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 transition duration-200" disabled={isLoading} />
                 <button className={`${buttonClass} ${primaryButtonClass} bg-red-600 hover:bg-red-700 text-white w-full`} onClick={handleSubmit} disabled={isLoading || !title || !description}>
                     {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Mail className="w-5 h-5 mr-2" />}
                     {isLoading ? 'Submitting...' : 'Submit Complaint'}
                 </button>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+            <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10">
                 <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-xl font-bold text-red-700 flex items-center"><ClipboardList className="w-5 h-5 mr-2" /> Your Complaint History ({userComplaints.length})</h4>
-                    <button onClick={fetchUserComplaints} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition" disabled={isFetching}><RefreshCw className="w-5 h-5 text-gray-600" /></button>
+                    <h4 className="text-xl font-bold text-red-400 flex items-center"><ClipboardList className="w-5 h-5 mr-2" /> Your Complaint History ({userComplaints.length})</h4>
+                    <button onClick={fetchUserComplaints} className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition" disabled={isFetching}><RefreshCw className="w-5 h-5 text-slate-300" /></button>
                 </div>
-                
+
                 {isFetching ? (
                     <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-red-500" /></div>
                 ) : userComplaints.length === 0 ? (
-                    <div className="p-4 text-gray-500 text-center">You have no active or historical complaints.</div>
+                    <div className="p-4 text-slate-500 text-center">You have no active or historical complaints.</div>
                 ) : (
                     <div className="space-y-6">
                         {userComplaints.map(c => (
-                            <div key={c.id} className={`p-4 rounded-xl shadow-md border-l-4 ${c.status === 'Resolved' || c.status === 'Closed' ? 'border-green-500 bg-green-50' : c.status.includes('Progress') || c.status.includes('Review') ? 'border-orange-500 bg-orange-50' : 'border-red-500 bg-red-50'}`}>
+                            <div key={c.id} className={`p-4 rounded-xl shadow-md border-l-4 ${c.status === 'Resolved' || c.status === 'Closed' ? 'border-green-500 bg-green-900/20' : c.status.includes('Progress') || c.status.includes('Review') ? 'border-orange-500 bg-orange-900/20' : 'border-red-500 bg-red-900/20'}`}>
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <div className="font-bold text-lg text-gray-800">{c.title}</div>
-                                        <div className="text-sm text-gray-600 mt-1">Room: {c.room_number} in {c.hostel_name}</div>
+                                        <div className="font-bold text-lg text-white">{c.title}</div>
+                                        <div className="text-sm text-slate-400 mt-1">Room: {c.room_number} in {c.hostel_name}</div>
                                     </div>
-                                    <div className={`text-sm px-3 py-1 rounded-full font-semibold ${c.status === 'Resolved' || c.status === 'Closed' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                                    <div className={`text-sm px-3 py-1 rounded-full font-semibold ${c.status === 'Resolved' || c.status === 'Closed' ? 'bg-green-900/40 text-green-300' : 'bg-red-900/40 text-red-300'}`}>
                                         {c.status}
                                     </div>
                                 </div>
                                 <ComplaintAuditTimeline auditTrail={c.audit_trail || []} />
-                                {c.file_url && <a href={c.file_url} className="mt-3 inline-flex items-center text-xs text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">View Attachment</a>}
+                                {c.file_url && <a href={c.file_url} className="mt-3 inline-flex items-center text-xs text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">View Attachment</a>}
                             </div>
                         ))}
                     </div>
@@ -853,11 +1119,11 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
 
         setIsLoading(true);
         const query = encodeURIComponent(searchTerm.trim());
-        
+
         try {
             // Use the unified backend endpoint /api/library/search
             const res = await auth().get(`/api/library/search?q=${query}&source=${searchSource}`);
-            
+
             // The backend is responsible for formatting, so we take results directly
             setResults(res.data.books || []);
 
@@ -876,25 +1142,25 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-700 flex items-center"><Book className="w-6 h-6 mr-2" /> Unified Library Search</h4>
-            
+            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><Book className="w-6 h-6 mr-2" /> Unified Library Search</h4>
+
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                 <Select className="sm:w-40 flex-shrink-0" value={searchSource} onChange={e => setSearchSource(e.target.value)} disabled={isLoading}>
-                    <option value="internal">Internal Library</option>
-                    <option value="openlibrary">OpenLibrary API</option>
+                    <option value="internal" className="text-slate-900">Internal Library</option>
+                    <option value="openlibrary" className="text-slate-900">OpenLibrary API</option>
                 </Select>
-                <Input 
+                <Input
                     icon={Search}
-                    className="flex-grow py-3 px-4 rounded-full" 
-                    placeholder="Search for book title, author, or ISBN..." 
-                    value={searchTerm} 
-                    onChange={e => setSearchTerm(e.target.value)} 
+                    className="flex-grow py-3 px-4 rounded-full"
+                    placeholder="Search for book title, author, or ISBN..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') performSearch(); }}
-                    disabled={isLoading} 
+                    disabled={isLoading}
                 />
-                <button 
-                    className={`${buttonClass} w-32 py-3 ${primaryButtonClass}`} 
-                    onClick={performSearch} 
+                <button
+                    className={`${buttonClass} w-32 py-3 ${primaryButtonClass}`}
+                    onClick={performSearch}
                     disabled={isLoading || !searchTerm.trim()}
                 >
                     {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Search'}
@@ -902,25 +1168,25 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
             </div>
 
             {isLoading && <div className="text-center p-4"><Loader2 className="animate-spin w-6 h-6 mx-auto text-blue-500" /></div>}
-            
+
             {!isLoading && searchTerm.trim() && allResults.length === 0 && (
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-500">
+                <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500">
                     No results found for "{searchTerm}" in the {searchSource} library.
                 </div>
             )}
 
             {!isLoading && allResults.length > 0 && (
                 <div className="space-y-4">
-                    <div className="text-sm text-gray-500 font-semibold">{allResults.length} result(s) found.</div>
+                    <div className="text-sm text-slate-500 font-semibold">{allResults.length} result(s) found.</div>
                     {allResults.map((book, index) => (
-                        <div key={book.id || index} className={`p-4 rounded-xl shadow-md ${book.source === 'Internal' ? 'bg-green-50 border-l-4 border-green-500' : 'bg-white border-l-4 border-gray-300'}`}>
+                        <div key={book.id || index} className={`p-4 rounded-xl shadow-md ${book.source === 'Internal' ? 'bg-green-900/20 border-l-4 border-green-500' : 'bg-slate-900/60 border-l-4 border-slate-500'}`}>
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
-                                    <div className="font-bold text-lg text-gray-800">{book.title}</div>
-                                    <div className="text-sm text-gray-600 mt-1">
+                                    <div className="font-bold text-lg text-white">{book.title}</div>
+                                    <div className="text-sm text-slate-400 mt-1">
                                         Author: **{book.author}** | ISBN: {book.isbn || 'N/A'}
                                     </div>
-                                    <div className="text-xs mt-1 text-gray-500">Source: {book.source}</div>
+                                    <div className="text-xs mt-1 text-slate-500">Source: {book.source}</div>
                                 </div>
                                 <div className="ml-4 flex-shrink-0">
                                     {book.source === 'Internal' && book.file_url ? (
@@ -932,7 +1198,7 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
                                             <img src={book.cover_url} onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/50x70/E0E0E0/505050?text=No+Cover'; }} className="w-12 h-16 object-cover rounded shadow-md" alt="Cover" />
                                         </a>
                                     ) : (
-                                        <span className="text-xs text-gray-500 bg-gray-100 p-2 rounded-full">No Download</span>
+                                        <span className="text-xs text-slate-500 bg-slate-800 p-2 rounded-full">No Download</span>
                                     )}
                                 </div>
                             </div>
@@ -945,7 +1211,7 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
 }
 
 
-function AIChat({ showMessage, primaryButtonClass, buttonClass }) { 
+function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
     const [question, setQuestion] = useState("");
     const [history, setHistory] = useState([
         { role: "ai", text: "Hello! I am your NoteOrbit academic assistant. Ask me anything about your studies, concepts, or topics you want to review." }
@@ -982,21 +1248,20 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-blue-200">
-            <h4 className="text-2xl font-bold mb-4 text-blue-700 flex items-center"><Briefcase className="w-6 h-6 mr-2" /> AI Study Assistant</h4>
-            <div id="chat-history" className="h-96 overflow-y-auto border border-gray-300 rounded-xl p-4 bg-gray-50">
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-blue-500/20">
+            <h4 className="text-2xl font-bold mb-4 text-blue-400 flex items-center"><Briefcase className="w-6 h-6 mr-2" /> AI Study Assistant</h4>
+            <div id="chat-history" className="h-96 overflow-y-auto border border-white/10 rounded-xl p-4 bg-slate-950/50">
                 <div className="flex flex-col space-y-3">
                     {history.map((msg, index) => (
-                        <div key={index} className={`max-w-[80%] p-3 rounded-xl shadow-sm text-sm whitespace-pre-wrap ${
-                            msg.role === "ai" 
-                                ? "self-start bg-blue-100 text-gray-800 border border-blue-300" 
-                                : "self-end bg-blue-600 text-white"
-                        }`}>
+                        <div key={index} className={`max-w-[80%] p-3 rounded-xl shadow-sm text-sm whitespace-pre-wrap ${msg.role === "ai"
+                            ? "self-start bg-slate-800 text-slate-300 border border-white/5"
+                            : "self-end bg-blue-600 text-white"
+                            }`}>
                             {msg.text}
                         </div>
                     ))}
                     {isLoading && (
-                        <div className="self-start bg-blue-100 p-3 rounded-xl text-sm text-blue-700 flex items-center">
+                        <div className="self-start bg-blue-900/20 p-3 rounded-xl text-sm text-blue-300 flex items-center border border-blue-500/20">
                             <Loader2 className="animate-spin w-4 h-4 mr-2" />
                             <span className="font-semibold">Generating Response...</span>
                         </div>
@@ -1004,19 +1269,19 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
                 </div>
             </div>
             <div className="flex space-x-3 mt-4">
-                <Input 
-                    className="flex-grow py-3 px-4 rounded-full" 
-                    placeholder="Ask a question about your subject..." 
-                    value={question} 
-                    onChange={e => setQuestion(e.target.value)} 
-                    onKeyDown={handleKeyDown} 
-                    disabled={isLoading} 
+                <Input
+                    className="flex-grow py-3 px-4 rounded-full"
+                    placeholder="Ask a question about your subject..."
+                    value={question}
+                    onChange={e => setQuestion(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isLoading}
                 />
                 <button className={`${buttonClass} w-24 py-3 ${primaryButtonClass}`} onClick={askQuestion} disabled={isLoading || !question.trim()}>
                     {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Ask'}
                 </button>
             </div>
-            <div className="text-xs text-center mt-2 text-gray-500">Powered by Gemini</div>
+            <div className="text-xs text-center mt-2 text-slate-500">Powered by GroqCloud</div>
         </div>
     );
 }
@@ -1029,7 +1294,7 @@ function ProfessorMarksUpload({ showMessage, primaryButtonClass, buttonClass, ca
     const { subjects, fetchSubjects } = catalogs;
     const [subject, setSubject] = useState("");
     const [examType, setExamType] = useState("internal");
-    
+
     // New fields for single mark entry
     const [srn, setSrn] = useState("");
     const [marksObtained, setMarksObtained] = useState("");
@@ -1037,25 +1302,72 @@ function ProfessorMarksUpload({ showMessage, primaryButtonClass, buttonClass, ca
 
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        // NOTE: Professor view filters are now handled by the user/context
-        if (user && user.degree && user.semester) { fetchSubjects(user.degree, user.semester); }
-    }, [user.degree, user.semester, fetchSubjects]);
+    // --- Allocation Logic & Filters ---
+    const [allocations, setAllocations] = useState([]);
 
+    // Selection States
+    const [selDegree, setSelDegree] = useState("");
+    const [selSemester, setSelSemester] = useState("");
+    const [selSection, setSelSection] = useState("");
+
+    // Derived Lists
+    const [availableDegrees, setAvailableDegrees] = useState([]);
+    const [availableSemesters, setAvailableSemesters] = useState([]);
+    const [availableSections, setAvailableSections] = useState([]);
+    const [availableSubjects, setAvailableSubjects] = useState([]);
+
+    // 1. Fetch Allocations
+    const fetchAllocations = useCallback(async () => {
+        try {
+            const res = await auth().get("/faculty/allocations");
+            setAllocations(res.data.allocations || []);
+        } catch (e) { console.error("Alloc fetch error", e); }
+    }, []);
+
+    useEffect(() => { fetchAllocations(); }, [fetchAllocations]);
+
+    // 2. Filter: Degrees
     useEffect(() => {
-        if (Array.isArray(subjects) && subjects.length > 0) {
-            if (!subject || !subjects.includes(subject)) { setSubject(subjects[0]); }
-        } else {
-            setSubject("");
-        }
-    }, [subjects, subject]); 
+        if (!allocations.length) return;
+        const degrees = [...new Set(allocations.map(a => a.degree))];
+        setAvailableDegrees(degrees);
+        if (!selDegree && degrees.length) setSelDegree(degrees[0]);
+    }, [allocations, selDegree]);
+
+    // 3. Filter: Semesters (based on Degree)
+    useEffect(() => {
+        if (!selDegree) return;
+        const relevant = allocations.filter(a => a.degree === selDegree);
+        const sems = [...new Set(relevant.map(a => a.semester))].sort((a, b) => a - b);
+        setAvailableSemesters(sems);
+        if (!selSemester && sems.length) setSelSemester(String(sems[0]));
+    }, [allocations, selDegree, selSemester]);
+
+    // 4. Filter: Sections (based on Degree + Sem)
+    useEffect(() => {
+        if (!selDegree || !selSemester) return;
+        const relevant = allocations.filter(a => a.degree === selDegree && a.semester == selSemester);
+        const secs = [...new Set(relevant.map(a => a.section))].sort();
+        setAvailableSections(secs);
+        // FIX: Re-validate selSection
+        if (!selSection || !secs.includes(selSection)) setSelSection(secs[0] || "");
+    }, [allocations, selDegree, selSemester, selSection]);
+
+    // 5. Filter: Subjects (based on Degree + Sem + Section)
+    useEffect(() => {
+        if (!selDegree || !selSemester || !selSection) return;
+        const relevant = allocations.filter(a => a.degree === selDegree && a.semester == selSemester && a.section === selSection);
+        const subjs = [...new Set(relevant.map(a => a.subject))];
+        setAvailableSubjects(subjs);
+        if (!subject || !subjs.includes(subject)) setSubject(subjs[0] || "");
+    }, [allocations, selDegree, selSemester, selSection, subject]);
 
     const handleUpload = async () => {
-        if (!subject || !examType || !srn || marksObtained === "" || maxMarks === "") { 
-            return showMessage("All fields are required.", 'error'); 
+        if (!subject || !examType || !srn || marksObtained === "" || maxMarks === "") {
+            return showMessage("All fields are required.", 'error');
         }
         if (parseFloat(marksObtained) > parseFloat(maxMarks)) {
-            return showMessage("Marks Obtained cannot be greater than Maximum Marks.", 'error'); 
+            return showMessage("Marks Obtained cannot be greater than Maximum Marks.", 'error');
         }
 
         setIsLoading(true);
@@ -1069,7 +1381,7 @@ function ProfessorMarksUpload({ showMessage, primaryButtonClass, buttonClass, ca
 
         try {
             // Using auth()
-            const res = await auth().post("/faculty/marks/upload", payload); 
+            const res = await auth().post("/faculty/marks/upload", payload);
             showMessage(res.data.message, 'success');
             setSrn("");
             setMarksObtained("");
@@ -1084,26 +1396,36 @@ function ProfessorMarksUpload({ showMessage, primaryButtonClass, buttonClass, ca
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-green-200 space-y-4">
-            <h4 className="text-2xl font-bold text-green-700 flex items-center"><Upload className="w-6 h-6 mr-2" /> Upload Single Mark Entry</h4>
-            <p className="text-sm text-gray-500">Enter marks directly per student (CSV upload removed).</p>
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-green-500/20 space-y-4">
+            <h4 className="text-2xl font-bold text-green-400 flex items-center"><Upload className="w-6 h-6 mr-2" /> Upload Single Mark Entry</h4>
+            <p className="text-sm text-slate-400">Enter marks directly per student.</p>
 
-            {/* Note: Professor degree/semester filter is handled by the main panel's navigation */}
-
-            <div className="grid grid-cols-2 gap-3">
-                <Select value={subject} onChange={e => setSubject(e.target.value)} disabled={!subjects.length || isLoading}>
-                    <option value="">Select Subject</option>
-                    { (subjects || []).map(s => <option key={s} value={s}>{s}</option>) }
+            <div className="grid grid-cols-3 gap-3">
+                <Select value={selDegree} onChange={e => setSelDegree(e.target.value)} disabled={isLoading}>
+                    {availableDegrees.map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                 </Select>
-                <Select value={examType} onChange={e => setExamType(e.target.value)} disabled={isLoading}>
-                    <option value="internal">Internal Exam</option>
-                    <option value="mid">Mid-Term Exam</option>
-                    <option value="endsem">End-Semester Exam</option>
-                    <option value="assignment">Assignment</option>
-                    <option value="lab">Lab Viva/Report</option>
+                <Select value={selSemester} onChange={e => setSelSemester(e.target.value)} disabled={isLoading}>
+                    {availableSemesters.map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                </Select>
+                <Select value={selSection} onChange={e => setSelSection(e.target.value)} disabled={isLoading}>
+                    {availableSections.map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
                 </Select>
             </div>
-            
+
+            <div className="grid grid-cols-2 gap-3">
+                <Select value={subject} onChange={e => setSubject(e.target.value)} disabled={!availableSubjects.length || isLoading}>
+                    <option value="" className="text-slate-900">Select Subject</option>
+                    {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
+                </Select>
+                <Select value={examType} onChange={e => setExamType(e.target.value)} disabled={isLoading}>
+                    <option value="internal" className="text-slate-900">Internal Exam</option>
+                    <option value="mid" className="text-slate-900">Mid-Term Exam</option>
+                    <option value="endsem" className="text-slate-900">End-Semester Exam</option>
+                    <option value="assignment" className="text-slate-900">Assignment</option>
+                    <option value="lab" className="text-slate-900">Lab Viva/Report</option>
+                </Select>
+            </div>
+
             <Input placeholder="Student SRN (e.g., SRN001)" value={srn} onChange={e => setSrn(e.target.value)} disabled={isLoading} />
 
             <div className="grid grid-cols-2 gap-3">
@@ -1111,9 +1433,9 @@ function ProfessorMarksUpload({ showMessage, primaryButtonClass, buttonClass, ca
                 <Input type="number" placeholder="Max Marks (Total)" value={maxMarks} onChange={e => setMaxMarks(e.target.value)} disabled={isLoading} min="1" />
             </div>
 
-            <button 
-                className={`${buttonClass} ${primaryButtonClass} w-full`} 
-                onClick={handleUpload} 
+            <button
+                className={`${buttonClass} ${primaryButtonClass} w-full`}
+                onClick={handleUpload}
                 disabled={isLoading || !subject || !srn || marksObtained === "" || maxMarks === ""}
             >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />}
@@ -1128,15 +1450,68 @@ function ProfessorFeedback({ showMessage, primaryButtonClass, buttonClass, catal
     const [srn, setSrn] = useState("");
     const [subject, setSubject] = useState("");
     const [text, setText] = useState("");
+
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        if (user && user.degree && user.semester) { fetchSubjects(user.degree, user.semester); }
-    }, [user.degree, user.semester, fetchSubjects]);
+    // --- Allocation Logic & Filters ---
+    const [allocations, setAllocations] = useState([]);
 
+    // Selection States
+    const [selDegree, setSelDegree] = useState("");
+    const [selSemester, setSelSemester] = useState("");
+    const [selSection, setSelSection] = useState("");
+
+    // Derived Lists
+    const [availableDegrees, setAvailableDegrees] = useState([]);
+    const [availableSemesters, setAvailableSemesters] = useState([]);
+    const [availableSections, setAvailableSections] = useState([]);
+    const [availableSubjects, setAvailableSubjects] = useState([]);
+
+    // 1. Fetch Allocations
+    const fetchAllocations = useCallback(async () => {
+        try {
+            const res = await auth().get("/faculty/allocations");
+            setAllocations(res.data.allocations || []);
+        } catch (e) { console.error("Alloc fetch error", e); }
+    }, []);
+
+    useEffect(() => { fetchAllocations(); }, [fetchAllocations]);
+
+    // 2. Filter: Degrees
     useEffect(() => {
-        if (Array.isArray(subjects) && subjects.length && !subject) setSubject(subjects[0]);
-    }, [subjects]);
+        if (!allocations.length) return;
+        const degrees = [...new Set(allocations.map(a => a.degree))];
+        setAvailableDegrees(degrees);
+        if (!selDegree && degrees.length) setSelDegree(degrees[0]);
+    }, [allocations, selDegree]);
+
+    // 3. Filter: Semesters
+    useEffect(() => {
+        if (!selDegree) return;
+        const relevant = allocations.filter(a => a.degree === selDegree);
+        const sems = [...new Set(relevant.map(a => a.semester))].sort((a, b) => a - b);
+        setAvailableSemesters(sems);
+        if (!selSemester && sems.length) setSelSemester(String(sems[0]));
+    }, [allocations, selDegree, selSemester]);
+
+    // 4. Filter: Sections
+    useEffect(() => {
+        if (!selDegree || !selSemester) return;
+        const relevant = allocations.filter(a => a.degree === selDegree && a.semester == selSemester);
+        const secs = [...new Set(relevant.map(a => a.section))].sort();
+        setAvailableSections(secs);
+        // FIX: Check if current section is still valid
+        if (!selSection || !secs.includes(selSection)) setSelSection(secs[0] || "");
+    }, [allocations, selDegree, selSemester, selSection]);
+
+    // 5. Filter: Subjects
+    useEffect(() => {
+        if (!selDegree || !selSemester || !selSection) return;
+        const relevant = allocations.filter(a => a.degree === selDegree && a.semester == selSemester && a.section === selSection);
+        const subjs = [...new Set(relevant.map(a => a.subject))];
+        setAvailableSubjects(subjs);
+        if (!subject || !subjs.includes(subject)) setSubject(subjs[0] || "");
+    }, [allocations, selDegree, selSemester, selSection, subject]);
 
     const handleSubmit = async () => {
         if (!srn || !subject || !text) { return showMessage("SRN, subject, and feedback text are required.", 'error'); }
@@ -1158,28 +1533,40 @@ function ProfessorFeedback({ showMessage, primaryButtonClass, buttonClass, catal
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-yellow-200 space-y-4">
-            <h4 className="text-2xl font-bold text-yellow-700 flex items-center"><MessageSquare className="w-6 h-6 mr-2" /> Provide Student Feedback</h4>
-            <p className="text-sm text-gray-500">Send personalized academic comments to a specific student.</p>
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20 space-y-4">
+            <h4 className="text-2xl font-bold text-yellow-400 flex items-center"><MessageSquare className="w-6 h-6 mr-2" /> Provide Student Feedback</h4>
+            <p className="text-sm text-slate-400">Send personalized academic comments to a specific student.</p>
+
+            <div className="grid grid-cols-3 gap-3">
+                <Select value={selDegree} onChange={e => setSelDegree(e.target.value)} disabled={isLoading}>
+                    {availableDegrees.map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                </Select>
+                <Select value={selSemester} onChange={e => setSelSemester(e.target.value)} disabled={isLoading}>
+                    {availableSemesters.map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                </Select>
+                <Select value={selSection} onChange={e => setSelSection(e.target.value)} disabled={isLoading}>
+                    {availableSections.map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
+                </Select>
+            </div>
 
             <Input placeholder="Student SRN (e.g., SRN001)" value={srn} onChange={e => setSrn(e.target.value)} disabled={isLoading} />
-            
-            <Select value={subject} onChange={e => setSubject(e.target.value)} disabled={!subjects.length || isLoading}>
-                <option value="">Select Subject</option>
-                {(subjects || []).map(s => <option key={s} value={s}>{s}</option>)}
+
+            <Select value={subject} onChange={e => setSubject(e.target.value)} disabled={!availableSubjects.length || isLoading}>
+                <option value="" className="text-slate-900">Select Subject</option>
+                {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
             </Select>
 
-            <textarea 
-                className="w-full bg-white text-gray-800 placeholder-gray-500 border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-yellow-500 outline-none transition duration-200 h-32" 
-                placeholder="Detailed feedback message..." 
-                value={text} 
+            <textarea
+                className="w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-slate-500 border border-white/10 rounded-xl py-3 px-4 focus:ring-2 focus:ring-yellow-500/50 outline-none transition duration-200 h-32"
+                placeholder="Detailed feedback message..."
+                value={text}
                 onChange={e => setText(e.target.value)}
                 disabled={isLoading}
             />
 
-            <button 
-                className={`${buttonClass} ${primaryButtonClass} w-full bg-yellow-600 hover:bg-yellow-700 text-white`} 
-                onClick={handleSubmit} 
+            <button
+                className={`${buttonClass} ${primaryButtonClass} w-full bg-yellow-600 hover:bg-yellow-700 text-white`}
+                onClick={handleSubmit}
                 disabled={isLoading || !srn || !subject || !text}
             >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />}
@@ -1189,85 +1576,145 @@ function ProfessorFeedback({ showMessage, primaryButtonClass, buttonClass, catal
     );
 }
 
-// Professor Panel (Updated for separated Degree/Semester controls)
+// Professor Panel (Updated for separated Degree/Semester controls + Strict Allocation Filtering)
 function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButtonClass, dangerButtonClass }) {
     const [view, setView] = useState('notes');
 
+    // Allocations State
+    const [allocations, setAllocations] = useState([]);
+    const [availableDegrees, setAvailableDegrees] = useState([]);
+    const [availableSemesters, setAvailableSemesters] = useState([]); // Filtered by selected degree
+    const [availableSections, setAvailableSections] = useState([]);   // Filtered by selected degree & sem
+    const [availableSubjects, setAvailableSubjects] = useState([]);   // Filtered by selected degree & sem
+
     // --- State for Notes Upload ---
     const [noteTitle, setNoteTitle] = useState("");
-    const [noteDegree, setNoteDegree] = useState(user && (user.degree || (catalogs.degrees && catalogs.degrees[0]) || ""));
-    const [noteSemester, setNoteSemester] = useState(user && (user.semester ? String(user.semester) : "1"));
+    const [noteDegree, setNoteDegree] = useState("");
+    const [noteSemester, setNoteSemester] = useState("");
+    const [noteSection, setNoteSection] = useState(""); // Added Section State
     const [noteSubject, setNoteSubject] = useState("");
     const [noteDocumentType, setNoteDocumentType] = useState("Notes");
     const [noteFile, setNoteFile] = useState(null);
     const [isUploadLoading, setIsUploadLoading] = useState(false);
-    
+
     // --- State for Notice Creation ---
     const [nTitle, setNTitle] = useState("");
     const [nMsg, setNMsg] = useState("");
-    const [nDegree, setNDegree] = useState(user && (user.degree || (catalogs.degrees && catalogs.degrees[0]) || ""));
-    const [nSemester, setNSemester] = useState(user && (user.semester ? String(user.semester) : "1"));
-    const [nSection, setNSection] = useState((catalogs.sections && catalogs.sections[0]) || ""); // Target Section(s)
+    const [nDegree, setNDegree] = useState("");
+    const [nSemester, setNSemester] = useState("");
+    const [nSection, setNSection] = useState("");
     const [nSubject, setNSubject] = useState("");
     const [nDeadline, setNDeadline] = useState("");
-    const [attachment, setAttachment] = useState(null); 
+    const [attachment, setAttachment] = useState(null);
     const [isNoticeLoading, setIsNoticeLoading] = useState(false);
 
-    const { fetchSubjects } = catalogs;
-    const [noteSubjects, setNoteSubjects] = useState([]);
-    const [noticeSubjects, setNoticeSubjects] = useState([]);
-    
-    // 1. Fetch subjects for Notes Upload view
-    const fetchNoteSubjects = useCallback(async () => {
-        if (view === 'notes' && noteDegree && noteSemester) {
-            const subjects = await fetchSubjects(noteDegree, noteSemester);
-            setNoteSubjects(subjects);
-        } else if (view !== 'notes') {
-            setNoteSubjects([]);
+    // Fetch Allocations
+    const fetchAllocations = useCallback(async () => {
+        try {
+            const res = await auth().get("/faculty/allocations");
+            setAllocations(res.data.allocations || []);
+        } catch (e) {
+            console.error("Failed to fetch allocations", e);
         }
-    }, [view, noteDegree, noteSemester, fetchSubjects]); 
+    }, []);
 
-    // 2. Fetch subjects for Notice Creation view
-    const fetchNoticeSubjects = useCallback(async () => {
-        if (view === 'notices' && nDegree && nSemester) {
-            const subjects = await fetchSubjects(nDegree, nSemester);
-            setNoticeSubjects(subjects);
-        } else if (view !== 'notices') {
-            setNoticeSubjects([]);
+    useEffect(() => { fetchAllocations(); }, [fetchAllocations]);
+
+    // Derived Lists based on Allocations
+    useEffect(() => {
+        if (!allocations.length) return;
+        const degrees = [...new Set(allocations.map(a => a.degree))];
+        setAvailableDegrees(degrees);
+        // Defaults
+        if (!noteDegree && degrees.length) { setNoteDegree(degrees[0]); setNDegree(degrees[0]); }
+    }, [allocations, noteDegree]);
+
+    // Update Valid Semesters when Degree changes
+    useEffect(() => {
+        const relevant = allocations.filter(a => a.degree === (view === 'notes' ? noteDegree : nDegree));
+        const sems = [...new Set(relevant.map(a => a.semester))].sort((a, b) => a - b);
+        setAvailableSemesters(sems);
+        // Default Semester
+        const currentSem = view === 'notes' ? noteSemester : nSemester;
+        if (!currentSem || !sems.includes(parseInt(currentSem))) {
+            const def = sems.length ? String(sems[0]) : "";
+            if (view === 'notes') setNoteSemester(def); else setNSemester(def);
         }
-    }, [view, nDegree, nSemester, fetchSubjects]); 
+    }, [allocations, noteDegree, nDegree, view, noteSemester, nSemester]);
 
-    useEffect(() => { fetchNoteSubjects(); }, [fetchNoteSubjects]);
-    useEffect(() => { fetchNoticeSubjects(); }, [fetchNoticeSubjects]);
-
-    // 3. Initialize/Sync Subject dropdowns
+    // Update Valid Subjects/Sections when Degree/Sem changes
     useEffect(() => {
-        if (Array.isArray(noteSubjects) && noteSubjects.length > 0) {
-            if (!noteSubject || !noteSubjects.includes(noteSubject)) { setNoteSubject(noteSubjects[0]); }
-        } else { setNoteSubject(""); }
-    }, [noteSubjects, noteSubject]);
+        // Shared Logic for Valid Sections (Both Views need Section now)
+        const relevantForSec = allocations.filter(a => a.degree === (view === 'notes' ? noteDegree : nDegree) && a.semester == (view === 'notes' ? noteSemester : nSemester));
+        const secs = [...new Set(relevantForSec.map(a => a.section))].sort();
+        setAvailableSections(secs);
+
+        // Update Section State
+        if (view === 'notes') {
+            if (!noteSection || !secs.includes(noteSection)) setNoteSection(secs[0] || "");
+        } else {
+            if (!nSection || !secs.includes(nSection)) setNSection(secs[0] || "");
+        }
+
+        // Shared Logic for Subjects (Filtered by Section as well now)
+        const currentSec = view === 'notes' ? noteSection : nSection;
+        const currentDeg = view === 'notes' ? noteDegree : nDegree;
+        const currentSem = view === 'notes' ? noteSemester : nSemester;
+
+        const relevantForSub = allocations.filter(a => a.degree === currentDeg && a.semester == currentSem && a.section === currentSec);
+        const subjs = [...new Set(relevantForSub.map(a => a.subject))];
+        setAvailableSubjects(subjs);
+
+        if (view === 'notes') {
+            if (!noteSubject || !subjs.includes(noteSubject)) setNoteSubject(subjs[0] || "");
+        } else {
+            if (!nSubject || !subjs.includes(nSubject)) setNSubject(subjs[0] || "");
+        }
+
+    }, [allocations, view, noteDegree, noteSemester, noteSection, nDegree, nSemester, nSection, noteSubject, nSubject]);
+
+    // GSAP Navigation Animation
+    const navRef = useRef(null);
+    const indicatorRef = useRef(null);
+    const contentRef = useRef(null);
 
     useEffect(() => {
-        if (Array.isArray(noticeSubjects) && noticeSubjects.length > 0) {
-            if (!nSubject || !noticeSubjects.includes(nSubject)) { setNSubject(noticeSubjects[0]); }
-        } else { setNSubject(""); }
-    }, [noticeSubjects, nSubject]);
+        if (navRef.current && indicatorRef.current) {
+            const activeBtn = navRef.current.querySelector(`button[data-key="${view}"]`);
+            if (activeBtn) {
+                gsap.to(indicatorRef.current, {
+                    y: activeBtn.offsetTop,
+                    height: activeBtn.offsetHeight,
+                    opacity: 1,
+                    duration: 0.5,
+                    ease: "elastic.out(1, 0.6)"
+                });
+            }
+        }
+        // Animate Content
+        if (contentRef.current) {
+            gsap.fromTo(contentRef.current,
+                { opacity: 0, y: 10 },
+                { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }
+            );
+        }
+    }, [view]);
 
-    // --- Handlers (Modified to use new state variables) ---
     const uploadNote = async () => {
-        if (!noteTitle || !noteFile || !noteDegree || !noteSemester || !noteSubject) return showMessage("All fields and file are required.", 'error');
-        
+        if (!noteTitle || !noteFile || !noteDegree || !noteSemester || !noteSection || !noteSubject) return showMessage("All fields and file are required.", 'error');
+
         setIsUploadLoading(true);
         const form = new FormData();
         form.append("title", noteTitle);
         form.append("degree", noteDegree);
         form.append("semester", noteSemester);
+        form.append("section", noteSection); // Added Section
         form.append("subject", noteSubject);
         form.append("document_type", noteDocumentType);
         form.append("file", noteFile);
-        
+
         try {
-            await auth().post("/upload-note", form); 
+            await auth().post("/upload-note", form);
             showMessage("Note uploaded successfully!", 'success');
             setNoteTitle(""); setNoteFile(null);
             if (document.getElementById('noteFile')) document.getElementById('noteFile').value = '';
@@ -1280,18 +1727,18 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
 
     const postNotice = async () => {
         if (!nTitle || !nMsg || !nSection || !nDegree || !nSemester || !nSubject) return showMessage("All fields are required.", 'error');
-        
+
         setIsNoticeLoading(true);
         const form = new FormData();
         form.append("title", nTitle);
         form.append("message", nMsg);
         form.append("degree", nDegree);
         form.append("semester", nSemester);
-        form.append("section", nSection); 
+        form.append("section", nSection);
         form.append("subject", nSubject);
         if (nDeadline) form.append("deadline", nDeadline);
         if (attachment) form.append("attachment", attachment);
-        
+
         try {
             await auth().post("/create-notice", form);
             showMessage("Notice posted successfully!", 'success');
@@ -1308,62 +1755,67 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
         switch (view) {
             case 'notes':
                 return (
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-green-200 space-y-3">
-                        <h4 className="text-2xl font-bold mb-4 text-green-700 flex items-center"><Book className="w-6 h-6 mr-2" /> Upload Study Material</h4>
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-green-500/20 space-y-3">
+                        <h4 className="text-2xl font-bold mb-4 text-green-400 flex items-center"><Book className="w-6 h-6 mr-2" /> Upload Study Material</h4>
                         <Input placeholder="Title (e.g., Module 1 PPT)" value={noteTitle} onChange={e => setNoteTitle(e.target.value)} disabled={isUploadLoading} />
-                        
+
                         {/* SEPARATE DROPDOWNS FOR NOTES */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
                             <Select value={noteDegree} onChange={e => setNoteDegree(e.target.value)} disabled={isUploadLoading}>
-                                {(catalogs.degrees || []).map(d => <option key={d} value={d}>{d}</option>)}
+                                {availableDegrees.map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                             </Select>
                             <Select value={noteSemester} onChange={e => setNoteSemester(e.target.value)} disabled={isUploadLoading}>
-                                {Array.from({length: 8}, (_, i) => i + 1).map(s => <option key={s} value={s}>{s}</option>)}
+                                {availableSemesters.map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                            </Select>
+                            <Select value={noteSection} onChange={e => setNoteSection(e.target.value)} disabled={isUploadLoading || !availableSections.length}>
+                                {availableSections.map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
                             </Select>
                         </div>
                         {/* END SEPARATE DROPDOWNS */}
 
-                        <Select value={noteSubject} onChange={e => setNoteSubject(e.target.value)} icon={Book} disabled={isUploadLoading}>
-                            {(Array.isArray(noteSubjects) ? noteSubjects : []).map(s => <option key={s} value={s}>{s}</option>)}
+                        <Select value={noteSubject} onChange={e => setNoteSubject(e.target.value)} icon={Book} disabled={isUploadLoading || !availableSubjects.length}>
+                            <option value="" className="text-slate-900">Select Subject</option>
+                            {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                         </Select>
                         <Select value={noteDocumentType} onChange={e => setNoteDocumentType(e.target.value)} disabled={isUploadLoading}>
-                            <option value="Notes">Notes</option>
-                            <option value="Question Bank">Question Bank</option>
-                            <option value="Reference Book">Reference Book</option>
+                            <option value="Notes" className="text-slate-900">Notes</option>
+                            <option value="Question Bank" className="text-slate-900">Question Bank</option>
+                            <option value="Reference Book" className="text-slate-900">Reference Book</option>
                         </Select>
-                        <label className="block text-sm text-gray-700 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
-                        <input id="noteFile" type="file" onChange={e => setNoteFile(e.target.files[0])} className="w-full text-gray-600 bg-gray-100 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition duration-200" disabled={isUploadLoading}/>
+                        <label className="block text-sm text-slate-300 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
+                        <input id="noteFile" type="file" onChange={e => setNoteFile(e.target.files[0])} className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition duration-200" disabled={isUploadLoading} />
                         <button className={`${buttonClass} ${successButtonClass} w-full`} onClick={uploadNote} disabled={isUploadLoading || !noteTitle || !noteFile || !noteSubject}> {isUploadLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Upload className="w-5 h-5 mr-2" />} {isUploadLoading ? 'Uploading...' : 'Upload Note'} </button>
                     </div>
                 );
             case 'notices':
                 return (
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-red-200 space-y-3">
-                        <h4 className="text-2xl font-bold mb-4 text-red-700 flex items-center"><Bell className="w-6 h-6 mr-2" /> Create Notice</h4>
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-red-500/20 space-y-3">
+                        <h4 className="text-2xl font-bold mb-4 text-red-500 flex items-center"><Bell className="w-6 h-6 mr-2" /> Create Notice</h4>
                         <Input placeholder="Title (e.g., Assignment 1 Due)" value={nTitle} onChange={e => setNTitle(e.target.value)} disabled={isNoticeLoading} />
-                        <textarea className="w-full bg-white text-gray-800 placeholder-gray-500 border border-gray-300 rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500 outline-none transition duration-200 h-24" placeholder="Message details..." value={nMsg} onChange={e => setNMsg(e.target.value)} disabled={isNoticeLoading}/>
-                        
+                        <textarea className="w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-slate-500 border border-white/10 rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500/50 outline-none transition duration-200 h-24" placeholder="Message details..." value={nMsg} onChange={e => setNMsg(e.target.value)} disabled={isNoticeLoading} />
+
                         {/* SEPARATE DROPDOWNS FOR NOTICES */}
                         <div className="grid grid-cols-3 gap-3">
                             <Select value={nDegree} onChange={e => setNDegree(e.target.value)} disabled={isNoticeLoading}>
-                                {(catalogs.degrees || []).map(d => <option key={d} value={d}>{d}</option>)}
+                                {availableDegrees.map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                             </Select>
                             <Select value={nSemester} onChange={e => setNSemester(e.target.value)} disabled={isNoticeLoading}>
-                                {Array.from({length: 8}, (_, i) => i + 1).map(s => <option key={s} value={s}>{s}</option>)}
+                                {availableSemesters.map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
                             </Select>
-                             <Select value={nSection} onChange={e => setNSection(e.target.value)} disabled={isNoticeLoading}>
-                                { (catalogs.sections || []).map(s => <option key={s} value={s}>{s}</option>) }
+                            <Select value={nSection} onChange={e => setNSection(e.target.value)} disabled={isNoticeLoading || !availableSections.length}>
+                                {availableSections.map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
                             </Select>
                         </div>
                         {/* END SEPARATE DROPDOWNS */}
 
-                        <Input type="date" value={nDeadline} onChange={e => setNDeadline(e.target.value)} disabled={isNoticeLoading} />
-                        
-                        <Select value={nSubject} onChange={e => setNSubject(e.target.value)} icon={Book} disabled={isNoticeLoading}>
-                            {(Array.isArray(noticeSubjects) ? noticeSubjects : []).map(s => <option key={s} value={s}>{s}</option>)}
+                        <Input type="date" value={nDeadline} onChange={e => setNDeadline(e.target.value)} disabled={isNoticeLoading} className="text-slate-300" />
+
+                        <Select value={nSubject} onChange={e => setNSubject(e.target.value)} icon={Book} disabled={isNoticeLoading || !availableSubjects.length}>
+                            <option value="" className="text-slate-900">Select Subject (Optional)</option>
+                            {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                         </Select>
-                        <label className="block text-sm text-gray-700 font-medium pt-2">Attachment (Optional):</label>
-                        <input id="noticeAttachment" type="file" onChange={e => setAttachment(e.target.files[0])} className="w-full text-gray-600 bg-gray-100 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 transition duration-200" disabled={isNoticeLoading}/>
+                        <label className="block text-sm text-slate-300 font-medium pt-2">Attachment (Optional):</label>
+                        <input id="noticeAttachment" type="file" onChange={e => setAttachment(e.target.files[0])} className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 transition duration-200" disabled={isNoticeLoading} />
                         <button className={`${buttonClass} ${dangerButtonClass} w-full`} onClick={postNotice} disabled={isNoticeLoading || !nTitle || !nMsg || !nSection || !nSubject}> {isNoticeLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Bell className="w-5 h-5 mr-2" />} {isNoticeLoading ? 'Posting...' : 'Post Notice'} </button>
                     </div>
                 );
@@ -1373,6 +1825,8 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                 return <ProfessorFeedback showMessage={showMessage} primaryButtonClass={successButtonClass} buttonClass={buttonClass} catalogs={catalogs} user={user} />;
             case 'books':
                 return <UnifiedLibrarySearch showMessage={showMessage} primaryButtonClass={successButtonClass} buttonClass={buttonClass} />;
+            case 'attendance':
+                return <FacultyAttendance showMessage={showMessage} buttonClass={buttonClass} catalogs={catalogs} />;
             default:
                 return <div className="p-8 text-center text-gray-500">Welcome to the Faculty Portal. Select a tool from the sidebar.</div>;
         }
@@ -1383,23 +1837,25 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
         { key: 'notices', label: 'Create Notices', icon: Bell },
         { key: 'marks', label: 'Upload Marks', icon: Award },
         { key: 'feedback', label: 'Send Feedback', icon: MessageSquare },
+        { key: 'attendance', label: 'Attendance', icon: ClipboardList },
         { key: 'books', label: 'Search Library', icon: Search },
     ];
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-56 bg-white p-4 rounded-xl shadow-lg border border-gray-200 flex-shrink-0">
-                <h5 className="text-lg font-bold text-green-800 mb-4">Faculty Tools</h5>
-                <nav className="space-y-2">
+            <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
+                <h5 className="text-lg font-bold text-emerald-400 mb-4 ml-2">Faculty Tools</h5>
+                <nav className="space-y-1 relative" ref={navRef}>
+                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-emerald-600/20 border border-emerald-500/30 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {navigation.map(item => (
                         <button
                             key={item.key}
+                            data-key={item.key}
                             onClick={() => setView(item.key)}
-                            className={`w-full flex items-center p-3 rounded-lg font-semibold transition duration-200 ${
-                                view === item.key 
-                                    ? 'bg-green-600 text-white shadow-md' 
-                                    : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
+                                ? 'text-emerald-300'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
                         >
                             <item.icon className="w-5 h-5 mr-3" />
                             {item.label}
@@ -1407,7 +1863,8 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                     ))}
                 </nav>
             </div>
-            <div className="flex-1 min-h-[600px]">
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
                 {renderView()}
             </div>
         </div>
@@ -1431,7 +1888,7 @@ function AdminBookUpload({ showMessage, buttonClass, primaryButtonClass, catalog
     useEffect(() => {
         if (degrees.length && !degree) setDegree(degrees[0]);
     }, [degrees, degree]);
-    
+
     const handleUpload = async () => {
         if (!title || !author || !degree || !semester || !file) {
             return showMessage("Title, Author, Degree, Semester, and File are required.", 'error');
@@ -1447,7 +1904,7 @@ function AdminBookUpload({ showMessage, buttonClass, primaryButtonClass, catalog
         form.append("file", file);
 
         try {
-            const res = await auth().post("/api/admin/library/book", form); 
+            const res = await auth().post("/api/admin/library/book", form);
             showMessage(res.data.message, 'success');
             setTitle("");
             setAuthor("");
@@ -1455,8 +1912,8 @@ function AdminBookUpload({ showMessage, buttonClass, primaryButtonClass, catalog
             setFile(null);
             if (document.getElementById('bookFile')) document.getElementById('bookFile').value = '';
         } catch (err) {
-            if (err.response && err.response.status !== 401) { 
-                showMessage(err.response?.data?.message || "Book upload failed.", 'error'); 
+            if (err.response && err.response.status !== 401) {
+                showMessage(err.response?.data?.message || "Book upload failed.", 'error');
             }
         } finally {
             setIsLoading(false);
@@ -1464,35 +1921,35 @@ function AdminBookUpload({ showMessage, buttonClass, primaryButtonClass, catalog
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-blue-200 space-y-4">
-            <h4 className="text-2xl font-bold mb-4 text-blue-700 flex items-center"><Upload className="w-6 h-6 mr-2" /> Upload Internal E-Book / Resource</h4>
-            
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-blue-500/20 space-y-4">
+            <h4 className="text-2xl font-bold mb-4 text-blue-400 flex items-center"><Upload className="w-6 h-6 mr-2" /> Upload Internal E-Book / Resource</h4>
+
             <Input placeholder="Book Title" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
             <Input placeholder="Author Name" value={author} onChange={e => setAuthor(e.target.value)} disabled={isLoading} />
             <Input placeholder="ISBN (Optional)" value={isbn} onChange={e => setIsbn(e.target.value)} disabled={isLoading} />
 
             <div className="grid grid-cols-2 gap-3">
                 <Select value={degree} onChange={e => setDegree(e.target.value)} disabled={isLoading}>
-                    <option value="">Select Degree</option>
-                    {(degrees || []).map(d => <option key={d} value={d}>{d}</option>)}
+                    <option value="" className="text-slate-900">Select Degree</option>
+                    {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                 </Select>
                 <Select value={semester} onChange={e => setSemester(e.target.value)} disabled={isLoading}>
-                    {Array.from({length: 8}, (_, i) => i + 1).map(s => <option key={s} value={s}>{s}</option>)}
+                    {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                 </Select>
             </div>
-            
-            <label className="block text-sm text-gray-700 font-medium pt-2">Select Book File (PDF, EPUB, DOCX):</label>
-            <input 
-                id="bookFile" 
-                type="file" 
-                onChange={e => setFile(e.target.files[0])} 
-                className="w-full text-gray-600 bg-gray-100 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition duration-200" 
+
+            <label className="block text-sm text-slate-300 font-medium pt-2">Select Book File (PDF, EPUB, DOCX):</label>
+            <input
+                id="bookFile"
+                type="file"
+                onChange={e => setFile(e.target.files[0])}
+                className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition duration-200"
                 disabled={isLoading}
             />
 
-            <button 
-                className={`${buttonClass} ${primaryButtonClass} w-full`} 
-                onClick={handleUpload} 
+            <button
+                className={`${buttonClass} ${primaryButtonClass} w-full`}
+                onClick={handleUpload}
                 disabled={isLoading || !title || !author || !degree || !semester || !file}
             >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />}
@@ -1503,15 +1960,160 @@ function AdminBookUpload({ showMessage, buttonClass, primaryButtonClass, catalog
 }
 
 
+
+
+
+function FacultyAttendance({ showMessage, buttonClass, catalogs }) {
+    const [allocations, setAllocations] = useState([]);
+    const [selectedAlloc, setSelectedAlloc] = useState(null);
+    const [students, setStudents] = useState([]);
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLocked, setIsLocked] = useState(false); // Locked if > 30 mins
+
+    useEffect(() => {
+        const fetchAlloc = async () => {
+            try {
+                const res = await auth().get("/faculty/allocations");
+                setAllocations(res.data.allocations || []);
+            } catch (e) { } // silent fail or log
+        };
+        fetchAlloc();
+    }, []);
+
+    const fetchStudents = useCallback(async () => {
+        if (!selectedAlloc) return;
+        setIsLoading(true);
+        setIsLocked(false);
+        try {
+            const res = await auth().get("/faculty/students", {
+                params: {
+                    degree: selectedAlloc.degree, semester: selectedAlloc.semester, section: selectedAlloc.section,
+                    subject: selectedAlloc.subject, date: date
+                }
+            });
+            const data = res.data.students || [];
+            // Map to include local 'status' state if needed, but we used api to return 'status'
+            // We need to manage state for toggling.
+            const mapped = data.map(s => ({
+                ...s,
+                currentStatus: s.status || "Present" // Default to Present if not marked
+            }));
+            setStudents(mapped);
+
+            // Check Lock Logic
+            // If any student has marked_at, check if (now - marked_at) > 30m
+            // We can check the first one that has marked_at
+            const marked = data.find(s => s.marked_at);
+            if (marked) {
+                const markedTime = new Date(marked.marked_at).getTime(); // UTC ISO string to local time (browser handles it, or use Z)
+                // Backend sends isoformat (no Z usually unless pytz). utcnow() is native.
+                // Assuming simplified check:
+                // Let's rely on backend rejecting save? Or visual cue?
+                // Visual cue:
+                // The marked_at is from server (UTC presumably).
+                // Let's assume server time sync.
+                // Actually, logic: "Editable for 30 mins".
+                const now = new Date().getTime();
+                // Add 'Z' to marked_at if missing to ensure UTC parsing
+                const timeStr = marked.marked_at.endsWith('Z') ? marked.marked_at : marked.marked_at + 'Z';
+                const mTime = new Date(timeStr).getTime();
+                if ((now - mTime) > 30 * 60 * 1000) {
+                    setIsLocked(true);
+                }
+            }
+
+        } catch (e) {
+            showMessage("Failed to load class list.", 'error');
+        } finally { setIsLoading(false); }
+    }, [selectedAlloc, date, showMessage]);
+
+    useEffect(() => { if (selectedAlloc) fetchStudents(); }, [fetchStudents]);
+
+    const toggleStatus = (id) => {
+        if (isLocked) return;
+        setStudents(prev => prev.map(s => s.id === id ? { ...s, currentStatus: s.currentStatus === "Present" ? "Absent" : "Present" } : s));
+    };
+
+    const submitAttendance = async () => {
+        if (isLocked) return showMessage("Attendance is locked (30 mins passed).", 'error');
+        if (!selectedAlloc) return;
+        setIsSubmitting(true);
+        try {
+            const payload = {
+                degree: selectedAlloc.degree,
+                semester: selectedAlloc.semester,
+                section: selectedAlloc.section,
+                subject: selectedAlloc.subject,
+                date: date,
+                data: students.map(s => ({ student_id: s.id, status: s.currentStatus }))
+            };
+            await auth().post("/faculty/attendance", payload);
+            showMessage("Attendance saved successfully!", 'success');
+            fetchStudents(); // Refresh lock status etc
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Failed to save.", 'error');
+        } finally { setIsSubmitting(false); }
+    };
+
+    return (
+        <div className="space-y-6">
+            <h4 className="text-2xl font-bold text-emerald-400 flex items-center"><ClipboardList className="w-6 h-6 mr-2" /> Attendance Register</h4>
+
+            {/* Controls */}
+            <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-emerald-500/20 grid grid-cols-1 md:grid-cols-3 gap-4 mx-auto">
+                <div>
+                    <label className="text-xs text-slate-400 font-bold uppercase">Select Class</label>
+                    <Select value={selectedAlloc ? selectedAlloc.id : ""} onChange={e => {
+                        const a = allocations.find(x => x.id === parseInt(e.target.value));
+                        setSelectedAlloc(a || null);
+                    }} disabled={!allocations.length}>
+                        <option value="">-- Choose Class --</option>
+                        {allocations.map(a => <option key={a.id} value={a.id}>{a.subject} ({a.degree} {a.semester} {a.section})</option>)}
+                    </Select>
+                    {!allocations.length && <div className="text-xs text-red-500 mt-1">No classes allocated. Contact Admin.</div>}
+                </div>
+                <div>
+                    <label className="text-xs text-slate-400 font-bold uppercase">Date</label>
+                    <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="text-slate-300" />
+                </div>
+                <div className="flex items-end">
+                    <button className={`${buttonClass} bg-emerald-600 hover:bg-emerald-700 w-full disabled:opacity-50 disabled:cursor-not-allowed`} onClick={submitAttendance} disabled={!selectedAlloc || isLoading || isSubmitting || isLocked}>
+                        {isSubmitting ? "Saving..." : isLocked ? "Locked (Time limit)" : "Mark Attendance"}
+                    </button>
+                </div>
+            </div>
+
+            {/* Student List */}
+            {isLoading ? <div className="text-center p-10"><Loader2 className="animate-spin w-8 h-8 mx-auto text-emerald-500" /></div> : !selectedAlloc ? <div className="text-center text-slate-500 mt-10">Select a class to load students.</div> : students.length === 0 ? <div className="text-center text-slate-500">No students found in this class.</div> : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {students.map(s => (
+                        <div key={s.id} onClick={() => toggleStatus(s.id)} className={`cursor-pointer p-4 rounded-xl border transition-all duration-200 flex justify-between items-center ${s.currentStatus === 'Present' ? 'bg-emerald-900/20 border-emerald-500/30 hover:bg-emerald-900/40' : 'bg-red-900/20 border-red-500/30 hover:bg-red-900/40'} ${isLocked ? 'opacity-70 pointer-events-none' : ''}`}>
+                            <div>
+                                <div className={`font-bold ${s.currentStatus === 'Present' ? 'text-emerald-300' : 'text-red-300'}`}>{s.name}</div>
+                                <div className="text-xs text-slate-400">{s.srn}</div>
+                            </div>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.currentStatus === 'Present' ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'}`}>
+                                {s.currentStatus === 'Present' ? <Check className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // --- MODIFIED ADMIN MODULE: Hostel Management (SRN Change) ---
 function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, catalogs }) {
     const { degrees, sections, fetchBasics } = catalogs;
-    
+
     // States for Hostel/Room CRUD
     const [hostels, setHostels] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [isHostelLoading, setIsHostelLoading] = useState(false);
-    
+
     const [newHostelName, setNewHostelName] = useState('');
     const [newHostelAddress, setNewHostelAddress] = useState('');
 
@@ -1520,9 +2122,9 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
     const [newRoomCapacity, setNewRoomCapacity] = useState(1);
 
     // MODIFIED: Renamed state variable from studentToAssign to srnToAssign
-    const [srnToAssign, setSrnToAssign] = useState(''); 
+    const [srnToAssign, setSrnToAssign] = useState('');
     const [roomToAssign, setRoomToAssign] = useState('');
-    
+
     // States for Global View
     const [globalHostelData, setGlobalHostelData] = useState([]);
 
@@ -1537,11 +2139,11 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
             setHostels(hostelRes.data.hostels || []);
             setRooms(roomRes.data.rooms || []);
             setGlobalHostelData(globalRes.data.hostels || []);
-            
+
             // Initialize dropdowns
             if (hostelRes.data.hostels.length > 0) {
                 setNewRoomHostelId(hostelRes.data.hostels[0].id);
-            } 
+            }
             if (roomRes.data.rooms.length > 0) {
                 setRoomToAssign(roomRes.data.rooms[0].id);
             } else {
@@ -1577,14 +2179,14 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
             showMessage(e.response?.data?.message || "Failed to add hostel.", 'error');
         }
     };
-    
+
     const handleAddRoom = async () => {
         if (!newRoomHostelId || !newRoomNumber.trim() || newRoomCapacity < 1) return showMessage("All room fields are required and capacity must be > 0.", 'error');
         try {
-            await auth().post("/admin/hostel/rooms", { 
-                hostel_id: newRoomHostelId, 
-                room_number: newRoomNumber, 
-                capacity: parseInt(newRoomCapacity) 
+            await auth().post("/admin/hostel/rooms", {
+                hostel_id: newRoomHostelId,
+                room_number: newRoomNumber,
+                capacity: parseInt(newRoomCapacity)
             });
             showMessage(`Room **${newRoomNumber}** added!`, 'success');
             setNewRoomNumber('');
@@ -1599,7 +2201,7 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
     const handleAssignRoom = async () => {
         if (!srnToAssign.trim() || !roomToAssign) return showMessage("Student SRN and Room must be selected.", 'error');
         try {
-            await auth().post("/admin/hostel/assign-room", { 
+            await auth().post("/admin/hostel/assign-room", {
                 srn: srnToAssign, // <<-- KEY CHANGED TO SRN
                 room_id: roomToAssign
             });
@@ -1613,27 +2215,27 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
 
     const renderGlobalHostelView = () => (
         <div className="space-y-4">
-            <h5 className="text-xl font-bold text-blue-700">Hostel Overview (One Go)</h5>
-            {isHostelLoading ? <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-blue-500" /></div> : globalHostelData.length === 0 ? <div className="text-gray-500">No hostels defined.</div> : (
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 shadow-md rounded-xl bg-white">
-                        <thead className="bg-gray-50">
+            <h5 className="text-xl font-bold text-blue-400">Hostel Overview (One Go)</h5>
+            {isHostelLoading ? <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-blue-500" /></div> : globalHostelData.length === 0 ? <div className="text-slate-500">No hostels defined.</div> : (
+                <div className="overflow-x-auto rounded-xl border border-white/10">
+                    <table className="min-w-full divide-y divide-white/10 shadow-md bg-slate-900/60 backdrop-blur-xl">
+                        <thead className="bg-slate-800/80">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hostel</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rooms</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Occupancy</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vacant Beds</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Hostel</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Rooms</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Capacity</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Occupancy</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Vacant Beds</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-slate-900/40 divide-y divide-white/10">
                             {globalHostelData.map(h => (
                                 <tr key={h.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{h.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.total_rooms}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.total_capacity}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{h.current_occupancy}</td>
-                                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${h.vacant_beds > 0 ? 'text-green-600' : 'text-red-600'}`}>{h.vacant_beds}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-200">{h.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{h.total_rooms}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{h.total_capacity}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{h.current_occupancy}</td>
+                                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${h.vacant_beds > 0 ? 'text-green-400' : 'text-red-400'}`}>{h.vacant_beds}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -1642,49 +2244,49 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
             )}
         </div>
     );
-    
+
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-700 flex items-center"><Home className="w-6 h-6 mr-2" /> Hostel Management</h4>
-            
+            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><Home className="w-6 h-6 mr-2" /> Hostel Management</h4>
+
             {renderGlobalHostelView()}
-            
-            <div className="grid lg:grid-cols-3 gap-6 pt-4 border-t border-gray-200">
-                
+
+            <div className="grid lg:grid-cols-3 gap-6 pt-4 border-t border-white/10">
+
                 {/* Add Hostel */}
-                <div className="bg-white p-5 rounded-xl shadow-lg border space-y-3">
-                    <h5 className="text-xl font-bold text-yellow-700">Add New Hostel</h5>
+                <div className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-xl shadow-lg border border-yellow-500/20 space-y-3">
+                    <h5 className="text-xl font-bold text-yellow-400">Add New Hostel</h5>
                     <Input placeholder="Hostel Name" value={newHostelName} onChange={e => setNewHostelName(e.target.value)} />
                     <Input placeholder="Address (Optional)" value={newHostelAddress} onChange={e => setNewHostelAddress(e.target.value)} />
                     <button className={`${buttonClass} ${primaryButtonClass}`} onClick={handleAddHostel}>Create Hostel</button>
                 </div>
 
                 {/* Add Room */}
-                <div className="bg-white p-5 rounded-xl shadow-lg border space-y-3">
-                    <h5 className="text-xl font-bold text-yellow-700">Add Room to Hostel</h5>
+                <div className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-xl shadow-lg border border-yellow-500/20 space-y-3">
+                    <h5 className="text-xl font-bold text-yellow-400">Add Room to Hostel</h5>
                     <Select value={newRoomHostelId} onChange={e => setNewRoomHostelId(parseInt(e.target.value) || '')} disabled={!hostels.length}>
-                        <option value="">Select Hostel</option>
-                        {(hostels || []).map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                        <option value="" className="text-slate-900">Select Hostel</option>
+                        {(hostels || []).map(h => <option key={h.id} value={h.id} className="text-slate-900">{h.name}</option>)}
                     </Select>
                     <Input placeholder="Room Number (e.g., 101A)" value={newRoomNumber} onChange={e => setNewRoomNumber(e.target.value)} />
                     <Input type="number" placeholder="Capacity (e.g., 2)" value={newRoomCapacity} onChange={e => setNewRoomCapacity(parseInt(e.target.value) || 1)} min="1" />
                     <button className={`${buttonClass} ${primaryButtonClass}`} onClick={handleAddRoom} disabled={!newRoomHostelId || !newRoomNumber}>Add Room</button>
                 </div>
-                
+
                 {/* Assign Room */}
-                <div className="bg-white p-5 rounded-xl shadow-lg border space-y-3">
-                    <h5 className="text-xl font-bold text-yellow-700">Assign Room to Student</h5>
+                <div className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-xl shadow-lg border border-yellow-500/20 space-y-3">
+                    <h5 className="text-xl font-bold text-yellow-400">Assign Room to Student</h5>
                     <Input placeholder="Student SRN (e.g., SRN001)" value={srnToAssign} onChange={e => setSrnToAssign(e.target.value)} /> {/* MODIFIED: Input changed to SRN */}
                     <Select value={roomToAssign} onChange={e => setRoomToAssign(parseInt(e.target.value) || '')} disabled={!rooms.length}>
-                        <option value="">Select Room (Hostel - Room # - Occupancy)</option>
+                        <option value="" className="text-slate-900">Select Room (Hostel - Room # - Occupancy)</option>
                         {(rooms || []).map(r => (
-                            <option key={r.id} value={r.id} disabled={r.occupancy >= r.capacity}>
+                            <option key={r.id} value={r.id} disabled={r.occupancy >= r.capacity} className="text-slate-900">
                                 {r.hostel_name} - {r.room_number} ({r.occupancy}/{r.capacity})
                             </option>
                         ))}
                     </Select>
                     <button className={`${buttonClass} ${primaryButtonClass}`} onClick={handleAssignRoom} disabled={!srnToAssign || !roomToAssign}>Assign Room</button>
-                    <p className="text-xs text-red-500">Note: Must use Student **SRN**.</p> {/* MODIFIED: Note changed */}
+                    <p className="text-xs text-red-400">Note: Must use Student **SRN**.</p> {/* MODIFIED: Note changed */}
                 </div>
             </div>
         </div>
@@ -1701,6 +2303,11 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
     const [filterSemester, setFilterSemester] = useState('');
     const [filterSection, setFilterSection] = useState('');
 
+    // Edit Modal State
+    const [editStudent, setEditStudent] = useState(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [generatedPass, setGeneratedPass] = useState(null);
+
     useEffect(() => {
         if (loaded && degrees.length && !filterDegree) setFilterDegree(degrees[0]);
         if (loaded && sections.length && !filterSection) setFilterSection(sections[0]);
@@ -1709,7 +2316,7 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
     const fetchStudents = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await auth().get("/admin/students", { 
+            const res = await auth().get("/admin/students", {
                 params: {
                     degree: filterDegree,
                     semester: filterSemester,
@@ -1727,27 +2334,66 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
         }
     }, [filterDegree, filterSemester, filterSection, showMessage]);
 
+    // Handle Update Student (for Modal)
+    const handleUpdateStudent = async () => {
+        if (!editStudent) return;
+        setIsUpdating(true);
+        try {
+            await auth().post("/admin/update-student", {
+                student_id: editStudent.id,
+                name: editStudent.name,
+                srn: editStudent.srn,
+                degree: editStudent.degree,
+                semester: editStudent.semester,
+                section: editStudent.section,
+                parent_email: editStudent.parent_email
+            });
+            showMessage("Student details updated.", "success");
+            setEditStudent(null);
+            fetchStudents(); // Refresh list to show changes
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Update failed", "error");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    // Handle Generate Parent Password
+    const handleGenerateParentPass = async () => {
+        if (!editStudent?.id) return;
+        setIsUpdating(true);
+        try {
+            const res = await auth().post("/admin/generate-parent-password", { student_id: editStudent.id });
+            setGeneratedPass(res.data.password);
+            showMessage(res.data.message, "success");
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Generation failed", "error");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-yellow-700 flex items-center"><GraduationCap className="w-6 h-6 mr-2" /> Student Directory</h4>
-            
+            <h4 className="text-2xl font-bold text-yellow-400 flex items-center"><GraduationCap className="w-6 h-6 mr-2" /> Student Directory</h4>
+
             {/* Filters */}
-            <div className="bg-gray-50 p-4 rounded-xl shadow-inner grid grid-cols-4 gap-3 items-end">
+            <div className="bg-slate-900/40 border border-white/10 p-4 rounded-xl shadow-inner grid grid-cols-4 gap-3 items-end">
                 <Select value={filterDegree} onChange={e => setFilterDegree(e.target.value)} disabled={!degrees.length}>
-                    <option value="">All Degrees</option>
-                    {(degrees || []).map(d => <option key={d} value={d}>{d}</option>)}
+                    <option value="" className="text-slate-900">All Degrees</option>
+                    {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                 </Select>
                 <Select value={filterSemester} onChange={e => setFilterSemester(e.target.value)}>
-                    <option value="">All Sems</option>
-                    {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="" className="text-slate-900">All Sems</option>
+                    {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                 </Select>
                 <Select value={filterSection} onChange={e => setFilterSection(e.target.value)} disabled={!sections.length}>
-                    <option value="">All Sections</option>
-                    {(sections || []).map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="" className="text-slate-900">All Sections</option>
+                    {(sections || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                 </Select>
-                <button 
-                    onClick={fetchStudents} 
+                <button
+                    onClick={fetchStudents}
                     className={`${buttonClass} ${primaryButtonClass} bg-yellow-600 hover:bg-yellow-700`}
                     disabled={isLoading || (!filterDegree && !filterSemester && !filterSection)}
                 >
@@ -1757,40 +2403,124 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
             </div>
 
             {/* Results Table */}
-            {isLoading ? <div className="text-center p-10"><Loader2 className="animate-spin w-8 h-8 mx-auto text-yellow-500" /></div> : students.length === 0 ? <div className="p-4 text-gray-500 text-center bg-white rounded-xl shadow-md">No students found matching filters.</div> : (
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 shadow-md rounded-xl bg-white">
-                        <thead className="bg-gray-50">
+            {isLoading ? <div className="text-center p-10"><Loader2 className="animate-spin w-8 h-8 mx-auto text-yellow-500" /></div> : students.length === 0 ? <div className="p-4 text-slate-500 text-center bg-slate-900/60 rounded-xl shadow-md border border-white/10">No students found matching filters.</div> : (
+                <div className="overflow-x-auto rounded-xl border border-white/10">
+                    <table className="min-w-full divide-y divide-white/10 shadow-md bg-slate-900/60 backdrop-blur-xl">
+                        <thead className="bg-slate-800/80">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SRN / Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Academics</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hostel</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">SRN / Name</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Academics</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Hostel</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-slate-900/40 divide-y divide-white/10">
                             {students.map(s => (
                                 <tr key={s.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{s.name}</div>
-                                        <div className="text-xs text-gray-500">{s.srn}</div>
+                                        <div className="text-sm font-medium text-slate-200">{s.name}</div>
+                                        <div className="text-xs text-slate-500">{s.srn}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-900">{s.degree} Sem {s.semester}</div>
-                                        <div className="text-xs text-gray-500">Section {s.section}</div>
+                                        <div className="text-sm text-slate-300">{s.degree} Sem {s.semester}</div>
+                                        <div className="text-xs text-slate-500">Section {s.section}</div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {s.hostel_info || <span className="text-xs text-red-500">Not Assigned</span>}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                                        {s.hostel_info || <span className="text-xs text-red-400">Not Assigned</span>}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${s.status === 'APPROVED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${s.status === 'APPROVED' ? 'bg-green-900/40 text-green-300' : 'bg-red-900/40 text-red-300'}`}>
                                             {s.status}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                        <button onClick={() => { setEditStudent(s); setGeneratedPass(null); }} className="text-yellow-400 hover:text-yellow-300 p-2 hover:bg-yellow-500/10 rounded-full transition-colors">
+                                            <Edit className="w-4 h-4" />
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {/* EDIT STUDENT MODAL */}
+            {editStudent && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-white/10 p-6 rounded-xl w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-2">
+                            <h5 className="text-xl font-bold text-yellow-400">Edit Student Details</h5>
+                            <button onClick={() => setEditStudent(null)} className="text-slate-500 hover:text-white"><XCircle className="w-6 h-6" /></button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-xs text-slate-400">Full Name</label>
+                                <Input value={editStudent.name} onChange={e => setEditStudent({ ...editStudent, name: e.target.value })} />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-slate-400">SRN</label>
+                                <Input value={editStudent.srn} onChange={e => setEditStudent({ ...editStudent, srn: e.target.value })} />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-slate-400">Degree</label>
+                                <Select value={editStudent.degree} onChange={e => setEditStudent({ ...editStudent, degree: e.target.value })}>
+                                    {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-slate-400">Semester</label>
+                                <Select value={editStudent.semester} onChange={e => setEditStudent({ ...editStudent, semester: e.target.value })}>
+                                    {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-slate-400">Section</label>
+                                <Select value={editStudent.section} onChange={e => setEditStudent({ ...editStudent, section: e.target.value })}>
+                                    {(sections || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-white/5 space-y-2">
+                            <h6 className="text-sm font-bold text-slate-300">Parent Portal (Read Only Access)</h6>
+                            <div className="space-y-2">
+                                <label className="text-xs text-slate-400">Parent Email (Required for Login)</label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="email"
+                                        placeholder="parent@example.com"
+                                        value={editStudent.parent_email || ''}
+                                        onChange={e => setEditStudent({ ...editStudent, parent_email: e.target.value })}
+                                    />
+                                </div>
+
+                                <button
+                                    className={`${buttonClass} w-full border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10`}
+                                    onClick={handleGenerateParentPass}
+                                    disabled={!editStudent.parent_email || isUpdating}
+                                >
+                                    {isUpdating ? <Loader2 className="animate-spin w-4 h-4 mr-2 inline" /> : <Lock className="w-4 h-4 mr-2 inline" />}
+                                    Generate & Email Password
+                                </button>
+                                {generatedPass && (
+                                    <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-lg text-green-300 text-sm break-all">
+                                        <strong>Generated Password:</strong> {generatedPass} <br />
+                                        <span className="text-xs opacity-70">(Sent to {editStudent.parent_email})</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t border-white/5">
+                            <button className={`${buttonClass} bg-slate-700 text-white flex-1 hover:bg-slate-600`} onClick={() => setEditStudent(null)}>Cancel</button>
+                            <button className={`${buttonClass} ${primaryButtonClass} bg-green-600 flex-1`} onClick={handleUpdateStudent} disabled={isUpdating}>
+                                {isUpdating ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />} Save Changes
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
@@ -1812,8 +2542,8 @@ function AdminFacultyOnboarding({ showMessage, buttonClass, primaryButtonClass }
 
         setIsLoading(true);
         try {
-            const payload = { 
-                name, email, password, 
+            const payload = {
+                name, email, password,
                 emp_id: empId, // <-- Send the new EMP ID field
             };
             // Using auth()
@@ -1833,18 +2563,18 @@ function AdminFacultyOnboarding({ showMessage, buttonClass, primaryButtonClass }
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-yellow-200 space-y-4">
-            <h4 className="text-2xl font-bold mb-4 text-yellow-700 flex items-center"><UserPlus className="w-6 h-6 mr-2" /> Onboard New Faculty Member</h4>
-            
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20 space-y-4">
+            <h4 className="text-2xl font-bold mb-4 text-yellow-400 flex items-center"><UserPlus className="w-6 h-6 mr-2" /> Onboard New Faculty Member</h4>
+
             <Input placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} disabled={isLoading} />
             <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} disabled={isLoading} />
             <Input type="password" placeholder="Temporary Password" value={password} onChange={e => setPassword(e.target.value)} disabled={isLoading} />
 
             <Input placeholder="Employee ID (e.g., FCLT001)" value={empId} onChange={e => setEmpId(e.target.value)} disabled={isLoading} />
-            
-            <button 
-                className={`${buttonClass} ${primaryButtonClass} w-full`} 
-                onClick={handleSubmit} 
+
+            <button
+                className={`${buttonClass} ${primaryButtonClass} w-full`}
+                onClick={handleSubmit}
                 disabled={isLoading || !name || !email || !password || !empId}
             >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />}
@@ -1883,12 +2613,12 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
         }
 
         const amountCents = Math.round(parseFloat(amount) * 100);
-        
+
         let payload = {
             title, description, amount_cents: amountCents, category,
             due_date: dueDate || undefined, target: targetType,
         };
-        
+
         if (targetType === 'sem') {
             if (!targetDegree || !targetSemester) return showMessage("Degree and Semester are required for sem targeting.", 'error');
             payload.degree = targetDegree;
@@ -1929,36 +2659,36 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
 
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-yellow-200 space-y-4">
-            <h4 className="text-2xl font-bold mb-4 text-yellow-700 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Create New Fee Notification</h4>
-            
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20 space-y-4">
+            <h4 className="text-2xl font-bold mb-4 text-yellow-400 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Create New Fee Notification</h4>
+
             <Input placeholder="Fee Title (e.g., Tuition Fee Sem 4)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
-            <Input 
-                type="number" 
-                placeholder="Amount in Rupees (e.g., 5000.00)" 
-                value={amount} 
-                onChange={e => setAmount(e.target.value)} 
-                disabled={isLoading} 
+            <Input
+                type="number"
+                placeholder="Amount in Rupees (e.g., 5000.00)"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                disabled={isLoading}
             />
 
             <div className="grid grid-cols-2 gap-3">
                 <Select value={category} onChange={e => setCategory(e.target.value)} disabled={isLoading}>
-                    <option value="tuition">Tuition Fee</option>
-                    <option value="hostel">Hostel Fee</option>
-                    <option value="transport">Transport Fee</option>
-                    <option value="exam">Exam Fee</option>
-                    <option value="misc">Miscellaneous</option>
+                    <option value="tuition" className="text-slate-900">Tuition Fee</option>
+                    <option value="hostel" className="text-slate-900">Hostel Fee</option>
+                    <option value="transport" className="text-slate-900">Transport Fee</option>
+                    <option value="exam" className="text-slate-900">Exam Fee</option>
+                    <option value="misc" className="text-slate-900">Miscellaneous</option>
                 </Select>
-                <Input type="date" placeholder="Due Date (Optional)" value={dueDate} onChange={e => setDueDate(e.target.value)} disabled={isLoading} />
+                <Input type="date" placeholder="Due Date (Optional)" value={dueDate} onChange={e => setDueDate(e.target.value)} disabled={isLoading} className="text-slate-300" />
             </div>
 
-            <h5 className="text-lg font-bold text-gray-700 pt-4 border-t border-gray-100">Target Students:</h5>
-            
+            <h5 className="text-lg font-bold text-slate-300 pt-4 border-t border-white/10">Target Students:</h5>
+
             <Select value={targetType} onChange={e => setTargetType(e.target.value)} disabled={isLoading}>
-                <option value="batch">Whole Student Body (All Degrees/Sems)</option>
-                <option value="sem">Specific Degree & Semester</option>
-                <option value="custom">Custom List of SRNs (Bulk)</option>
-                <option value="single">Single SRN</option>
+                <option value="batch" className="text-slate-900">Whole Student Body (All Degrees/Sems)</option>
+                <option value="sem" className="text-slate-900">Specific Degree & Semester</option>
+                <option value="custom" className="text-slate-900">Custom List of SRNs (Bulk)</option>
+                <option value="single" className="text-slate-900">Single SRN</option>
             </Select>
 
             {isSemesterTarget && (
@@ -1966,16 +2696,16 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
                     {loaded && Array.isArray(degrees) && degrees.length > 0 ? (
                         <>
                             <Select value={targetDegree} onChange={e => setTargetDegree(e.target.value)} disabled={isLoading}>
-                                {degrees.map(d => <option key={d} value={d}>{d}</option>)}
+                                {degrees.map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                             </Select>
                             <Select value={targetSemester} onChange={e => setTargetSemester(e.target.value)} disabled={isLoading}>
-                                {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s}>{s}</option>)}
+                                {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                             </Select>
                         </>
-                    ) : <div className="col-span-2 text-center text-sm text-gray-500">Loading degree list...</div>}
+                    ) : <div className="col-span-2 text-center text-sm text-slate-500">Loading degree list...</div>}
                 </div>
             )}
-            
+
             {(isBroadTarget) && (
                 <Input
                     placeholder="Sections (Optional, Comma-separated: A, B, C)"
@@ -1988,14 +2718,14 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
 
             {isCustomTarget && (
                 <textarea
-                    className="w-full bg-white text-gray-800 border border-gray-300 rounded-xl py-3 px-4 h-24"
+                    className="w-full bg-slate-800/50 backdrop-blur-xl text-white border border-white/10 rounded-xl py-3 px-4 h-24 placeholder-slate-500 focus:ring-2 focus:ring-yellow-500/50 outline-none"
                     placeholder="Enter SRNs separated by commas (e.g., SRN001, SRN005, SRN010)"
                     value={customSrns}
                     onChange={e => setCustomSrns(e.target.value)}
                     disabled={isLoading}
                 />
             )}
-            
+
             {isSingleTarget && (
                 <Input
                     placeholder="Enter Single SRN"
@@ -2004,10 +2734,10 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
                     disabled={isLoading}
                 />
             )}
-            
-            <button 
-                className={`${buttonClass} ${primaryButtonClass} w-full mt-4`} 
-                onClick={handleSubmit} 
+
+            <button
+                className={`${buttonClass} ${primaryButtonClass} w-full mt-4`}
+                onClick={handleSubmit}
                 disabled={isLoading}
             >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />}
@@ -2029,24 +2759,24 @@ function AdminHostelComplaints({ showMessage, buttonClass, primaryButtonClass })
         try {
             const res = await auth().get("/admin/hostel/complaints");
             setComplaints(res.data.complaints || []);
-        } catch(e) {
-             if (e.response && e.response.status !== 401) {
-                 showMessage("Failed to fetch hostel complaints.", 'error');
-             }
-             setComplaints([]);
+        } catch (e) {
+            if (e.response && e.response.status !== 401) {
+                showMessage("Failed to fetch hostel complaints.", 'error');
+            }
+            setComplaints([]);
         } finally {
             setIsLoading(false);
         }
     }, [showMessage]);
-    
+
     // NEW: Function to handle status change
     const updateComplaintStatus = async () => {
         if (!statusUpdate.id || !statusUpdate.status) return;
 
         setIsLoading(true); // Disable interface during update
         try {
-            const res = await auth().patch(`/admin/hostel/complaints/${statusUpdate.id}/status`, { 
-                status: statusUpdate.status, 
+            const res = await auth().patch(`/admin/hostel/complaints/${statusUpdate.id}/status`, {
+                status: statusUpdate.status,
                 note: statusUpdate.note
             });
             showMessage(`Complaint status updated to **${res.data.new_status}**`, 'success');
@@ -2068,28 +2798,28 @@ function AdminHostelComplaints({ showMessage, buttonClass, primaryButtonClass })
     }
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-red-500/20">
             <div className="flex justify-between items-center mb-4">
-                <h4 className="text-2xl font-bold text-red-700 flex items-center"><Home className="w-6 h-6 mr-2" /> Active Hostel Complaints</h4>
-                <button onClick={fetchComplaints} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition" disabled={isLoading}><RefreshCw className="w-5 h-5 text-gray-600" /></button>
+                <h4 className="text-2xl font-bold text-red-400 flex items-center"><Home className="w-6 h-6 mr-2" /> Active Hostel Complaints</h4>
+                <button onClick={fetchComplaints} className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition" disabled={isLoading}><RefreshCw className="w-5 h-5 text-slate-300" /></button>
             </div>
-            
+
             {/* Status Update Modal/Form (Render if statusUpdate.id is set) */}
             {statusUpdate.id && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-2xl space-y-4">
-                        <h5 className="text-xl font-bold text-red-700">Update Complaint Status</h5>
-                        <Select value={statusUpdate.status} onChange={e => setStatusUpdate(prev => ({...prev, status: e.target.value}))}>
-                            {VALID_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-white/10 p-6 rounded-xl w-full max-w-md shadow-2xl space-y-4">
+                        <h5 className="text-xl font-bold text-red-400">Update Complaint Status</h5>
+                        <Select value={statusUpdate.status} onChange={e => setStatusUpdate(prev => ({ ...prev, status: e.target.value }))}>
+                            {VALID_STATUSES.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                         </Select>
                         <textarea
-                            className="w-full bg-white text-gray-800 border border-gray-300 rounded-xl py-3 px-4 h-20"
+                            className="w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-slate-500 border border-white/10 rounded-xl py-3 px-4 h-20 focus:ring-2 focus:ring-red-500/50 outline-none"
                             placeholder="Internal Note (Optional)"
                             value={statusUpdate.note}
-                            onChange={e => setStatusUpdate(prev => ({...prev, note: e.target.value}))}
+                            onChange={e => setStatusUpdate(prev => ({ ...prev, note: e.target.value }))}
                         />
                         <div className="flex gap-3">
-                            <button className={`${buttonClass} bg-gray-400 text-gray-900 flex-1`} onClick={() => setStatusUpdate({ id: null, status: 'Open', note: '' })}>Cancel</button>
+                            <button className={`${buttonClass} bg-slate-700 text-white flex-1 hover:bg-slate-600`} onClick={() => setStatusUpdate({ id: null, status: 'Open', note: '' })}>Cancel</button>
                             <button className={`${buttonClass} ${primaryButtonClass} bg-green-600 flex-1`} onClick={updateComplaintStatus} disabled={isLoading}>
                                 {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />} Save Status
                             </button>
@@ -2097,54 +2827,367 @@ function AdminHostelComplaints({ showMessage, buttonClass, primaryButtonClass })
                     </div>
                 </div>
             )}
-            
+
             {/* Complaints List */}
-            {complaints.length === 0 && !isLoading && <div className="text-gray-500 text-center py-4">No complaints recorded.</div>}
-            
+            {complaints.length === 0 && !isLoading && <div className="text-slate-500 text-center py-4">No complaints recorded.</div>}
+
             <div className="space-y-4">
                 {complaints.map(c => (
-                    <div key={c.id} className={`p-4 rounded-xl shadow-md ${c.status === 'Closed' ? 'bg-gray-100 border-l-4 border-gray-400' : 'bg-red-50 border-l-4 border-red-500'}`}>
+                    <div key={c.id} className={`p-4 rounded-xl shadow-md ${c.status === 'Closed' ? 'bg-slate-800/50 border-l-4 border-slate-500' : 'bg-slate-800 border-l-4 border-red-500'}`}>
                         <div className="flex justify-between items-start">
-                             <div className="flex-1">
-                                 <div className="font-bold text-lg text-red-700">{c.title}</div>
-                                 <div className="text-sm text-gray-700 mt-1">{c.description}</div>
-                                 <div className="text-xs text-gray-500 mt-1">
-                                     From: <strong>{c.hostel_name} (Room {c.room_number})</strong> | Student: <strong>{c.student_name}</strong>
-                                 </div>
-                             </div>
-                             <div className={`text-xs px-2 py-1 rounded-full flex-shrink-0 font-semibold ${c.status.includes('Progress') ? 'bg-orange-200 text-orange-800' : c.status === 'Open' ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
-                                 {c.status}
-                             </div>
+                            <div className="flex-1">
+                                <div className="font-bold text-lg text-red-400">{c.title}</div>
+                                <div className="text-sm text-slate-300 mt-1">{c.description}</div>
+                                <div className="text-xs text-slate-500 mt-1">
+                                    From: <strong className="text-slate-400">{c.hostel_name} (Room {c.room_number})</strong> | Student: <strong className="text-slate-400">{c.student_name}</strong>
+                                </div>
+                            </div>
+                            <div className={`text-xs px-2 py-1 rounded-full flex-shrink-0 font-semibold ${c.status.includes('Progress') ? 'bg-orange-900/40 text-orange-300' : c.status === 'Open' ? 'bg-red-900/40 text-red-300' : 'bg-green-900/40 text-green-300'}`}>
+                                {c.status}
+                            </div>
                         </div>
-                        
+
                         {/* Audit Trail/Status Bar */}
-                        <div className="mt-3 pt-2 border-t border-red-100">
-                            <div className="text-xs text-gray-500 font-semibold mb-1">Audit Trail:</div>
+                        <div className="mt-3 pt-2 border-t border-white/10">
+                            <div className="text-xs text-slate-500 font-semibold mb-1">Audit Trail:</div>
                             <div className="flex items-center space-x-2 text-xs overflow-x-auto pb-1">
                                 {c.audit_trail && c.audit_trail.map((step, index) => (
                                     <div key={index} className="flex-shrink-0">
-                                        <span className={`px-2 py-0.5 rounded-full ${step.status.includes('Progress') ? 'bg-orange-100 text-orange-700' : step.status === 'Open' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                        <span className={`px-2 py-0.5 rounded-full ${step.status.includes('Progress') ? 'bg-orange-900/40 text-orange-300' : step.status === 'Open' ? 'bg-red-900/40 text-red-300' : 'bg-green-900/40 text-green-300'}`}>
                                             {step.status}
                                         </span>
-                                        {index < c.audit_trail.length - 1 && <span className="text-gray-400 ml-2">&gt;</span>}
+                                        {index < c.audit_trail.length - 1 && <span className="text-slate-600 ml-2">&gt;</span>}
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="flex justify-end items-center mt-3 pt-2 border-t border-red-100">
+                        <div className="flex justify-end items-center mt-3 pt-2 border-t border-white/10">
                             <div className="flex space-x-2">
                                 {c.file_url && <a href={c.file_url} className={`py-1 px-3 text-xs font-semibold rounded-full inline-flex items-center bg-red-600 hover:bg-red-700 text-white`} target="_blank" rel="noopener noreferrer">Attachment</a>}
-                                <button 
+                                <button
                                     className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-1.5 w-32`}
                                     onClick={() => setStatusUpdate({ id: c.id, status: c.status, note: '' })}
                                 >
-                                    <RefreshCw className="w-4 h-4 mr-1"/> Update Status
+                                    <RefreshCw className="w-4 h-4 mr-1" /> Update Status
                                 </button>
                             </div>
                         </div>
                     </div>
                 ))}
+            </div>
+        </div>
+    );
+}
+
+
+
+function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryButtonClass }) {
+    const { degrees, sections, loaded, fetchBasics, subjects, fetchSubjects } = catalogs; // Added subjects, fetchSubjects
+    const [faculty, setFaculty] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Allocation Modal State
+    const [selectedFaculty, setSelectedFaculty] = useState(null);
+    const [allocDegree, setAllocDegree] = useState("");
+    const [allocSemester, setAllocSemester] = useState("1");
+    const [allocSection, setAllocSection] = useState("");
+    const [allocSubject, setAllocSubject] = useState("");
+    const [allocFacultySearch, setAllocFacultySearch] = useState("");
+    const [isAllocating, setIsAllocating] = useState(false);
+
+    // Filters
+    const [filterDegree, setFilterDegree] = useState("");
+    const [filterSemester, setFilterSemester] = useState("");
+    const [filterSection, setFilterSection] = useState("");
+
+    // Fetch subjects when degree/sem changes
+    useEffect(() => {
+        if (allocDegree && allocSemester) {
+            fetchSubjects(allocDegree, allocSemester);
+        }
+    }, [allocDegree, allocSemester, fetchSubjects]);
+
+    // Fetch Faculty List
+    const fetchFaculty = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await auth().get("/admin/faculty");
+            setFaculty(res.data.faculty || []);
+        } catch (e) {
+            if (e.response && e.response.status !== 401) {
+                showMessage(e.response?.data?.message || "Failed to fetch faculty list.", 'error');
+            }
+        } finally { setIsLoading(false); }
+    }, [showMessage]);
+
+    // FIX: Removed fetchBasics call from here to avoid loops. Parent should handle basics.
+    useEffect(() => { fetchFaculty(); }, [fetchFaculty]);
+
+    // Initialize dropdowns
+    useEffect(() => {
+        if (loaded && degrees.length && !allocDegree) setAllocDegree(degrees[0]);
+        if (loaded && sections.length && !allocSection) setAllocSection(sections[0]);
+    }, [loaded, degrees, sections, allocDegree, allocSection]);
+
+    // Filter Logic
+    const filtersActive = filterDegree || filterSemester || filterSection;
+
+    // Custom Dropdown State
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [dropdownRef]);
+
+    const filteredFaculty = faculty.filter(f => {
+        if (!filtersActive) return false; // Hide if no filters
+
+        // Match if ANY allocation matches the filter criteria
+        const hasMatch = f.allocations.some(a => {
+            const matchDeg = filterDegree ? a.degree === filterDegree : true;
+            const matchSem = filterSemester ? a.semester === parseInt(filterSemester) : true;
+            const matchSec = filterSection ? a.section === filterSection : true;
+            return matchDeg && matchSem && matchSec;
+        });
+
+        return hasMatch;
+    });
+
+    const handleAllocate = async () => {
+        if (!selectedFaculty || !allocDegree || !allocSemester || !allocSection || !allocSubject) {
+            return showMessage("All fields are required.", 'error');
+        }
+        setIsAllocating(true);
+        try {
+            await auth().post("/admin/faculty/allocate", {
+                faculty_id: selectedFaculty.id,
+                degree: allocDegree, semester: parseInt(allocSemester),
+                section: allocSection, subject: allocSubject
+            });
+            showMessage(`Success: Assigned **${allocSubject}** to **${selectedFaculty.name}**`, 'success');
+            setAllocSubject("");
+            fetchFaculty(); // Refresh
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Allocation failed.", 'error');
+        } finally { setIsAllocating(false); }
+    };
+
+    const handleDeallocate = async (allocId) => {
+        if (!confirm("Are you sure you want to remove this subject assignment?")) return;
+        try {
+            await auth().post("/admin/faculty/deallocate", { allocation_id: allocId });
+            showMessage("Allocation removed.", 'success');
+            fetchFaculty();
+        } catch (e) { showMessage("Failed to remove.", 'error'); }
+    };
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex justify-between items-center border-b border-white/10 pb-4">
+                <div>
+                    <h4 className="text-3xl font-bold text-yellow-500 flex items-center tracking-tight">
+                        <ClipboardList className="w-8 h-8 mr-3 opacity-80" />
+                        Faculty & Allocations
+                    </h4>
+                    <p className="text-slate-400 mt-1 pl-11">Manage professors and their subject allotments.</p>
+                </div>
+                <div className="bg-yellow-500/10 px-4 py-2 rounded-lg border border-yellow-500/20 text-yellow-500 font-mono text-xs uppercase tracking-widest">
+                    {faculty.length} Faculty Members
+                </div>
+            </div>
+
+            {/* Allocation Interface */}
+            <div className="bg-slate-900/40 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-yellow-500/10" style={{ minHeight: '400px' }}>
+                <h5 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-6 flex items-center">
+                    <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span> New Allocation
+                </h5>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Faculty Selection */}
+                    <div className="space-y-4">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider pl-1">Select Professor</label>
+
+                        {/* Custom Searchable Dropdown */}
+                        <div className="relative" ref={dropdownRef}>
+                            <div
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className={`w-full bg-slate-800/50 border ${isDropdownOpen ? 'border-yellow-500 ring-1 ring-yellow-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-white flex justify-between items-center cursor-pointer transition-all hover:bg-slate-800/80`}
+                            >
+                                <span className={selectedFaculty ? "text-white font-medium" : "text-slate-500"}>
+                                    {selectedFaculty ? `${selectedFaculty.name} (${selectedFaculty.emp_id})` : "-- Choose Faculty Member --"}
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            </div>
+
+                            {/* Dropdown Menu */}
+                            {isDropdownOpen && (
+                                <div className="absolute z-50 mt-2 w-full bg-slate-900 border border-white/10 rounded-xl shadow-2xl max-h-80 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    {/* Search Box Sticky Top */}
+                                    <div className="p-2 border-b border-white/5 bg-slate-900 sticky top-0">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                                            <input
+                                                autoFocus
+                                                className="w-full bg-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:ring-1 focus:ring-yellow-500"
+                                                placeholder="Search faculty..."
+                                                value={allocFacultySearch}
+                                                onChange={e => setAllocFacultySearch(e.target.value)}
+                                                onClick={e => e.stopPropagation()}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* List */}
+                                    <div className="overflow-y-auto custom-scrollbar flex-1 p-1">
+                                        {faculty.filter(f => f.name.toLowerCase().includes(allocFacultySearch.toLowerCase())).length === 0 ? (
+                                            <div className="p-3 text-xs text-slate-500 text-center italic">No faculty found.</div>
+                                        ) : (
+                                            faculty.filter(f => f.name.toLowerCase().includes(allocFacultySearch.toLowerCase())).map(f => (
+                                                <div
+                                                    key={f.id}
+                                                    onClick={() => {
+                                                        setSelectedFaculty(f);
+                                                        setIsDropdownOpen(false);
+                                                        setAllocFacultySearch(""); // Optional: reset search or keep it
+                                                    }}
+                                                    className={`p-2.5 rounded-lg text-sm cursor-pointer flex items-center justify-between group transition-colors ${selectedFaculty?.id === f.id ? 'bg-yellow-500/20 text-yellow-400' : 'hover:bg-slate-800 text-slate-300 hover:text-white'}`}
+                                                >
+                                                    <span className="font-medium">{f.name}</span>
+                                                    <span className={`text-[10px] uppercase tracking-wider ${selectedFaculty?.id === f.id ? 'text-yellow-500/70' : 'text-slate-600 group-hover:text-slate-500'}`}>{f.emp_id}</span>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {selectedFaculty && (
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/5 flex items-center animate-in fade-in slide-in-from-top-2">
+                                <div className="w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center font-bold mr-3">{selectedFaculty.name[0]}</div>
+                                <div>
+                                    <div className="text-sm font-bold text-white leading-tight">{selectedFaculty.name}</div>
+                                    <div className="text-xs text-slate-500">{selectedFaculty.email}</div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Class Details */}
+                    <div className="space-y-4">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider pl-1">Class Details</label>
+                        <div className="grid grid-cols-3 gap-3">
+                            <Select value={allocDegree} onChange={e => setAllocDegree(e.target.value)}>
+                                {degrees.map(d => <option key={d} value={d}>{d}</option>)}
+                            </Select>
+                            <Select value={allocSemester} onChange={e => setAllocSemester(e.target.value)}>
+                                {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s}>Sem {s}</option>)}
+                            </Select>
+                            <Select value={allocSection} onChange={e => setAllocSection(e.target.value)}>
+                                {sections.map(s => <option key={s} value={s}>Sec {s}</option>)}
+                            </Select>
+                        </div>
+                        <div className="flex gap-2">
+                            <Select value={allocSubject} onChange={e => setAllocSubject(e.target.value)} icon={Book} disabled={!subjects.length}>
+                                <option value="">-- Select Subject --</option>
+                                {subjects.length > 0 ? (
+                                    subjects.map(s => <option key={s} value={s}>{s}</option>)
+                                ) : (
+                                    <option value="" disabled>No subjects found for this class</option>
+                                )}
+                            </Select>
+                            <button
+                                className={`${buttonClass} bg-yellow-600 hover:bg-yellow-500 text-white w-auto px-6`}
+                                onClick={handleAllocate}
+                                disabled={!selectedFaculty || isAllocating || !allocSubject}
+                            >
+                                {isAllocating ? <Loader2 className="animate-spin w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* List */}
+            <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                    <h5 className="text-sm font-bold text-slate-300 uppercase tracking-widest pl-1">Directory & Allocations</h5>
+
+                    {/* Filters UI */}
+                    <div className="flex gap-2">
+                        <select className="bg-slate-900 border border-white/10 text-xs rounded px-2 py-1 text-slate-300 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterDegree} onChange={e => setFilterDegree(e.target.value)}>
+                            <option value="">Degree</option>
+                            {(degrees || []).map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                        <select className="bg-slate-900 border border-white/10 text-xs rounded px-2 py-1 text-slate-300 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterSemester} onChange={e => setFilterSemester(e.target.value)}>
+                            <option value="">Semester</option>
+                            {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s}>Sem {s}</option>)}
+                        </select>
+                        <select className="bg-slate-900 border border-white/10 text-xs rounded px-2 py-1 text-slate-300 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterSection} onChange={e => setFilterSection(e.target.value)}>
+                            <option value="">Section</option>
+                            {(sections || []).map(s => <option key={s} value={s}>Sec {s}</option>)}
+                        </select>
+                    </div>
+                </div>
+
+                {!filtersActive ? (
+                    <div className="text-center py-20 bg-slate-900/20 rounded-2xl border border-white/5 text-slate-600 animate-in fade-in zoom-in-95 duration-500">
+                        <div className="w-16 h-16 rounded-full bg-slate-800 mx-auto mb-4 flex items-center justify-center">
+                            <Filter className="w-8 h-8 text-slate-500" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-400 mb-1">Directory Filtered</h3>
+                        <p className="text-sm text-slate-500">Please select a Degree, Semester, or Section to view faculty.</p>
+                    </div>
+                ) : isLoading ? <div className="text-center p-20"><Loader2 className="animate-spin w-10 h-10 mx-auto text-yellow-500 opacity-50" /></div> : filteredFaculty.length === 0 ? <div className="text-center py-20 bg-slate-900/20 rounded-2xl border border-white/5 text-slate-600">No faculty members found matching criteria.</div> : (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {filteredFaculty.map(f => (
+                            <div key={f.id} className="bg-slate-800/20 rounded-xl border border-white/5 p-5 hover:bg-slate-800/40 hover:border-white/10 transition-all duration-300 group">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center">
+                                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-700 to-slate-800 border border-white/10 flex items-center justify-center text-slate-300 font-bold text-lg mr-3 shadow-inner">
+                                            {f.name[0]}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-white group-hover:text-yellow-400 transition-colors">{f.name}</div>
+                                            <div className="text-xs text-slate-500 font-mono mt-0.5">{f.email} • {f.emp_id}</div>
+                                        </div>
+                                    </div>
+                                    {f.allocations.length > 0 && <span className="bg-yellow-500/10 text-yellow-500 text-[10px] font-bold px-2 py-1 rounded border border-yellow-500/20 uppercase tracking-widest">{f.allocations.length} SUB</span>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    {f.allocations.length === 0 ? (
+                                        <div className="text-xs text-slate-600 italic pl-1">No subjects allocated yet.</div>
+                                    ) : (
+                                        f.allocations.map(a => (
+                                            <div key={a.id} className="flex justify-between items-center bg-slate-900/60 p-2.5 rounded-lg border border-white/5 text-sm group/item hover:border-white/10 transition-colors">
+                                                <div className="flex items-center">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50 mr-3"></div>
+                                                    <span className="text-slate-200 font-medium mr-2">{a.subject}</span>
+                                                    <span className="text-xs text-slate-500">
+                                                        {a.degree} • {a.semester}-{a.section}
+                                                    </span>
+                                                </div>
+                                                <button onClick={() => handleDeallocate(a.id)} className="text-slate-600 hover:text-red-400 p-1 opacity-0 group-hover/item:opacity-100 transition-all">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -2163,17 +3206,18 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     const [view, setView] = useState('approvals');
     const [isFetchingPending, setIsFetchingPending] = useState(false);
 
+    // Edit Modal State
+    const [editStudent, setEditStudent] = useState(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [generatedPass, setGeneratedPass] = useState(null);
+
     // FIX: Cleaned up fetchPending function
     const fetchPending = useCallback(async () => {
-        // No token check needed here, relying on useEffect guardrail
-        
         setIsFetchingPending(true);
         try {
-            // Using auth()
             const res = await auth().get("/admin/pending-students");
             setPending(res.data.students || []);
         } catch (e) {
-            // Only show message if it's NOT a 401 (handled by auth interceptor)
             if (e.response && e.response.status !== 401) {
                 showMessage("Failed to fetch pending students.", "error");
             }
@@ -2181,7 +3225,44 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         } finally {
             setIsFetchingPending(false);
         }
-    }, [showMessage]); 
+    }, [showMessage]);
+
+    const handleUpdateStudent = async () => {
+        if (!editStudent) return;
+        setIsUpdating(true);
+        try {
+            await auth().post("/admin/update-student", {
+                student_id: editStudent.id,
+                name: editStudent.name,
+                srn: editStudent.srn,
+                degree: editStudent.degree,
+                semester: editStudent.semester,
+                section: editStudent.section,
+                parent_email: editStudent.parent_email
+            });
+            showMessage("Student details updated.", "success");
+            setEditStudent(null);
+            fetchPending(); // Refresh lists (might be efficient to just update local state but safer to refetch)
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Update failed", "error");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleGenerateParentPass = async () => {
+        if (!editStudent?.id) return;
+        setIsUpdating(true);
+        try {
+            const res = await auth().post("/admin/generate-parent-password", { student_id: editStudent.id });
+            setGeneratedPass(res.data.password);
+            showMessage(res.data.message, "success");
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Generation failed", "error");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
     const take = async (id, action) => {
         try {
@@ -2202,7 +3283,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
             // Using auth()
             await auth().post(`/admin/${endpoint}`, { name });
             showMessage(successMsg, "success");
-            await fetchBasics(); 
+            await fetchBasics();
         } catch (e) {
             if (e.response && e.response.status !== 401) {
                 showMessage(e.response?.data?.message || "Operation failed.", "error");
@@ -2243,21 +3324,48 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         }
     }, [view, fetchPending, user]); // Added 'user' to the dependency array
 
+    // GSAP Navigation Animation
+    const navRef = useRef(null);
+    const indicatorRef = useRef(null);
+    const contentRef = useRef(null);
+
+    useEffect(() => {
+        if (navRef.current && indicatorRef.current) {
+            const activeBtn = navRef.current.querySelector(`button[data-key="${view}"]`);
+            if (activeBtn) {
+                gsap.to(indicatorRef.current, {
+                    y: activeBtn.offsetTop,
+                    height: activeBtn.offsetHeight,
+                    opacity: 1,
+                    duration: 0.5,
+                    ease: "elastic.out(1, 0.6)"
+                });
+            }
+        }
+        // Animate Content
+        if (contentRef.current) {
+            gsap.fromTo(contentRef.current,
+                { opacity: 0, scale: 0.99 },
+                { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" }
+            );
+        }
+    }, [view]);
+
 
     const renderView = () => {
         switch (view) {
             case "approvals":
                 return (
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                        <h4 className="text-2xl font-bold text-yellow-700 mb-4">Pending Student Approvals</h4>
-                        {isFetchingPending && <div className="text-center p-5"><Loader2 className="animate-spin w-6 h-6 text-yellow-600 mx-auto" /></div>}
-                        {!isFetchingPending && pending.length === 0 && <div className="p-4 text-gray-500 text-center">No pending students.</div>}
-                        
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20">
+                        <h4 className="text-2xl font-bold text-yellow-500 mb-4">Pending Student Approvals</h4>
+                        {isFetchingPending && <div className="text-center p-5"><Loader2 className="animate-spin w-6 h-6 text-yellow-500 mx-auto" /></div>}
+                        {!isFetchingPending && pending.length === 0 && <div className="p-4 text-slate-500 text-center">No pending students.</div>}
+
                         <div className="space-y-4">
                             {pending.map(s => (
-                                <div key={s.id} className="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-xl shadow">
-                                    <div className="font-bold text-lg">{s.name}</div>
-                                    <div className="text-sm text-gray-600">{s.email} • {s.degree} • Sem {s.semester}</div>
+                                <div key={s.id} className="p-4 bg-yellow-900/20 border-l-4 border-yellow-500 rounded-xl shadow backdrop-blur-sm">
+                                    <div className="font-bold text-lg text-white">{s.name}</div>
+                                    <div className="text-sm text-slate-300">{s.email} • {s.degree} • Sem {s.semester}</div>
                                     <div className="flex gap-3 mt-3">
                                         <button className={`${buttonClass} bg-green-600 text-white`} onClick={() => take(s.id, "approve")}>Approve</button>
                                         <button className={`${buttonClass} bg-red-600 text-white`} onClick={() => take(s.id, "reject")}>Reject</button>
@@ -2267,30 +3375,32 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                         </div>
                     </div>
                 );
+            case 'faculty_mgmt':
+                return <AdminFacultyManagement showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} />;
             case "faculty-onboard": return <AdminFacultyOnboarding showMessage={showMessage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} catalogs={catalogs} />;
             case "library-upload": return <AdminBookUpload showMessage={showMessage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} catalogs={catalogs} />; // NEW VIEW
             case "catalogs":
                 return (
                     <div className="grid md:grid-cols-3 gap-6">
-                        <div className="bg-white p-6 rounded-xl shadow-lg border space-y-3">
-                            <h4 className="text-xl font-bold text-yellow-700">Manage Degrees</h4>
+                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
+                            <h4 className="text-xl font-bold text-yellow-400">Manage Degrees</h4>
                             <Input placeholder="New degree" value={newDegree} onChange={e => setNewDegree(e.target.value)} />
                             <button className={`${buttonClass} ${primaryButtonClass}`} onClick={() => addCatalogItem("degrees", newDegree, "Degree added!")}>Add Degree</button>
-                            <div className="text-xs text-gray-500">Current: {(degrees || []).join(", ")}</div>
+                            <div className="text-xs text-slate-500">Current: {(degrees || []).join(", ")}</div>
                         </div>
-                        <div className="bg-white p-6 rounded-xl shadow-lg border space-y-3">
-                            <h4 className="text-xl font-bold text-yellow-700">Manage Sections</h4>
+                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
+                            <h4 className="text-xl font-bold text-yellow-400">Manage Sections</h4>
                             <Input placeholder="New section" value={newSection} onChange={e => setNewSection(e.target.value)} />
                             <button className={`${buttonClass} ${primaryButtonClass}`} onClick={() => addCatalogItem("sections", newSection, "Section added!")}>Add Section</button>
-                            <div className="text-xs text-gray-500">Current: {(sections || []).join(", ")}</div>
+                            <div className="text-xs text-slate-500">Current: {(sections || []).join(", ")}</div>
                         </div>
-                        <div className="bg-white p-6 rounded-xl shadow-lg border space-y-3">
-                            <h4 className="text-xl font-bold text-yellow-700">Add Subject</h4>
+                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
+                            <h4 className="text-xl font-bold text-yellow-400">Add Subject</h4>
                             <Select value={subjectDegree} onChange={e => setSubjectDegree(e.target.value)}>
-                                {(degrees || []).map(d => <option key={d} value={d}>{d}</option>)}
+                                {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                             </Select>
                             <Select value={subjectSemester} onChange={e => setSubjectSemester(e.target.value)}>
-                                {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s}>{s}</option>)}
+                                {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                             </Select>
                             <Input placeholder="Subject name" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
                             <button className={`${buttonClass} ${primaryButtonClass}`} onClick={addSubject}>Add Subject</button>
@@ -2307,28 +3417,261 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-56 bg-white p-4 rounded-xl shadow-lg border">
-                <h5 className="font-bold text-yellow-800 mb-4">Admin Tools</h5>
-                {[
-                    { key: 'approvals', label: 'Student Approvals', icon: User },
-                    { key: 'student-list', label: 'Student Directory', icon: GraduationCap },
-                    { key: 'hostel-config', label: 'Hostel Config', icon: Home },
-                    { key: 'complaints-admin', label: 'Hostel Complaints', icon: Mail },
-                    { key: 'library-upload', label: 'Book Upload', icon: Upload }, // NEW NAVIGATION ITEM
-                    { key: 'faculty-onboard', label: 'Add Faculty', icon: UserPlus },
-                    { key: 'catalogs', label: 'Degrees/Subjects', icon: Settings },
-                    { key: 'fees-admin', label: 'Manage Fees', icon: DollarSign },
-                ].map(item => (
-                    <button key={item.key} onClick={() => setView(item.key)} className={`w-full flex items-center p-3 rounded-lg font-semibold transition ${view === item.key ? "bg-yellow-600 text-white" : "hover:bg-gray-100"}`}>
-                        <item.icon className="w-5 h-5 mr-3" />{item.label}
-                    </button>
-                ))}
+            <div className="w-full md:w-64 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0">
+                <h5 className="text-lg font-bold text-amber-400 mb-4 ml-2">Admin Tools</h5>
+                <nav className="space-y-1 relative" ref={navRef}>
+                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-amber-600/20 border border-amber-500/30 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
+                    {[
+                        { key: 'approvals', label: 'Student Approvals', icon: User },
+                        { key: 'student-list', label: 'Student Directory', icon: GraduationCap },
+                        { key: 'faculty_mgmt', label: 'Faculty Allocations', icon: ClipboardList }, // RE-ADDED
+                        { key: 'hostel-config', label: 'Hostel Config', icon: Home },
+                        { key: 'complaints-admin', label: 'Hostel Complaints', icon: Mail },
+                        { key: 'library-upload', label: 'Book Upload', icon: Upload },
+                        { key: 'faculty-onboard', label: 'Add Faculty', icon: UserPlus },
+                        { key: 'catalogs', label: 'Degrees/Subjects', icon: Settings },
+                        { key: 'fees-admin', label: 'Manage Fees', icon: DollarSign },
+                    ].map(item => (
+                        <button
+                            key={item.key}
+                            data-key={item.key}
+                            onClick={() => setView(item.key)}
+                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 whitespace-nowrap ${view === item.key ? "text-amber-300" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                        >
+                            <item.icon className="w-5 h-5 mr-3" />{item.label}
+                        </button>
+                    ))}
+                </nav>
             </div>
-            <div className="flex-1">{renderView()}</div>
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative">{renderView()}</div>
         </div>
     );
 }
 // Professor Panel (Updated with Books)
+
+// Student Attendance Calendar
+function StudentAttendanceCalendar({ showMessage, buttonClass, primaryButtonClass }) {
+    const [attendance, setAttendance] = useState([]);
+    const [viewDate, setViewDate] = useState(new Date()); // Tracks Month/Year
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedDay, setSelectedDay] = useState(null);
+
+    useEffect(() => {
+        const fetchAtt = async () => {
+            setIsLoading(true);
+            try {
+                const res = await auth().get("/student/attendance");
+                setAttendance(res.data.attendance || []);
+            } catch (e) { } finally { setIsLoading(false); }
+        };
+        fetchAtt();
+    }, []);
+
+    // Calendar Logic
+    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay(); // 0 = Sun
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+
+    // Map attendance to dates
+    // attendance: [{date, subject, status}]
+    const getStatusForDay = (day) => {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayRecs = attendance.filter(r => r.date === dateStr);
+        if (!dayRecs.length) return null; // No data
+        // Priority: If any Absent -> Red. Else (all present) -> Green.
+        const anyAbsent = dayRecs.some(r => r.status === "Absent");
+        return anyAbsent ? "Absent" : "Present";
+    };
+
+    const getDayDetails = (day) => {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        return attendance.filter(r => r.date === dateStr);
+    };
+
+    return (
+        <div className="space-y-6">
+            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><ClipboardList className="w-6 h-6 mr-2" /> My Attendance</h4>
+
+            <div className="grid md:grid-cols-2 gap-6">
+                {/* Calendar View */}
+                <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-blue-500/20">
+                    <div className="flex justify-between items-center mb-4">
+                        <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="text-slate-400 hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
+                        <h5 className="text-lg font-bold text-white uppercase tracking-wider">
+                            {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        </h5>
+                        <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="text-slate-400 hover:text-white rotate-180"><ArrowLeft className="w-5 h-5" /></button>
+                    </div>
+
+                    <div className="grid grid-cols-7 text-center mb-2">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} className="text-xs font-bold text-slate-500">{d}</div>)}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-2">
+                        {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                            const day = i + 1;
+                            const status = getStatusForDay(day);
+                            const isSelected = selectedDay === day;
+
+                            let bgClass = "bg-slate-800/50 border-white/5 text-slate-300";
+                            if (status === "Present") bgClass = "bg-green-900/40 border-green-500/30 text-green-300";
+                            if (status === "Absent") bgClass = "bg-red-900/40 border-red-500/30 text-red-300";
+                            if (isSelected) bgClass += " ring-2 ring-blue-500";
+
+                            return (
+                                <div
+                                    key={day}
+                                    onClick={() => setSelectedDay(day)}
+                                    className={`aspect-square rounded-lg flex items-center justify-center font-bold text-sm border cursor-pointer hover:opacity-80 transition-all ${bgClass}`}
+                                >
+                                    {day}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex gap-4 mt-4 text-xs text-slate-400 justify-center">
+                        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-green-500"></div> Present</div>
+                        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-red-500"></div> Absent</div>
+                        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-slate-700"></div> No Data</div>
+                    </div>
+                </div>
+
+                {/* Details View */}
+                <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10">
+                    <h5 className="text-xl font-bold text-slate-300 mb-4">
+                        {selectedDay ? `Details for ${viewDate.toLocaleString('default', { month: 'long' })} ${selectedDay}` : "Select a date to view details"}
+                    </h5>
+
+                    {selectedDay ? (
+                        <div className="space-y-3">
+                            {getDayDetails(selectedDay).length > 0 ? getDayDetails(selectedDay).map((r, idx) => (
+                                <div key={idx} className={`p-3 rounded-lg border flex justify-between items-center ${r.status === 'Present' ? 'bg-green-900/10 border-green-500/20' : 'bg-red-900/10 border-red-500/20'}`}>
+                                    <span className="font-medium text-slate-200">{r.subject}</span>
+                                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${r.status === 'Present' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>{r.status}</span>
+                                </div>
+                            )) : <div className="text-slate-500 italic">No classes recorded for this day.</div>}
+                        </div>
+                    ) : (
+                        <div className="text-center py-10 text-slate-600">
+                            <ClipboardList className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                            Click on a calendar date
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Academic Insights Component (Groq Powered)
+function AcademicInsights({ user, showMessage }) {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchInsights = async () => {
+            try {
+                const res = await auth().get("/api/academic-insights");
+                setData(res.data.insights);
+            } catch (e) {
+                console.error(e);
+                showMessage("Failed to load insights.", "error");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchInsights();
+    }, []);
+
+    if (loading) return <div className="text-center py-20 text-slate-400 animate-pulse">Consulting AI Counselor...</div>;
+    if (!data) return <div className="text-center py-20 text-slate-500">No insights available.</div>;
+
+    return (
+        <div className="space-y-6 animate-fade-in-up">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-2">
+                <div className="p-3 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/20">
+                    <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-bold text-white tracking-tight">AI Academic Insights</h2>
+                    <p className="text-slate-400 text-sm">Personalized analysis powered by Groq AI</p>
+                </div>
+            </div>
+
+            {/* Counselor Message Card */}
+            <div className="bg-slate-800/60 backdrop-blur-xl border border-violet-500/30 rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/50 transition-all">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                <h3 className="text-lg font-semibold text-violet-300 mb-3 flex items-center gap-2">
+                    <BrainCircuit className="w-5 h-5" />
+                    Counselor's Note
+                </h3>
+                <p className="text-slate-200 leading-relaxed text-lg italic opacity-90">
+                    "{data.counselor_message}"
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Risks - Red Theme */}
+                <div className="bg-slate-900/50 border border-red-500/20 rounded-xl p-5 hover:bg-slate-900/80 transition-all">
+                    <h4 className="text-red-400 font-bold mb-4 flex items-center gap-2 border-b border-red-500/10 pb-2">
+                        <AlertTriangle className="w-5 h-5" /> Attendance Risks
+                    </h4>
+                    {data.attendance_risks && data.attendance_risks.length > 0 ? (
+                        <ul className="space-y-2">
+                            {data.attendance_risks.map((sub, i) => (
+                                <li key={i} className="flex items-center gap-2 text-red-200 bg-red-500/10 px-3 py-2 rounded-lg text-sm">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" /> {sub}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="text-slate-500 text-sm italic">No attendance risks detected. Great job!</div>
+                    )}
+                </div>
+
+                {/* Priorities - Yellow Theme */}
+                <div className="bg-slate-900/50 border border-amber-500/20 rounded-xl p-5 hover:bg-slate-900/80 transition-all">
+                    <h4 className="text-amber-400 font-bold mb-4 flex items-center gap-2 border-b border-amber-500/10 pb-2">
+                        <Target className="w-5 h-5" /> Focus Priorities
+                    </h4>
+                    {data.priorities && data.priorities.length > 0 ? (
+                        <ul className="space-y-2">
+                            {data.priorities.map((sub, i) => (
+                                <li key={i} className="flex items-center gap-2 text-amber-200 bg-amber-500/10 px-3 py-2 rounded-lg text-sm">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" /> {sub}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="text-slate-500 text-sm italic">No urgent priorities. Keep maintaining your scores!</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Suggestions - Green Theme */}
+            <div className="bg-slate-900/50 border border-emerald-500/20 rounded-xl p-6 hover:bg-slate-900/80 transition-all">
+                <h4 className="text-emerald-400 font-bold mb-4 flex items-center gap-2 border-b border-emerald-500/10 pb-2">
+                    <Lightbulb className="w-5 h-5" /> Improvement Plan
+                </h4>
+                <div className="grid gap-3">
+                    {data.suggestions.map((tip, i) => (
+                        <div key={i} className="flex gap-3 text-slate-300 text-sm bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
+                            <span className="text-emerald-500 font-bold font-mono">{i + 1}.</span>
+                            <span>{tip}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 // Student Panel (Updated with Books and Hostel)
 function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass }) {
@@ -2339,10 +3682,39 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
         { key: 'books', label: 'Internal Library', icon: Search },
         { key: 'fees', label: 'Fees & Payments', icon: DollarSign },
         { key: 'marks', label: 'Marks & Grades', icon: Award },
-        { key: 'feedback', label: 'Faculty Feedback', icon: MessageSquare }, // ADDED FEEDBACK NAVIGATION
+        { key: 'feedback', label: 'Feedback', icon: MessageSquare },
+        { key: 'attendance', label: 'My Attendance', icon: ClipboardList },
         { key: 'complaints', label: 'Hostel Complaints', icon: Home },
+        { key: 'insights', label: 'Academic Insights', icon: BrainCircuit },
         { key: 'chat', label: 'AI Study Chat', icon: Briefcase },
     ];
+
+    // GSAP Navigation Animation
+    const navRef = useRef(null);
+    const indicatorRef = useRef(null);
+    const contentRef = useRef(null);
+
+    useEffect(() => {
+        if (navRef.current && indicatorRef.current) {
+            const activeBtn = navRef.current.querySelector(`button[data-key="${view}"]`);
+            if (activeBtn) {
+                gsap.to(indicatorRef.current, {
+                    y: activeBtn.offsetTop,
+                    height: activeBtn.offsetHeight,
+                    opacity: 1,
+                    duration: 0.5,
+                    ease: "elastic.out(1, 0.6)"
+                });
+            }
+        }
+        // Animate Content (Subtle slide and fade)
+        if (contentRef.current) {
+            gsap.fromTo(contentRef.current,
+                { opacity: 0, x: 20 },
+                { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
+            );
+        }
+    }, [view]);
 
     // === FIX: Completed renderView function ===
     const renderView = () => {
@@ -2352,7 +3724,9 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
             case 'fees': return <StudentFees user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'marks': return <StudentMarks user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'feedback': return <StudentFeedback showMessage={showMessage} />; // NEW COMPONENT
+            case 'attendance': return <StudentAttendanceCalendar showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'complaints': return <HostelComplaints showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'insights': return <AcademicInsights user={user} showMessage={showMessage} />;
             case 'chat': return <AIChat showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             default: return <div className="p-8 text-center text-gray-500">Welcome to NoteOrbit! Select a module to begin.</div>;
         }
@@ -2361,18 +3735,19 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-56 bg-white p-4 rounded-xl shadow-lg border border-gray-200 flex-shrink-0">
-                <h5 className="text-lg font-bold text-blue-800 mb-4">Student Hub</h5>
-                <nav className="space-y-2">
+            <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
+                <h5 className="text-lg font-bold text-blue-400 mb-4 ml-2">Student Hub</h5>
+                <nav className="space-y-1 relative" ref={navRef}>
+                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-blue-600/20 border border-blue-500/30 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {navigation.map(item => (
                         <button
                             key={item.key}
+                            data-key={item.key}
                             onClick={() => setView(item.key)}
-                            className={`w-full flex items-center p-3 rounded-lg font-semibold transition duration-200 ${
-                                view === item.key 
-                                    ? 'bg-blue-600 text-white shadow-md' 
-                                    : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
+                                ? 'text-blue-300'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
                         >
                             <item.icon className="w-5 h-5 mr-3" />
                             {item.label}
@@ -2380,7 +3755,93 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
                     ))}
                 </nav>
             </div>
-            <div className="flex-1 min-h-[600px] bg-white p-6 rounded-xl shadow-2xl border border-blue-200">
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+                {renderView()}
+            </div>
+        </div>
+    );
+}
+
+// Parent Panel (Reusing Student Components)
+function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass }) {
+    const [view, setView] = useState('attendance');
+
+    const navigation = [
+        { key: 'attendance', label: 'Ward Attendance', icon: ClipboardList },
+        { key: 'marks', label: 'Academic Performance', icon: Award },
+        { key: 'fees', label: 'Fee Payments', icon: DollarSign },
+        { key: 'feedback', label: 'Feedback', icon: MessageSquare },
+        { key: 'complaints', label: 'Hostel Complaints', icon: Home },
+        { key: 'insights', label: 'Academic Insights', icon: BrainCircuit },
+    ];
+
+    // GSAP Navigation Animation
+    const navRef = useRef(null);
+    const indicatorRef = useRef(null);
+    const contentRef = useRef(null);
+
+    useEffect(() => {
+        if (navRef.current && indicatorRef.current) {
+            const activeBtn = navRef.current.querySelector(`button[data-key="${view}"]`);
+            if (activeBtn) {
+                gsap.to(indicatorRef.current, {
+                    y: activeBtn.offsetTop,
+                    height: activeBtn.offsetHeight,
+                    opacity: 1,
+                    duration: 0.5,
+                    ease: "elastic.out(1, 0.6)"
+                });
+            }
+        }
+        if (contentRef.current) {
+            gsap.fromTo(contentRef.current,
+                { opacity: 0, x: 20 },
+                { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
+            );
+        }
+    }, [view]);
+
+    const renderView = () => {
+        switch (view) {
+            case 'attendance': return <StudentAttendanceCalendar showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'marks': return <StudentMarks user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'fees': return <StudentFees user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'feedback': return <StudentFeedback showMessage={showMessage} />;
+            case 'complaints': return <HostelComplaints showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'insights': return <AcademicInsights user={user} showMessage={showMessage} />;
+            default: return <div className="text-center p-10 text-slate-500">Select an option</div>;
+        }
+    };
+
+    return (
+        <div className="flex flex-col md:flex-row gap-6">
+            <div className="w-full md:w-64 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
+                <div className="mb-6 ml-2">
+                    <h5 className="text-lg font-bold text-rose-400">Parent Portal</h5>
+                    <p className="text-xs text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
+                </div>
+
+                <nav className="space-y-1 relative" ref={navRef}>
+                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-rose-600/20 border border-rose-500/30 rounded-xl shadow-[0_0_15px_rgba(225,29,72,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
+                    {navigation.map(item => (
+                        <button
+                            key={item.key}
+                            data-key={item.key}
+                            onClick={() => setView(item.key)}
+                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
+                                ? 'text-rose-300'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                        >
+                            <item.icon className="w-5 h-5 mr-3" />
+                            {item.label}
+                        </button>
+                    ))}
+                </nav>
+            </div>
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
                 {renderView()}
             </div>
         </div>
@@ -2391,45 +3852,49 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
 // --- MAIN APPLICATION ---
 function App() {
     const [user, setUser, isLoading] = useLocalUser();
-    const [page, setPage] = useState(null); 
-    const [userRole, setUserRole] = useState(null); 
-    const [authMode, setAuthMode] = useState("login"); 
+    const [page, setPage] = useState(null);
+    const [userRole, setUserRole] = useState(null);
+    const [authMode, setAuthMode] = useState("login");
     const [message, setMessage] = useState({ text: null, type: null });
     const catalogs = useCatalogs();
 
-    useEffect(() => { 
+    useEffect(() => {
         if (!isLoading) {
             if (user) { setPage("dashboard"); } else { setPage("user_type"); }
         }
-    }, [user, isLoading]); 
+    }, [user, isLoading]);
 
     const showMessage = (text, type = 'error') => setMessage({ text, type });
     const clearMessage = () => setMessage({ text: null, type: null });
-    
+
     const getBackendRole = (uiRole) => {
         if (uiRole === 'Faculty') return 'professor';
-        return uiRole ? uiRole.toLowerCase() : null; 
+        return uiRole ? uiRole.toLowerCase() : null;
     };
 
-    const doLogin = async (email, password) => {
-    clearMessage();
-    const expectedRole = getBackendRole(userRole);
-    if (!expectedRole) return showMessage("Please select a valid role first.", 'error');
+    const doLogin = async (identifier, password) => {
+        clearMessage();
+        const expectedRole = getBackendRole(userRole);
+        if (!expectedRole) return showMessage("Please select a valid role first.", 'error');
 
-    try {
-        // Using unauth() for login/register endpoint.
-        const res = await unauth().post("/login", { email, password });
+        try {
+            // Using unauth() for login/register endpoint.
+            // Send proper payload based on role
+            let payload = { password, role: expectedRole };
+            payload.email = identifier; // Backend expects 'email' key even for SRN identifier for parents
 
-        // 🔥 ADD THIS LINE
-        console.log("BACKEND ROLE SAYS →", res.data.user.role);
+            const res = await unauth().post("/login", payload);
 
-        let { token, user: u } = res.data;
-        
-        u.degree = u.degree || "";
-        u.semester = u.semester || 1; 
-        u.section = u.section || "";
+            // 🔥 ADD THIS LINE
+            console.log("BACKEND ROLE SAYS →", res.data.user.role);
 
-            
+            let { token, user: u } = res.data;
+
+            u.degree = u.degree || "";
+            u.semester = u.semester || 1;
+            u.section = u.section || "";
+
+
             if (u.role !== expectedRole) {
                 setAuthToken(null);
                 localStorage.removeItem("noteorbit_user");
@@ -2469,10 +3934,10 @@ function App() {
         localStorage.removeItem("noteorbit_user");
         setAuthToken(null);
         setUser(null);
-        setPage("user_type"); 
+        setPage("user_type");
         clearMessage();
     };
-    
+
     const buttonClass = "w-full flex items-center justify-center px-4 py-3 font-semibold rounded-full shadow-md transition duration-200";
     const primaryButtonClass = "bg-blue-600 hover:bg-blue-700 text-white";
     const successButtonClass = "bg-green-600 hover:bg-green-700 text-white";
@@ -2493,20 +3958,21 @@ function App() {
 
         switch (page) {
             case 'user_type':
-                return (<UserTypeSelection setUserRole={setUserRole} setPage={setPage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass}/>);
+                return (<UserTypeSelection setUserRole={setUserRole} setPage={setPage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} />);
             case 'credentials':
                 return (
                     <div key={authMode} className="animate-in fade-in slide-in-from-right-10 duration-500 w-full max-w-lg mx-auto">
-                        <CredentialsView userRole={userRole} authMode={authMode} setAuthMode={setAuthMode} setPage={setPage} onLogin={doLogin} onRegister={doRegister} catalogs={catalogs} primaryButtonClass={primaryButtonClass} successButtonClass={successButtonClass} buttonClass={buttonClass} />
+                        <CredentialsView showMessage={showMessage} userRole={userRole} authMode={authMode} setAuthMode={setAuthMode} setPage={setPage} onLogin={doLogin} onRegister={doRegister} catalogs={catalogs} primaryButtonClass={primaryButtonClass} successButtonClass={successButtonClass} buttonClass={buttonClass} />
                     </div>
                 );
             case "dashboard":
                 return (
                     <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-700">
                         {user.role === "admin" ? <AdminPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} dangerButtonClass={dangerButtonClass} /> :
-                        user.role === "professor" ? <ProfessorPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} successButtonClass={successButtonClass} dangerButtonClass={dangerButtonClass} /> :
-                        user.role === "student" ? <StudentPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} /> :
-                        <div className="card">Unknown role</div>}
+                            user.role === "professor" ? <ProfessorPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} successButtonClass={successButtonClass} dangerButtonClass={dangerButtonClass} /> :
+                                user.role === "student" ? <StudentPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} /> :
+                                    user.role === "parent" ? <ParentPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} /> :
+                                        <div className="card">Unknown role</div>}
                     </div>
                 );
             default:
@@ -2515,18 +3981,25 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 font-sans p-4 sm:p-8 text-gray-900">
-            <div className="max-w-5xl mx-auto w-full">
-                <div className="header flex justify-between items-center p-6 bg-white rounded-xl shadow-lg border border-gray-200 mb-8">
+        <div className="min-h-screen bg-slate-950 font-sans p-4 sm:p-8 text-white selection:bg-blue-500/30 selection:text-blue-200 relative overflow-x-hidden">
+            {/* Global Background Elements */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] opacity-40 animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] opacity-40" />
+                <div className="absolute top-[20%] right-[30%] w-[200px] h-[200px] bg-cyan-500/10 rounded-full blur-[80px]" />
+            </div>
+
+            <div className="max-w-6xl mx-auto w-full relative z-10">
+                <div className="header flex justify-between items-center p-6 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 mb-8 sticky top-2 z-50 shadow-2xl">
                     <div className="flex flex-col">
-                        <h2 className="text-4xl font-extrabold text-blue-800 tracking-wider">NoteOrbit</h2>
-                        <div className="text-sm text-gray-500 mt-0.5">Smart college resource sharing platform</div>
+                        <OrbitLogo />
+                        {/* <div className="text-xs text-blue-300/80 ml-14 mt-1 font-medium tracking-wide">Smart University ERP Portal</div> */}
                     </div>
                     <div className="flex items-center space-x-3">
                         {user ? (
                             <>
-                                <span className="text-base font-medium text-gray-700 mr-3 hidden sm:inline">{user.name} ({user.role})</span>
-                                <button className={`${buttonClass} bg-red-600 hover:bg-red-700 w-28 py-2.5`} onClick={doLogout}><LogOut className="w-5 h-5 mr-1" /> Logout</button>
+                                <span className="text-sm font-medium text-slate-300 mr-4 hidden sm:inline">{user.name} <span className="text-blue-400 uppercase">({user.role})</span></span>
+                                <button className={`${buttonClass} bg-red-500/10 hover:bg-red-500/90 text-red-400 hover:text-white border border-red-500/50 w-28 py-2.5 backdrop-blur-sm transition-all`} onClick={doLogout}><LogOut className="w-4 h-4 mr-2" /> Logout</button>
                             </>
                         ) : null}
                     </div>

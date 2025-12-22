@@ -39,3 +39,20 @@ export const setAuthToken = (token) => {
     localStorage.removeItem("noteorbit_token");
   }
 };
+
+// --- AUTH API HELPERS ---
+export const sendOtp = async (email, mode = "signup") => {
+  return api.post("/auth/send-otp", { email, mode });
+};
+
+export const verifyOtp = async (email, otp) => {
+  return api.post("/auth/verify-otp", { email, otp });
+};
+
+export const resetPassword = async (email, otp, newPassword) => {
+  return api.post("/auth/reset-password", { email, otp, new_password: newPassword });
+};
+
+export const registerWithOtp = async (userData) => {
+  return api.post("/register", userData);
+};
