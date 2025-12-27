@@ -7,11 +7,12 @@ import {
     Book, Bell, Settings, Briefcase, User, Mail, Lock, GraduationCap, ClipboardList,
     BriefcaseBusiness, DollarSign, Award, MessageSquare, Upload, RefreshCw,
     Trash2, Save, Home, Search, Download, Check, Atom, Star, Sparkles, Plus, Filter, Eye, EyeOff, Edit,
-    BrainCircuit, AlertTriangle, Target, Lightbulb
+    BrainCircuit, AlertTriangle, Target, Lightbulb, Send as SendIcon, Paperclip
 } from 'lucide-react';
 
 // --- COMPONENTS IMPORT ---
 import { api, setAuthToken, sendOtp, verifyOtp, resetPassword, registerWithOtp } from "./api";
+import ParticleBackground from './components/ParticleBackground';
 
 // Compatibility shims for existing code
 // note: api.js handles tokens via interceptors automatically
@@ -201,10 +202,10 @@ function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonCla
     }, []);
 
     const roles = [
-        { ui: 'Admin', icon: BriefcaseBusiness, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-500/20', description: 'Institutional Management' },
-        { ui: 'Faculty', icon: ClipboardList, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-500/20', description: 'Resource Uploader' },
-        { ui: 'Parent', icon: Home, color: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-500/20', description: 'Ward Progress & Fees' },
-        { ui: 'Student', icon: GraduationCap, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-500/20', description: 'Access Notes & AI Chat' },
+        { ui: 'Admin', icon: BriefcaseBusiness, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-500/20' },
+        { ui: 'Faculty', icon: ClipboardList, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-500/20' },
+        { ui: 'Parent', icon: Home, color: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-500/20' },
+        { ui: 'Student', icon: GraduationCap, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-500/20' },
     ];
 
     const handleContinue = () => {
@@ -1213,31 +1214,129 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
 
 function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
     const [question, setQuestion] = useState("");
-    const [history, setHistory] = useState([
-        { role: "ai", text: "Hello! I am your NoteOrbit academic assistant. Ask me anything about your studies, concepts, or topics you want to review." }
-    ]);
+    const [history, setHistory] = useState([]);
+    const [sessions, setSessions] = useState([]);
+    const [currentSessionId, setCurrentSessionId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const fileInputRef = useRef(null);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
+    const WELCOME_MSG = { role: "ai", text: "Hello! I am Orbit Bot, your academic assistant. Ask me anything about your studies, or upload notes for me to analyze." };
+
+    // Fetch Sessions on Mount
+    useEffect(() => {
+        loadSessions();
+        // Set initial view to empty/welcome
+        setHistory([WELCOME_MSG]);
+    }, []);
+
+    const loadSessions = async () => {
+        try {
+            const res = await auth().get("/ai/sessions");
+            setSessions(res.data.sessions || []);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const loadSession = async (sessionId) => {
+        if (currentSessionId === sessionId) return;
+        setIsLoading(true);
+        setCurrentSessionId(sessionId);
+        try {
+            const res = await auth().get(`/ai/session/${sessionId}`);
+            setHistory(res.data.messages || []);
+        } catch (e) {
+            showMessage("Failed to retrieve chat history", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const startNewChat = () => {
+        setCurrentSessionId(null);
+        setHistory([WELCOME_MSG]);
+        setQuestion("");
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const deleteSession = async (e, sessionId) => {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log("Attempting to delete session:", sessionId);
+
+        // Removed window.confirm as it was blocking execution in some environments
+        // if (!window.confirm("Are you sure you want to delete this chat history?")) return;
+
+        try {
+            console.log("Sending DELETE request...");
+            await auth().delete(`/ai/session/${sessionId}`);
+            console.log("Delete success");
+            setSessions(prev => prev.filter(s => s.id !== sessionId));
+            if (currentSessionId === sessionId) startNewChat();
+        } catch (e) {
+            console.error("Delete Session Failed:", e);
+            showMessage(`Failed to delete session: ${e.response?.data?.message || e.message}`, "error");
+        }
+    };
+
+    // Auto-scroll logic
     useEffect(() => {
         const chatContainer = document.getElementById('chat-history');
         if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
     }, [history]);
 
+    const handleFileSelect = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
+
     const askQuestion = async () => {
-        const q = question.trim();
-        if (!q || isLoading) return;
-        setHistory(h => [...h, { role: "user", text: q }]);
+        if ((!question.trim() && !selectedFile) || isLoading) return;
+
+        // Message to display
+        const userMsgText = selectedFile ? `${question} [Attached: ${selectedFile.name}]` : question;
+        const tempHistory = [...history, { role: "user", text: userMsgText }];
+        setHistory(tempHistory);
         setQuestion("");
         setIsLoading(true);
+
         try {
-            // Using auth()
-            const res = await auth().post("/chat", { question: q });
+            let res;
+            const formData = new FormData();
+            formData.append("question", question);
+            if (currentSessionId) formData.append("session_id", currentSessionId);
+            if (selectedFile) formData.append("file", selectedFile);
+
+            // Using Multipart for everything to support file if present.
+            // If no file, we can still use multipart, or switch to JSON. 
+            // Previous code handled both. Let's send FormData always for simplicity now.
+
+            res = await auth().post("/chat", formData, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+
+            // Update Session ID if new
+            if (res.data.session_id && res.data.session_id !== currentSessionId) {
+                setCurrentSessionId(res.data.session_id);
+                loadSessions(); // Refresh list to show new title
+            } else {
+                // If existing session, just refresh list to update timestamp? Optional.
+                loadSessions();
+            }
+
             setHistory(h => [...h, { role: "ai", text: res.data.answer }]);
+            setSelectedFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+
         } catch (err) {
             if (err.response && err.response.status !== 401) {
                 showMessage(`Chat failed: ${err.response?.data?.message || "Could not connect to AI service."}`, 'error');
             }
-            setHistory(h => [...h, { role: "ai", text: "I'm sorry, I couldn't connect to the AI service. Please check the backend configuration or API Key." }]);
+            setHistory(h => [...h, { role: "ai", text: "I'm sorry, I couldn't connect to the AI service." }]);
         } finally {
             setIsLoading(false);
         }
@@ -1248,40 +1347,127 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
     };
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-blue-500/20">
-            <h4 className="text-2xl font-bold mb-4 text-blue-400 flex items-center"><Briefcase className="w-6 h-6 mr-2" /> AI Study Assistant</h4>
-            <div id="chat-history" className="h-96 overflow-y-auto border border-white/10 rounded-xl p-4 bg-slate-950/50">
-                <div className="flex flex-col space-y-3">
+        <div className="flex h-[600px] gap-4">
+            {/* Sidebar (History) */}
+            <div className={`${sidebarOpen ? 'w-1/4' : 'w-0'} transition-all duration-300 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl flex flex-col overflow-hidden`}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h5 className="font-bold text-slate-300">History</h5>
+                    <button onClick={startNewChat} className="p-1 px-2 bg-blue-600 rounded-lg text-xs font-semibold text-white hover:bg-blue-500 flex items-center">
+                        <Plus className="w-3 h-3 mr-1" /> New
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                    {sessions.map(s => (
+                        <div
+                            key={s.id}
+                            onClick={() => loadSession(s.id)}
+                            className={`p-3 rounded-lg text-sm cursor-pointer flex justify-between items-center group transition-colors ${currentSessionId === s.id ? "bg-blue-900/30 text-blue-200 border border-blue-500/30" : "text-slate-400 hover:bg-white/5"}`}
+                        >
+                            <div className="truncate pr-2 flex-grow">{s.title}</div>
+                            <button
+                                onClick={(e) => deleteSession(e, s.id)}
+                                className="text-slate-500 hover:text-red-400 p-1 hover:bg-white/10 rounded"
+                                title="Delete Chat"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                    {sessions.length === 0 && <div className="text-center text-xs text-slate-600 py-4">No recent chats</div>}
+                </div>
+            </div>
+
+            {/* Main Chat Area */}
+            <div className="flex-1 flex flex-col bg-slate-900/60 backdrop-blur-xl border border-blue-500/20 rounded-xl overflow-hidden relative">
+                {/* Header */}
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-800/30">
+                    <div className="flex items-center text-blue-400 font-bold text-lg">
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 opacity-70 hover:opacity-100">
+                            {sidebarOpen ? <ChevronDown className="w-5 h-5 rotate-90" /> : <ChevronDown className="w-5 h-5 -rotate-90" />}
+                        </button>
+                        <Briefcase className="w-6 h-6 mr-2" /> Orbit Bot
+                    </div>
+                    <div className="text-xs text-slate-500">
+                        {currentSessionId ? "Session Active" : "New Session"}
+                    </div>
+                </div>
+
+                {/* Messages */}
+                <div id="chat-history" className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950/30">
                     {history.map((msg, index) => (
-                        <div key={index} className={`max-w-[80%] p-3 rounded-xl shadow-sm text-sm whitespace-pre-wrap ${msg.role === "ai"
-                            ? "self-start bg-slate-800 text-slate-300 border border-white/5"
-                            : "self-end bg-blue-600 text-white"
+                        <div key={index} className={`max-w-[85%] p-3 rounded-xl shadow-sm text-sm whitespace-pre-wrap ${msg.role === "ai"
+                            ? "self-start bg-slate-800 text-slate-300 border border-white/5 rounded-tl-none"
+                            : "self-end bg-blue-600 text-white rounded-tr-none ml-auto"
                             }`}>
                             {msg.text}
                         </div>
                     ))}
                     {isLoading && (
-                        <div className="self-start bg-blue-900/20 p-3 rounded-xl text-sm text-blue-300 flex items-center border border-blue-500/20">
+                        <div className="self-start bg-blue-900/20 p-3 rounded-xl text-sm text-blue-300 flex items-center border border-blue-500/20 w-fit">
                             <Loader2 className="animate-spin w-4 h-4 mr-2" />
-                            <span className="font-semibold">Generating Response...</span>
+                            <span className="font-semibold">Orbit Bot is thinking...</span>
                         </div>
                     )}
                 </div>
+
+                {/* Input */}
+                {/* Input */}
+                <div className="p-4 bg-slate-900 border-t border-white/10">
+                    <div className="flex flex-col space-y-2">
+                        {selectedFile && (
+                            <div className="mb-2">
+                                <span className="text-xs font-semibold text-slate-400 mb-1 block uppercase tracking-wider">Attachment</span>
+                                <div className="flex items-center text-sm text-blue-200 bg-gradient-to-r from-blue-900/50 to-slate-900 px-4 py-2 rounded-lg border border-blue-500/30 w-full max-w-md shadow-lg shadow-blue-500/10">
+                                    <div className="bg-blue-600 p-2 rounded-md mr-3 text-white">
+                                        <Paperclip className="w-4 h-4" />
+                                    </div>
+                                    <span className="font-medium truncate flex-grow text-left">{selectedFile.name}</span>
+                                    <button
+                                        onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                                        className="ml-3 text-slate-400 hover:text-red-400 p-1 hover:bg-white/5 rounded-full transition-colors"
+                                    >
+                                        <XCircle className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex space-x-3 items-end">
+                            <button
+                                className="p-4 rounded-xl bg-slate-800 border border-white/10 text-slate-400 hover:text-blue-400 hover:bg-slate-700 hover:border-blue-500/30 transition-all shadow-lg shadow-blue-500/5 group"
+                                onClick={() => fileInputRef.current?.click()}
+                                title="Attach File"
+                                disabled={isLoading}
+                            >
+                                <Paperclip className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileSelect}
+                                className="hidden"
+                                accept=".pdf,.txt,.md,.py,.js,.html,.css,.json,.docx,.doc,.pptx,.ppt"
+                            />
+
+                            <div className="relative flex-grow">
+                                <Input
+                                    className="w-full py-4 pl-4 pr-4 rounded-xl bg-slate-800 border-white/10 focus:ring-blue-500 focus:border-blue-500 text-slate-200"
+                                    placeholder={selectedFile ? "Ask away..." : "Ask me anything, or attach notes (PDF, Word, PPT)..."}
+                                    value={question}
+                                    onChange={e => setQuestion(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <button className={`${buttonClass} w-24 py-4 rounded-xl font-bold tracking-wide shadow-lg shadow-blue-500/20 ${primaryButtonClass}`} onClick={askQuestion} disabled={isLoading || (!question.trim() && !selectedFile)}>
+                                {isLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : <div className="flex items-center justify-center">Send <SendIcon className="w-4 h-4 ml-1.5" /></div>}
+                            </button>
+                        </div>
+                        <div className="text-[10px] text-center text-slate-600">
+                            Powered by GroqCloud Llama 3.3
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div className="flex space-x-3 mt-4">
-                <Input
-                    className="flex-grow py-3 px-4 rounded-full"
-                    placeholder="Ask a question about your subject..."
-                    value={question}
-                    onChange={e => setQuestion(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={isLoading}
-                />
-                <button className={`${buttonClass} w-24 py-3 ${primaryButtonClass}`} onClick={askQuestion} disabled={isLoading || !question.trim()}>
-                    {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Ask'}
-                </button>
-            </div>
-            <div className="text-xs text-center mt-2 text-slate-500">Powered by GroqCloud</div>
         </div>
     );
 }
@@ -1576,6 +1762,181 @@ function ProfessorFeedback({ showMessage, primaryButtonClass, buttonClass, catal
     );
 }
 
+// --- NEW COMPONENT: Professor Messages (Chat Style) ---
+function ProfessorMessages({ showMessage }) {
+    const [conversations, setConversations] = useState([]);
+    const [activeThread, setActiveThread] = useState([]);
+    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [replyText, setReplyText] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSending, setIsSending] = useState(false);
+
+    // Auto-scroll logic
+    const messagesEndRef = useRef(null);
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    useEffect(scrollToBottom, [activeThread]);
+
+    // 1. Fetch List of Conversations (Students who have messaged)
+    const fetchConversations = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await auth().get("/faculty/conversations");
+            setConversations(res.data.conversations || []);
+        } catch (e) {
+            console.error(e);
+            showMessage("Failed to load conversations", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [showMessage]);
+
+    useEffect(() => { fetchConversations(); }, [fetchConversations]);
+
+    // 2. Fetch Thread when student selected
+    const selectStudent = async (student) => {
+        setSelectedStudent(student);
+        try {
+            const res = await auth().get(`/faculty/messages/${student.student_id}`);
+            setActiveThread(res.data.messages || []);
+            // Mark conversation as read locally
+            setConversations(prev => prev.map(c =>
+                c.student_id === student.student_id ? { ...c, unread_count: 0 } : c
+            ));
+        } catch (e) {
+            console.error(e);
+            showMessage("Failed to load chat history", "error");
+        }
+    };
+
+    const handleSendReply = async () => {
+        if (!replyText.trim()) return;
+        setIsSending(true);
+        try {
+            await auth().post("/faculty/messages/reply", {
+                student_id: selectedStudent.student_id,
+                reply_body: replyText
+            });
+
+            // Optimistic Update
+            const newMsg = {
+                id: Date.now(), // temp id
+                sender: 'faculty',
+                body: replyText,
+                timestamp: new Date().toISOString()
+            };
+            setActiveThread(prev => [...prev, newMsg]);
+            setReplyText("");
+        } catch (e) {
+            console.error(e);
+            showMessage("Failed to send reply", "error");
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    if (isLoading && conversations.length === 0) return <div className="p-8 text-center text-slate-400">Loading chats...</div>;
+
+    return (
+        <div className="flex h-[600px] gap-4">
+            {/* Sidebar: Conversation List */}
+            <div className="w-1/3 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden flex flex-col">
+                <div className="p-4 border-b border-white/10 bg-white/5">
+                    <h5 className="font-bold text-lg text-white">Messages</h5>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                    {conversations.length === 0 ? (
+                        <div className="p-4 text-center text-slate-500">No active conversations.</div>
+                    ) : (
+                        conversations.map(c => (
+                            <div
+                                key={c.student_id}
+                                onClick={() => selectStudent(c)}
+                                className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${selectedStudent?.student_id === c.student_id ? 'bg-blue-900/20 border-l-4 border-l-blue-500 chain-active' : ''}`}
+                            >
+                                <div className="flex justify-between items-start mb-1">
+                                    <div className="font-semibold text-slate-200">{c.student_name}</div>
+                                    {c.unread_count > 0 && (
+                                        <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full">{c.unread_count} new</span>
+                                    )}
+                                </div>
+                                <div className="text-xs text-slate-500 truncate">{c.last_message}</div>
+                                <div className="text-[10px] text-slate-600 mt-1">{new Date(c.last_timestamp).toLocaleDateString()}</div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Main Chat Area */}
+            <div className="flex-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl flex flex-col overflow-hidden relative">
+                {selectedStudent ? (
+                    <>
+                        {/* Header */}
+                        <div className="p-4 border-b border-white/10 bg-slate-800/50 flex justify-between items-center shadow-sm z-10">
+                            <div>
+                                <h4 className="font-bold text-white">{selectedStudent.student_name}</h4>
+                                <p className="text-xs text-slate-400">SRN: {selectedStudent.student_srn}</p>
+                            </div>
+                        </div>
+
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30">
+                            {activeThread.map((msg, idx) => {
+                                const isMe = msg.sender === 'faculty';
+                                return (
+                                    <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[70%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
+                                            ? 'bg-blue-600 text-white rounded-br-none'
+                                            : 'bg-slate-700 text-slate-200 rounded-bl-none'
+                                            }`}>
+                                            {!isMe && <div className="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-wider">Parent</div>}
+                                            {msg.body}
+                                            <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
+                                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="p-4 bg-slate-800/80 border-t border-white/10">
+                            <div className="flex gap-2">
+                                <textarea
+                                    className="flex-1 bg-slate-900 text-white rounded-xl border border-white/10 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
+                                    placeholder="Type your reply..."
+                                    value={replyText}
+                                    onChange={e => setReplyText(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
+                                />
+                                <button
+                                    onClick={handleSendReply}
+                                    disabled={isSending || !replyText.trim()}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
+                                >
+                                    {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
+                                </button>
+                            </div>
+                            <div className="text-[10px] text-center text-slate-500 mt-2">
+                                Reply will be sent via email and saved to chat history.
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-slate-600">
+                        <MessageSquare className="w-16 h-16 opacity-20 mb-4" />
+                        <p>Select a conversation to start chatting.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 // Professor Panel (Updated for separated Degree/Semester controls + Strict Allocation Filtering)
 function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButtonClass, dangerButtonClass }) {
     const [view, setView] = useState('notes');
@@ -1808,17 +2169,18 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                         </div>
                         {/* END SEPARATE DROPDOWNS */}
 
-                        <Input type="date" value={nDeadline} onChange={e => setNDeadline(e.target.value)} disabled={isNoticeLoading} className="text-slate-300" />
-
                         <Select value={nSubject} onChange={e => setNSubject(e.target.value)} icon={Book} disabled={isNoticeLoading || !availableSubjects.length}>
-                            <option value="" className="text-slate-900">Select Subject (Optional)</option>
+                            <option value="" className="text-slate-900">Select Subject</option>
                             {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                         </Select>
-                        <label className="block text-sm text-slate-300 font-medium pt-2">Attachment (Optional):</label>
-                        <input id="noticeAttachment" type="file" onChange={e => setAttachment(e.target.files[0])} className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 transition duration-200" disabled={isNoticeLoading} />
+                        <div className="flex gap-2">
+                            <input type="date" value={nDeadline} onChange={e => setNDeadline(e.target.value)} className="bg-slate-800/50 text-white border border-white/10 rounded-lg px-4" disabled={isNoticeLoading} />
+                            <input type="file" onChange={e => setAttachment(e.target.files[0])} className="text-xs text-slate-400 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700" disabled={isNoticeLoading} />
+                        </div>
                         <button className={`${buttonClass} ${dangerButtonClass} w-full`} onClick={postNotice} disabled={isNoticeLoading || !nTitle || !nMsg || !nSection || !nSubject}> {isNoticeLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Bell className="w-5 h-5 mr-2" />} {isNoticeLoading ? 'Posting...' : 'Post Notice'} </button>
                     </div>
                 );
+            case 'messages': return <ProfessorMessages showMessage={showMessage} />; // NEW
             case 'marks':
                 return <ProfessorMarksUpload showMessage={showMessage} primaryButtonClass={successButtonClass} buttonClass={buttonClass} catalogs={catalogs} user={user} />;
             case 'feedback':
@@ -1827,6 +2189,8 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                 return <UnifiedLibrarySearch showMessage={showMessage} primaryButtonClass={successButtonClass} buttonClass={buttonClass} />;
             case 'attendance':
                 return <FacultyAttendance showMessage={showMessage} buttonClass={buttonClass} catalogs={catalogs} />;
+            case 'chat':
+                return <AIChat showMessage={showMessage} primaryButtonClass={successButtonClass} buttonClass={buttonClass} />;
             default:
                 return <div className="p-8 text-center text-gray-500">Welcome to the Faculty Portal. Select a tool from the sidebar.</div>;
         }
@@ -1837,8 +2201,10 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
         { key: 'notices', label: 'Create Notices', icon: Bell },
         { key: 'marks', label: 'Upload Marks', icon: Award },
         { key: 'feedback', label: 'Send Feedback', icon: MessageSquare },
+        { key: 'messages', label: 'Parent Messages', icon: Mail }, // NEW
         { key: 'attendance', label: 'Attendance', icon: ClipboardList },
         { key: 'books', label: 'Search Library', icon: Search },
+        { key: 'chat', label: 'Orbit Bot', icon: Briefcase },
     ];
 
     return (
@@ -3686,7 +4052,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
         { key: 'attendance', label: 'My Attendance', icon: ClipboardList },
         { key: 'complaints', label: 'Hostel Complaints', icon: Home },
         { key: 'insights', label: 'Academic Insights', icon: BrainCircuit },
-        { key: 'chat', label: 'AI Study Chat', icon: Briefcase },
+        { key: 'chat', label: 'Orbit Bot', icon: Briefcase },
     ];
 
     // GSAP Navigation Animation
@@ -3763,12 +4129,229 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
     );
 }
 
+// --- NEW COMPONENT: Parent Contact Faculty (Chat Style) ---
+function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonClass }) {
+    const [professors, setProfessors] = useState([]);
+    const [conversations, setConversations] = useState([]);
+    const [activeThread, setActiveThread] = useState([]);
+    const [selectedProf, setSelectedProf] = useState(null);
+    const [replyText, setReplyText] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSending, setIsSending] = useState(false);
+
+    // Auto-scroll
+    const messagesEndRef = useRef(null);
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    useEffect(scrollToBottom, [activeThread]);
+
+    // Fetch Professors & Previous Conversations
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const [profsRes, convsRes] = await Promise.all([
+                auth().get("/parent/professors"),
+                auth().get("/parent/conversations")
+            ]);
+            setProfessors(profsRes.data.professors || []);
+            setConversations(convsRes.data.conversations || []);
+        } catch (e) {
+            console.error(e);
+            showMessage("Failed to load data.", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [showMessage]);
+
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    const selectProfessor = async (prof) => {
+        setSelectedProf(prof);
+        try {
+            const res = await auth().get(`/parent/messages/${prof.id}`);
+            setActiveThread(res.data.messages || []);
+            // Update local badge
+            setConversations(prev => prev.map(c =>
+                c.faculty_id === prof.id ? { ...c, unread_count: 0 } : c
+            ));
+        } catch (e) {
+            // If no thread exists, that's fine, empty array
+            setActiveThread([]);
+        }
+    };
+
+    const handleSendMessage = async () => {
+        if (!replyText.trim()) return;
+        setIsSending(true);
+
+        try {
+            if (activeThread.length === 0) {
+                // First message: standard /parent/contact-professor (Email + DB)
+                // Default Subject: Extract first subject from allocation array
+                const subjects = Array.isArray(selectedProf.allocations) ? selectedProf.allocations : [];
+                const defaultSubject = subjects.length > 0 ? subjects[0] : "Parent Inquiry";
+
+                await auth().post("/parent/contact-professor", {
+                    professor_id: selectedProf.id,
+                    subject: defaultSubject,
+                    message: replyText
+                });
+            } else {
+                // Follow-up: /parent/messages/reply (DB + Email)
+                await auth().post("/parent/messages/reply", {
+                    faculty_id: selectedProf.id,
+                    reply_body: replyText
+                });
+            }
+
+            // Optimistic Append
+            const newMsg = {
+                id: Date.now(),
+                sender: 'parent',
+                body: replyText,
+                timestamp: new Date().toISOString()
+            };
+            setActiveThread(prev => [...prev, newMsg]);
+            setReplyText("");
+        } catch (e) {
+            console.error(e);
+            showMessage("Failed to send message.", "error");
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    if (isLoading) return <div className="p-10 text-center"><Loader2 className="animate-spin w-8 h-8 mx-auto text-blue-500" /></div>;
+
+    // Merge Professors list with Conversation metadata (badges, last msg)
+    const displayList = professors.map(p => {
+        const conv = conversations.find(c => c.faculty_id === p.id);
+        return { ...p, ...conv };
+    });
+
+    return (
+        <div className="flex flex-col h-[600px] gap-4">
+            <h4 className="text-2xl font-bold text-blue-400 flex items-center shrink-0">
+                <Mail className="w-6 h-6 mr-2" /> Contact Class Faculty
+            </h4>
+
+            <div className="flex flex-1 gap-4 overflow-hidden">
+                {/* Sidebar: Faculty List */}
+                <div className="w-1/3 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-white/10 bg-white/5">
+                        <h5 className="font-bold text-lg text-white">Professors</h5>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        {displayList.map(p => (
+                            <div
+                                key={p.id}
+                                onClick={() => selectProfessor(p)}
+                                className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${selectedProf?.id === p.id ? 'bg-blue-900/20 border-l-4 border-l-blue-500' : ''}`}
+                            >
+                                <div className="flex justify-between items-start mb-1">
+                                    <div className="font-semibold text-slate-200">Prof. {p.name}</div>
+                                    {p.unread_count > 0 && (
+                                        <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full">{p.unread_count} new</span>
+                                    )}
+                                </div>
+                                <div className="text-xs text-blue-400 mb-1">{p.allocations && p.allocations.length > 0 ? p.allocations.join(", ") : "General Faculty"}</div>
+                                {p.last_message && (
+                                    <>
+                                        <div className="text-xs text-slate-500 truncate">{p.last_message}</div>
+                                        <div className="text-[10px] text-slate-600 mt-1">{new Date(p.last_timestamp).toLocaleDateString()}</div>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Main Chat Area */}
+                <div className="flex-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl flex flex-col overflow-hidden relative">
+                    {selectedProf ? (
+                        <>
+                            {/* Header */}
+                            <div className="p-4 border-b border-white/10 bg-slate-800/50 flex flex-col shadow-sm z-10">
+                                <h4 className="font-bold text-white">Prof. {selectedProf.name}</h4>
+                                <p className="text-xs text-slate-400">Subject: {selectedProf.allocations && selectedProf.allocations.length > 0 ? selectedProf.allocations.join(", ") : "N/A"}</p>
+                            </div>
+
+                            {/* Messages Area */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30">
+                                {activeThread.length === 0 ? (
+                                    <div className="text-center text-slate-500 py-10 opacity-70">
+                                        <p>Start a new conversation with Prof. {selectedProf.name}.</p>
+                                        <p className="text-sm">Subject will default to: "{selectedProf.allocations && selectedProf.allocations[0] ? selectedProf.allocations[0] : "Parent Inquiry"}"</p>
+                                    </div>
+                                ) : (
+                                    activeThread.map((msg, idx) => {
+                                        const isMe = msg.sender === 'parent';
+                                        return (
+                                            <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`max-w-[70%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
+                                                    ? 'bg-blue-600 text-white rounded-br-none'
+                                                    : 'bg-slate-700 text-slate-200 rounded-bl-none'
+                                                    }`}>
+                                                    {!isMe && <div className="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-wider">Prof. {selectedProf.name}</div>}
+                                                    {msg.body}
+                                                    <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
+                                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
+
+                            {/* Input Area */}
+                            <div className="p-4 bg-slate-800/80 border-t border-white/10">
+                                <div className="flex gap-2">
+                                    <textarea
+                                        className="flex-1 bg-slate-900 text-white rounded-xl border border-white/10 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
+                                        placeholder={`Message Prof. ${selectedProf.name}...`}
+                                        value={replyText}
+                                        onChange={e => setReplyText(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                                    />
+                                    <button
+                                        onClick={handleSendMessage}
+                                        disabled={isSending || !replyText.trim()}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
+                                    >
+                                        {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                                <div className="text-[10px] text-center text-slate-500 mt-2">
+                                    Message sent securely via email & portal.
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-600">
+                            <Mail className="w-16 h-16 opacity-20 mb-4" />
+                            <p>Select a professor to start messaging.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <p className="text-xs text-center text-slate-500">
+                Check your email ({user.email}) for notifications.
+            </p>
+        </div>
+    );
+}
+
 // Parent Panel (Reusing Student Components)
 function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass }) {
     const [view, setView] = useState('attendance');
 
     const navigation = [
         { key: 'attendance', label: 'Ward Attendance', icon: ClipboardList },
+        { key: 'contact', label: 'Contact Faculty', icon: Mail },
         { key: 'marks', label: 'Academic Performance', icon: Award },
         { key: 'fees', label: 'Fee Payments', icon: DollarSign },
         { key: 'feedback', label: 'Feedback', icon: MessageSquare },
@@ -3805,12 +4388,13 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
     const renderView = () => {
         switch (view) {
             case 'attendance': return <StudentAttendanceCalendar showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'contact': return <ParentContactFaculty user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'marks': return <StudentMarks user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'fees': return <StudentFees user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'feedback': return <StudentFeedback showMessage={showMessage} />;
             case 'complaints': return <HostelComplaints showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'insights': return <AcademicInsights user={user} showMessage={showMessage} />;
-            default: return <div className="text-center p-10 text-slate-500">Select an option</div>;
+            default: return <div className="p-8 text-center text-gray-500">Welcome, Parent! Select a module to begin.</div>;
         }
     };
 
@@ -3981,12 +4565,13 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 font-sans p-4 sm:p-8 text-white selection:bg-blue-500/30 selection:text-blue-200 relative overflow-x-hidden">
+        <div className="min-h-screen bg-transparent font-sans p-4 sm:p-8 text-white selection:bg-blue-500/30 selection:text-blue-200 relative overflow-x-hidden">
             {/* Global Background Elements */}
+            <ParticleBackground />
             <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] opacity-40 animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] opacity-40" />
-                <div className="absolute top-[20%] right-[30%] w-[200px] h-[200px] bg-cyan-500/10 rounded-full blur-[80px]" />
+                {/* <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] opacity-40 animate-pulse" /> */}
+                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] opacity-20" />
+                {/* <div className="absolute top-[20%] right-[30%] w-[200px] h-[200px] bg-cyan-500/10 rounded-full blur-[80px]" /> */}
             </div>
 
             <div className="max-w-6xl mx-auto w-full relative z-10">

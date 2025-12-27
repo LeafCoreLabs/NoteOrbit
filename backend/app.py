@@ -22,6 +22,16 @@ import io
 import csv
 import boto3
 from functools import wraps
+# File Processing Libs
+try:
+    import docx
+except ImportError:
+    docx = None
+try:
+    from pptx import Presentation
+except ImportError:
+    Presentation = None
+    
 # Optional PDF tool
 try:
     import pdfkit
@@ -188,6 +198,8 @@ def send_professional_email(to_email, subject, title, details, main_body):
     </html>
     """
     return send_email(to_email, subject, html_content)
+
+
 
 
 def generate_otp():
@@ -367,6 +379,24 @@ class HostelAllocation(db.Model):
     hostel_id = db.Column(db.Integer, db.ForeignKey('hostel.id'))
     room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
     allocated_on = db.Column(db.DateTime, default=datetime.utcnow)
+
+class AIChatSession(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), default="New Chat")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    messages = db.relationship('AIChatMessage', backref='session', cascade='all, delete-orphan')
+
+class AIChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(36), db.ForeignKey('ai_chat_session.id', ondelete='CASCADE'), nullable=False)
+    role = db.Column(db.String(20), nullable=False) # 'user' or 'ai'
+    text = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    # Optional: store file reference if we want to retrieve attachments later
+    attachment = db.Column(db.String(255), nullable=True)
+
 # --- END NEW HOSTEL DB MODELS ---
 
 
@@ -570,6 +600,19 @@ class Attendance(db.Model):
     )
 
 
+class Message(db.Model):
+    __tablename__ = "messages"
+    id = db.Column(db.Integer, primary_key=True)
+    sender = db.Column(db.String(20), nullable=False) # 'parent' or 'faculty'
+    student_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    faculty_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False) 
+    subject = db.Column(db.String(200))
+    body = db.Column(db.Text)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+
 # -------------------- AUTH / RBAC HELPERS --------------------
 
 def roles_allowed(roles):
@@ -591,6 +634,24 @@ def roles_allowed(roles):
 
             if not user or user.role not in roles:
                 return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def roles_allowed(allowed_roles):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            try:
+                verify_jwt_in_request()
+                claims = get_jwt()
+            except Exception as e:
+                return jsonify({"success": False, "message": "Authentication required", "detail": str(e)}), 401
+
+            if claims.get("role") not in allowed_roles:
+                return jsonify({"success": False, "message": "Insufficient permissions"}), 403
+        
             return fn(*args, **kwargs)
         return wrapper
     return decorator
@@ -2012,7 +2073,7 @@ def faculty_upload_marks():
         marks = float(marks_obtained)
         max_m = float(max_marks)
         if marks < 0 or max_m <= 0 or marks > max_m:
-             return jsonify({"success": False, "message": "Invalid mark values (marks must be $\\ge 0$ and $\\le max\_marks$, max\_marks $> 0$)."}), 400
+             return jsonify({"success": False, "message": "Invalid mark values (marks must be $\\ge 0$ and $\\le max\\_marks$, max\\_marks $> 0$)."}), 400
     except ValueError:
         return jsonify({"success": False, "message": "Marks must be numeric."}), 400
 
@@ -2249,7 +2310,7 @@ def call_groq_api(prompt: str):
     payload = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "You are a helpful academic assistant for students and professors. Provide concise and relevant answers."},
+            {"role": "system", "content": "You are Orbit Bot, an Academic Assistant trained by Meta and tuned at LeafCore Labs. If asked who you are, introduce yourself using this identity. Provide helpful, concise, and academically relevant answers."},
             {"role": "user", "content": prompt}
         ]
     }
@@ -2278,14 +2339,143 @@ def call_groq_api(prompt: str):
 @app.route("/chat", methods=["POST"])
 @jwt_required()
 def chat():
-    data = request.json or {}; q = data.get("question") or data.get("q") or ""
-    if not q:
-        return jsonify({"success": False, "message": "Question required"}), 400
-    answer, error_msg = call_groq_api(q)
+    # Handle both JSON and Multipart
+    q = ""
+    file_text = ""
+    session_id = ""
+    user_id = int(get_jwt_identity())
+    
+    # 1. Parse Input
+    if request.is_json:
+        data = request.json or {}
+        q = data.get("question") or data.get("q") or ""
+        session_id = data.get("session_id")
+    else:
+        q = request.form.get("question") or request.form.get("q") or ""
+        session_id = request.form.get("session_id")
+        
+        # 2. Handle File Upload
+        if 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename:
+                filename = file.filename.lower()
+                try:
+                    if filename.endswith('.pdf'):
+                        try:
+                            import PyPDF2
+                            pdf_reader = PyPDF2.PdfReader(file.stream)
+                            for page in pdf_reader.pages:
+                                text = page.extract_text()
+                                if text:
+                                    file_text += text + "\n"
+                        except ImportError:
+                             return jsonify({"success": False, "message": "Server missing PyPDF2 library. Please install it."}), 500
+                    
+                    elif filename.endswith('.docx') or filename.endswith('.doc'):
+                        if not docx: return jsonify({"success": False, "message": "Server missing python-docx library."}), 500
+                        try:
+                            doc = docx.Document(file.stream)
+                            for para in doc.paragraphs:
+                                file_text += para.text + "\n"
+                        except Exception as e:
+                            file_text = f"[Error reading DOCX: {str(e)}]"
+
+                    elif filename.endswith('.pptx'):
+                        if not Presentation: return jsonify({"success": False, "message": "Server missing python-pptx library."}), 500
+                        try:
+                            prs = Presentation(file.stream)
+                            for slide in prs.slides:
+                                for shape in slide.shapes:
+                                    if hasattr(shape, "text"):
+                                        file_text += shape.text + "\n"
+                        except Exception as e:
+                             file_text = f"[Error reading PPTX: {str(e)}]"
+
+
+
+                    elif filename.endswith(('.txt', '.md', '.py', '.js', '.html', '.css', '.json')):
+                         file_text = file.read().decode('utf-8', errors='ignore')
+                    else:
+                        file_text = f"[Uploaded file: {file.filename} - Type not supported for automatic reading]"
+                except Exception as e:
+                    print(f"File read error: {e}")
+                    file_text = f"[Error reading file: {str(e)}]"
+
+    if not q and not file_text:
+        return jsonify({"success": False, "message": "Question or file required"}), 400
+
+    # 3. Session Management
+    session = None
+    if session_id:
+        session = AIChatSession.query.filter_by(id=session_id, user_id=user_id).first()
+        if not session:
+             return jsonify({"success": False, "message": "Session not found or access denied"}), 404
+        session.updated_at = datetime.utcnow()
+    else:
+        # Create New Session
+        # Generate title from query (first 50 chars) or "New Chat" if empty/file-only
+        title = q[:50] + "..." if q else "File Analysis"
+        session = AIChatSession(user_id=user_id, title=title)
+        db.session.add(session)
+        db.session.commit()
+    
+    # 4. Save User Message
+    user_msg_text = q
+    if file_text:
+        user_msg_text += f"\n[Attached: {request.files['file'].filename if 'file' in request.files else 'File'}]"
+    
+    db.session.add(AIChatMessage(session_id=session.id, role="user", text=user_msg_text))
+    
+    # 5. Construct Prompt with Context
+    final_prompt = q
+    if file_text:
+        final_prompt += f"\n\n--- CONTEXT FROM UPLOADED FILE ({request.files['file'].filename}) ---\n{file_text[:20000]}\n--- END CONTEXT ---\n(Note: Text has been extracted from the file. Answer based on this context if relevant.)"
+
+    # Context Awareness: Retrieve last few messages for context?
+    # For now, keeping it stateless per request to save tokens, but could fetch history here.
+    
+    answer, error_msg = call_groq_api(final_prompt)
+    
     if answer:
-        return jsonify({"success": True, "answer": answer})
+        # Save AI Response
+        db.session.add(AIChatMessage(session_id=session.id, role="ai", text=answer))
+        db.session.commit()
+        return jsonify({"success": True, "answer": answer, "session_id": session.id})
     else:
         return jsonify({"success": False, "message": error_msg or "Failed to get response from AI model."}), 500
+
+
+@app.route("/ai/sessions", methods=["GET"])
+@jwt_required()
+def get_ai_sessions():
+    uid = int(get_jwt_identity())
+    sessions = AIChatSession.query.filter_by(user_id=uid).order_by(AIChatSession.updated_at.desc()).all()
+    out = [{"id": s.id, "title": s.title, "updated_at": s.updated_at.isoformat()} for s in sessions]
+    return jsonify({"success": True, "sessions": out})
+
+
+@app.route("/ai/session/<session_id>", methods=["GET", "DELETE"])
+@jwt_required()
+def manage_ai_session(session_id):
+    uid = int(get_jwt_identity())
+    session = AIChatSession.query.filter_by(id=session_id, user_id=uid).first()
+    if not session:
+        return jsonify({"success": False, "message": "Session not found"}), 404
+
+    if request.method == 'DELETE':
+        try:
+            AIChatMessage.query.filter_by(session_id=session_id).delete() # Manual cascade
+            db.session.delete(session)
+            db.session.commit()
+            return jsonify({"success": True, "message": "Session deleted"})
+        except Exception as e:
+            print(f"Error deleting session: {e}")
+            db.session.rollback()
+            return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
+
+    messages = AIChatMessage.query.filter_by(session_id=session_id).order_by(AIChatMessage.timestamp.asc()).all()
+    out = [{"role": m.role, "text": m.text, "timestamp": m.timestamp.isoformat()} for m in messages]
+    return jsonify({"success": True, "messages": out, "title": session.title})
 
 
 @app.route("/api/academic-insights", methods=["GET"])
@@ -2421,7 +2611,342 @@ def init_db():
         db.session.commit()
         print("Created default hostels and rooms.")
 
+    # Create Messages table if it doesn't exist (handled by create_all normally, but just to be sure if adding to existing DB)
+    # db.create_all() handles it
+
     os.makedirs(RECEIPT_TMP_DIR, exist_ok=True)
+
+
+# -------------------- PARENT COMMUNICATION ROUTES --------------------
+
+@app.route("/parent/professors", methods=["GET"])
+@roles_allowed(["parent", "student"]) # Allow both to see their professors
+def parent_get_professors():
+    identity = get_jwt_identity()
+    user = User.query.get(identity)
+    if not user:
+        return jsonify({"success": False, "message": "User not found"}), 404
+
+    # Find allocations for the student's current class
+    allocations = FacultyAllocation.query.filter_by(
+        degree=user.degree,
+        semester=user.semester,
+        section=user.section
+    ).all()
+
+    professors = []
+    seen_ids = set()
+    
+    for alloc in allocations:
+        prof = User.query.get(alloc.faculty_id)
+        if prof and prof.id not in seen_ids:
+            professors.append({
+                "id": prof.id,
+                "name": prof.name,
+                "email": prof.email,
+                "subject": alloc.subject, # Primary subject for context
+                "allocations": [a.subject for a in allocations if a.faculty_id == prof.id] # All subjects taught by this prof to this class
+            })
+            seen_ids.add(prof.id)
+
+    return jsonify({"success": True, "professors": professors})
+
+
+@app.route("/parent/contact-professor", methods=["POST"])
+@roles_allowed(["parent"]) 
+def parent_contact_professor():
+    identity = get_jwt_identity()
+    student = User.query.get(identity) # Parent token identity is the Student ID
+    if not student:
+        return jsonify({"success": False, "message": "Student record not found"}), 404
+
+    data = request.json or {}
+    prof_id = data.get("professor_id")
+    subject_line = data.get("subject", "Parent Inquiry")
+    message_body = data.get("message", "")
+    
+    if not prof_id or not message_body:
+        return jsonify({"success": False, "message": "Professor and message are required"}), 400
+
+    prof = User.query.get(prof_id)
+    if not prof:
+         return jsonify({"success": False, "message": "Professor not found"}), 404
+
+    # Construct the Email
+    # We use the Parent Email from the student record if available, else fallback
+    reply_to = student.parent_email or f"parent_of_{student.srn}@noteorbit.com" 
+    
+    email_subject = f"[NoteOrbit] Parent Query: {student.name} ({student.srn})"
+    
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
+        <div style="background-color: #3b82f6; padding: 20px; color: white;">
+            <h2 style="margin: 0;">Parent Communication</h2>
+            <p style="margin: 5px 0 0; opacity: 0.9;">From the desk of {student.name}'s Guardian</p>
+        </div>
+        <div style="padding: 30px;">
+            <p><strong>To:</strong> Prof. {prof.name}</p>
+            <p><strong>Regarding Student:</strong> {student.name} ({student.srn})</p>
+            <p><strong>Class:</strong> {student.degree} - Sem {student.semester} (Sec {student.section})</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            
+            <h3 style="color: #3b82f6; margin-top: 0;">{subject_line}</h3>
+            <p style="background-color: #f9fafb; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                "{message_body}"
+            </p>
+            
+            <p style="margin-top: 30px; font-size: 13px; color: #666;">
+                You can reply directly to this email to contact the parent at <a href="mailto:{reply_to}">{reply_to}</a>.
+            </p>
+        </div>
+         <div style="background-color: #f4f4f9; padding: 15px; text-align: center; font-size: 12px; color: #999;">
+            NoteOrbit Academic Portal
+        </div>
+    </div>
+    """
+
+    # We can't strictly set "Reply-To" in our simple helper without modification, 
+    # but we can try injecting it into headers if we modify send_email later. 
+    # For now, we rely on the body containing the contact info.
+    # Actually, let's just assume the Prof sees the "From" address as the System and replies to the text in body.
+    
+    # --- SAVE TO DB (In-App Messaging) ---
+    try:
+        new_msg = Message(
+            sender="parent",
+            student_id=student.id,
+            faculty_id=prof.id,
+            subject=subject_line,
+            body=message_body
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+    except Exception as e:
+        print(f"Error saving message to DB: {e}")
+    
+    # Send Email Notification
+    send_email(prof.email, email_subject, html_content)
+    
+    return jsonify({"success": True, "message": f"Message sent to Prof. {prof.name}"})
+
+
+@app.route("/faculty/conversations", methods=["GET"])
+@roles_allowed(["professor"])
+def get_faculty_conversations():
+    """Returns list of students the faculty has chatted with, ordered by most recent activity."""
+    identity = get_jwt_identity()
+    prof_id = int(identity)
+    
+    # Get all messages for this faculty
+    msgs = Message.query.filter_by(faculty_id=prof_id).order_by(Message.created_at.desc()).all()
+    
+    # Group by student
+    students_map = {}
+    for m in msgs:
+        if m.student_id not in students_map:
+            s_obj = User.query.get(m.student_id)
+            if not s_obj: continue
+            
+            # Count unread from parent
+            unread_count = 0
+            
+            students_map[m.student_id] = {
+                "student_id": s_obj.id,
+                "student_name": s_obj.name,
+                "student_srn": s_obj.srn,
+                "last_message": m.body[:50] + "..." if len(m.body)>50 else m.body,
+                "last_timestamp": m.created_at.isoformat(),
+                "unread_count": 0
+            }
+        
+        # Increment unread if message is from parent and not read
+        if m.sender == 'parent' and not m.is_read:
+            students_map[m.student_id]["unread_count"] += 1
+
+    return jsonify({"success": True, "conversations": list(students_map.values())})
+
+
+@app.route("/faculty/messages/<int:student_id>", methods=["GET"])
+@roles_allowed(["professor"])
+def get_conversation_thread(student_id):
+    """Gets full chat history with a specific student/parent."""
+    identity = get_jwt_identity()
+    prof_id = int(identity)
+
+    msgs = Message.query.filter_by(faculty_id=prof_id, student_id=student_id).order_by(Message.created_at.asc()).all()
+    
+    # Mark all parent messages as read
+    for m in msgs:
+        if m.sender == 'parent' and not m.is_read:
+            m.is_read = True
+    db.session.commit()
+    
+    out = []
+    for m in msgs:
+        out.append({
+            "id": m.id,
+            "sender": m.sender, # 'parent' or 'faculty'
+            "body": m.body,
+            "subject": m.subject,
+            "timestamp": m.created_at.isoformat()
+        })
+        
+    return jsonify({"success": True, "messages": out})
+
+
+@app.route("/faculty/messages/reply", methods=["POST"])
+@roles_allowed(["professor"])
+def reply_to_parent():
+    identity = get_jwt_identity()
+    prof = User.query.get(identity)
+    
+    data = request.json or {}
+    student_id = data.get("student_id") # Use Student ID context
+    reply_body = data.get("reply_body")
+    
+    if not student_id or not reply_body:
+        return jsonify({"success": False, "message": "Student ID and reply body required"}), 400
+        
+    student = User.query.get(student_id)
+    if not student or not student.parent_email:
+        return jsonify({"success": False, "message": "Parent email not found"}), 404
+        
+    # 1. Save to DB
+    try:
+        new_msg = Message(
+            sender="faculty",
+            student_id=student.id,
+            faculty_id=prof.id,
+            subject=f"Reply: Parent Query ({student.name})",
+            body=reply_body,
+            is_read=True # Faculty read their own message
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+    except Exception as e:
+        print("DB Save Error:", e)
+
+    # 2. Send Email
+    subject = f"Re: Query regarding {student.name} - [Prof. {prof.name}]"
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <p><strong>From:</strong> Prof. {prof.name}</p>
+        <hr/>
+        <p>{reply_body}</p>
+        <p style="color: #666; font-size: 12px; margin-top: 20px;">
+           Reply strictly via email or check the portal.
+        </p>
+    </div>
+    """
+    send_email(student.parent_email, subject, html_content)
+    return jsonify({"success": True, "message": "Reply sent"})
+
+
+@app.route("/parent/conversations", methods=["GET"])
+@roles_allowed(["parent", "student"]) 
+def get_parent_conversations():
+    """Returns list of professors the student/parent has chatted with."""
+    identity = get_jwt_identity()
+    student = User.query.get(identity)
+    
+    # Get all messages where this student is involved
+    msgs = Message.query.filter_by(student_id=student.id).order_by(Message.created_at.desc()).all()
+    
+    faculty_map = {}
+    for m in msgs:
+        if m.faculty_id not in faculty_map:
+            prof = User.query.get(m.faculty_id)
+            if not prof: continue
+            
+            # Count unread from faculty
+            unread_count = 0
+            
+            faculty_map[m.faculty_id] = {
+                "faculty_id": prof.id,
+                "faculty_name": prof.name,
+                "last_message": m.body[:50] + "..." if len(m.body)>50 else m.body,
+                "last_timestamp": m.created_at.isoformat(),
+                "unread_count": 0
+            }
+        
+        if m.sender == 'faculty' and not m.is_read:
+            faculty_map[m.faculty_id]["unread_count"] += 1
+
+    return jsonify({"success": True, "conversations": list(faculty_map.values())})
+
+
+@app.route("/parent/messages/<int:faculty_id>", methods=["GET"])
+@roles_allowed(["parent", "student"])
+def get_parent_thread(faculty_id):
+    """Gets full chat history with a specific professor."""
+    identity = get_jwt_identity()
+    student_id = int(identity)
+
+    msgs = Message.query.filter_by(student_id=student_id, faculty_id=faculty_id).order_by(Message.created_at.asc()).all()
+    
+    # Mark all faculty messages as read
+    for m in msgs:
+        if m.sender == 'faculty' and not m.is_read:
+            m.is_read = True
+    db.session.commit()
+    
+    out = []
+    for m in msgs:
+        out.append({
+            "id": m.id,
+            "sender": m.sender, # 'parent' or 'faculty'
+            "body": m.body,
+            "subject": m.subject,
+            "timestamp": m.created_at.isoformat()
+        })
+        
+    return jsonify({"success": True, "messages": out})
+
+
+@app.route("/parent/messages/reply", methods=["POST"])
+@roles_allowed(["parent"]) # Only parent can reply, student read-only? Let's allow parent.
+def parent_reply():
+    identity = get_jwt_identity()
+    student = User.query.get(identity)
+    
+    data = request.json or {}
+    faculty_id = data.get("faculty_id")
+    reply_body = data.get("reply_body")
+    
+    if not faculty_id or not reply_body:
+        return jsonify({"success": False, "message": "Faculty ID and reply body required"}), 400
+        
+    prof = User.query.get(faculty_id)
+    if not prof:
+        return jsonify({"success": False, "message": "Professor not found"}), 404
+
+    # 1. Save to DB
+    try:
+        new_msg = Message(
+            sender="parent",
+            student_id=student.id,
+            faculty_id=prof.id,
+            subject=f"Reply from Parent of {student.name}",
+            body=reply_body,
+            is_read=False
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+    except Exception as e:
+        print("DB Save Error:", e)
+
+    # 2. Send Email to Faculty
+    subject = f"New Message from Parent of {student.name}"
+    html_content = f"""
+    <div style="padding: 20px;">
+        <p><strong>Parent Reply:</strong></p>
+        <p>{reply_body}</p>
+        <p style="color: #666; font-size: 12px; margin-top: 20px;">Login to portal to reply.</p>
+    </div>
+    """
+    send_email(prof.email, subject, html_content)
+    
+    return jsonify({"success": True, "message": "Reply sent"})
 
 
 # -------------------- START --------------------
