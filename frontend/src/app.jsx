@@ -1828,6 +1828,7 @@ function ProfessorMessages({ showMessage }) {
     const [replyText, setReplyText] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
 
     // Auto-scroll logic
     const messagesEndRef = useRef(null);
@@ -1855,6 +1856,7 @@ function ProfessorMessages({ showMessage }) {
     // 2. Fetch Thread when student selected
     const selectStudent = async (student) => {
         setSelectedStudent(student);
+        setSidebarOpen(false); // Close mobile drawer
         try {
             const res = await auth().get(`/faculty/messages/${student.student_id}`);
             setActiveThread(res.data.messages || []);
@@ -1897,11 +1899,18 @@ function ProfessorMessages({ showMessage }) {
     if (isLoading && conversations.length === 0) return <div className="p-8 text-center text-slate-400">Loading chats...</div>;
 
     return (
-        <div className="flex h-[600px] gap-4">
-            {/* Sidebar: Conversation List */}
-            <div className="w-1/3 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden flex flex-col">
-                <div className="p-4 border-b border-white/10 bg-white/5">
+        <div className="flex h-[600px] gap-4 relative isolate overflow-hidden">
+            {/* Sidebar: Conversation List - Mobile Drawer / Desktop Static */}
+            <div className={`
+                absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
+                md:static md:w-1/3 md:bg-slate-900/60 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col md:shadow-none md:translate-x-0
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-0 md:p-0'}
+            `}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
                     <h5 className="font-bold text-lg text-white">Messages</h5>
+                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
                 </div>
                 <div className="flex-1 overflow-y-auto">
                     {conversations.length === 0 ? (
@@ -1927,12 +1936,23 @@ function ProfessorMessages({ showMessage }) {
                 </div>
             </div>
 
+            {/* Mobile Overlay for Sidebar */}
+            {sidebarOpen && (
+                <div
+                    className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Main Chat Area */}
-            <div className="flex-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl flex flex-col overflow-hidden relative">
+            <div className={`flex-1 flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden relative transition-all duration-300 ${sidebarOpen ? 'md:w-2/3' : 'w-full'}`}>
                 {selectedStudent ? (
                     <>
                         {/* Header */}
-                        <div className="p-4 border-b border-white/10 bg-slate-800/50 flex justify-between items-center shadow-sm z-10">
+                        <div className="p-4 border-b border-white/10 bg-slate-800/50 flex items-center shadow-sm z-10">
+                            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-white/5 transition-colors text-white">
+                                <Menu className="w-6 h-6" />
+                            </button>
                             <div>
                                 <h4 className="font-bold text-white">{selectedStudent.student_name}</h4>
                                 <p className="text-xs text-slate-400">SRN: {selectedStudent.student_srn}</p>
@@ -1945,9 +1965,9 @@ function ProfessorMessages({ showMessage }) {
                                 const isMe = msg.sender === 'faculty';
                                 return (
                                     <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[70%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
-                                            ? 'bg-blue-600 text-white rounded-br-none'
-                                            : 'bg-slate-700 text-slate-200 rounded-bl-none'
+                                        <div className={`max-w-[85%] md:max-w-[70%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
+                                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-none border border-blue-500/20'
+                                            : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'
                                             }`}>
                                             {!isMe && <div className="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-wider">Parent</div>}
                                             {msg.body}
@@ -1962,8 +1982,8 @@ function ProfessorMessages({ showMessage }) {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-4 bg-slate-800/80 border-t border-white/10">
-                            <div className="flex gap-2">
+                        <div className="p-3 md:p-4 bg-slate-900 border-t border-white/10 z-20">
+                            <div className="flex gap-2 max-w-4xl mx-auto">
                                 <textarea
                                     className="flex-1 bg-slate-900 text-white rounded-xl border border-white/10 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
                                     placeholder="Type your reply..."
@@ -1979,13 +1999,18 @@ function ProfessorMessages({ showMessage }) {
                                     {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
                                 </button>
                             </div>
-                            <div className="text-[10px] text-center text-slate-500 mt-2">
+                            <div className="text-[10px] text-center text-slate-500 mt-2 hidden md:block">
                                 Reply will be sent via email and saved to chat history.
                             </div>
                         </div>
                     </>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-600">
+                        <div className="md:hidden absolute top-4 left-4">
+                            <button onClick={() => setSidebarOpen(true)} className="p-2 bg-slate-800 rounded-lg text-white">
+                                <Menu className="w-6 h-6" />
+                            </button>
+                        </div>
                         <MessageSquare className="w-16 h-16 opacity-20 mb-4" />
                         <p>Select a conversation to start chatting.</p>
                     </div>
@@ -4260,6 +4285,7 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
     const [replyText, setReplyText] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
 
     // Auto-scroll
     const messagesEndRef = useRef(null);
@@ -4290,6 +4316,7 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
 
     const selectProfessor = async (prof) => {
         setSelectedProf(prof);
+        setSidebarOpen(false); // Close mobile drawer
         try {
             const res = await auth().get(`/parent/messages/${prof.id}`);
             setActiveThread(res.data.messages || []);
@@ -4353,111 +4380,130 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
     });
 
     return (
-        <div className="flex flex-col h-[600px] gap-4">
-            <h4 className="text-2xl font-bold text-blue-400 flex items-center shrink-0">
-                <Mail className="w-6 h-6 mr-2" /> Contact Class Faculty
-            </h4>
-
-            <div className="flex flex-1 gap-4 overflow-hidden">
-                {/* Sidebar: Faculty List */}
-                <div className="w-1/3 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-white/10 bg-white/5">
-                        <h5 className="font-bold text-lg text-white">Professors</h5>
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                        {displayList.map(p => (
-                            <div
-                                key={p.id}
-                                onClick={() => selectProfessor(p)}
-                                className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${selectedProf?.id === p.id ? 'bg-blue-900/20 border-l-4 border-l-blue-500' : ''}`}
-                            >
-                                <div className="flex justify-between items-start mb-1">
-                                    <div className="font-semibold text-slate-200">Prof. {p.name}</div>
-                                    {p.unread_count > 0 && (
-                                        <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full">{p.unread_count} new</span>
-                                    )}
-                                </div>
-                                <div className="text-xs text-blue-400 mb-1">{p.allocations && p.allocations.length > 0 ? p.allocations.join(", ") : "General Faculty"}</div>
-                                {p.last_message && (
-                                    <>
-                                        <div className="text-xs text-slate-500 truncate">{p.last_message}</div>
-                                        <div className="text-[10px] text-slate-600 mt-1">{new Date(p.last_timestamp).toLocaleDateString()}</div>
-                                    </>
+        <div className="flex h-[600px] gap-4 relative isolate overflow-hidden">
+            {/* Sidebar: Faculty List - Mobile Drawer */}
+            <div className={`
+                absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
+                md:static md:w-1/3 md:bg-slate-900/60 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col md:shadow-none md:translate-x-0
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-0 md:p-0'}
+            `}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+                    <h5 className="font-bold text-lg text-white flex items-center gap-2">
+                        <Mail className="w-5 h-5 text-blue-400" /> Contacts
+                    </h5>
+                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                    {displayList.map(p => (
+                        <div
+                            key={p.id}
+                            onClick={() => selectProfessor(p)}
+                            className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${selectedProf?.id === p.id ? 'bg-blue-900/20 border-l-4 border-l-blue-500' : ''}`}
+                        >
+                            <div className="flex justify-between items-start mb-1">
+                                <div className="font-semibold text-slate-200">Prof. {p.name}</div>
+                                {p.unread_count > 0 && (
+                                    <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full">{p.unread_count} new</span>
                                 )}
                             </div>
-                        ))}
-                    </div>
+                            <div className="text-xs text-blue-400 mb-1">{p.allocations && p.allocations.length > 0 ? p.allocations.join(", ") : "General Faculty"}</div>
+                            {p.last_message && (
+                                <>
+                                    <div className="text-xs text-slate-500 truncate">{p.last_message}</div>
+                                    <div className="text-[10px] text-slate-600 mt-1">{new Date(p.last_timestamp).toLocaleDateString()}</div>
+                                </>
+                            )}
+                        </div>
+                    ))}
                 </div>
+            </div>
 
-                {/* Main Chat Area */}
-                <div className="flex-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl flex flex-col overflow-hidden relative">
-                    {selectedProf ? (
-                        <>
-                            {/* Header */}
-                            <div className="p-4 border-b border-white/10 bg-slate-800/50 flex flex-col shadow-sm z-10">
+            {/* Mobile Overlay for Sidebar */}
+            {sidebarOpen && (
+                <div
+                    className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
+            {/* Main Chat Area */}
+            <div className={`flex-1 flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden relative transition-all duration-300 ${sidebarOpen ? 'md:w-2/3' : 'w-full'}`}>
+                {selectedProf ? (
+                    <>
+                        {/* Header */}
+                        <div className="p-4 border-b border-white/10 bg-slate-800/50 flex items-center shadow-sm z-10">
+                            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-white/5 transition-colors text-white">
+                                <Menu className="w-6 h-6" />
+                            </button>
+                            <div>
                                 <h4 className="font-bold text-white">Prof. {selectedProf.name}</h4>
                                 <p className="text-xs text-slate-400">Subject: {selectedProf.allocations && selectedProf.allocations.length > 0 ? selectedProf.allocations.join(", ") : "N/A"}</p>
                             </div>
+                        </div>
 
-                            {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30">
-                                {activeThread.length === 0 ? (
-                                    <div className="text-center text-slate-500 py-10 opacity-70">
-                                        <p>Start a new conversation with Prof. {selectedProf.name}.</p>
-                                        <p className="text-sm">Subject will default to: "{selectedProf.allocations && selectedProf.allocations[0] ? selectedProf.allocations[0] : "Parent Inquiry"}"</p>
-                                    </div>
-                                ) : (
-                                    activeThread.map((msg, idx) => {
-                                        const isMe = msg.sender === 'parent';
-                                        return (
-                                            <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[70%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
-                                                    ? 'bg-blue-600 text-white rounded-br-none'
-                                                    : 'bg-slate-700 text-slate-200 rounded-bl-none'
-                                                    }`}>
-                                                    {!isMe && <div className="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-wider">Prof. {selectedProf.name}</div>}
-                                                    {msg.body}
-                                                    <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
-                                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </div>
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30">
+                            {activeThread.length === 0 ? (
+                                <div className="text-center text-slate-500 py-10 opacity-70">
+                                    <p>Start a new conversation with Prof. {selectedProf.name}.</p>
+                                    <p className="text-sm">Subject will default to: "{selectedProf.allocations && selectedProf.allocations[0] ? selectedProf.allocations[0] : "Parent Inquiry"}"</p>
+                                </div>
+                            ) : (
+                                activeThread.map((msg, idx) => {
+                                    const isMe = msg.sender === 'parent';
+                                    return (
+                                        <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[70%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
+                                                ? 'bg-blue-600 text-white rounded-br-none'
+                                                : 'bg-slate-700 text-slate-200 rounded-bl-none'
+                                                }`}>
+                                                {!isMe && <div className="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-wider">Prof. {selectedProf.name}</div>}
+                                                {msg.body}
+                                                <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
+                                                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                             </div>
-                                        );
-                                    })
-                                )}
-                                <div ref={messagesEndRef} />
-                            </div>
-
-                            {/* Input Area */}
-                            <div className="p-4 bg-slate-800/80 border-t border-white/10">
-                                <div className="flex gap-2">
-                                    <textarea
-                                        className="flex-1 bg-slate-900 text-white rounded-xl border border-white/10 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
-                                        placeholder={`Message Prof. ${selectedProf.name}...`}
-                                        value={replyText}
-                                        onChange={e => setReplyText(e.target.value)}
-                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                                    />
-                                    <button
-                                        onClick={handleSendMessage}
-                                        disabled={isSending || !replyText.trim()}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
-                                    >
-                                        {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
-                                    </button>
-                                </div>
-                                <div className="text-[10px] text-center text-slate-500 mt-2">
-                                    Message sent securely via email & portal.
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-600">
-                            <Mail className="w-16 h-16 opacity-20 mb-4" />
-                            <p>Select a professor to start messaging.</p>
+                                        </div>
+                                    );
+                                })
+                            )}
+                            <div ref={messagesEndRef} />
                         </div>
-                    )}
-                </div>
+
+                        {/* Input Area */}
+                        <div className="p-4 bg-slate-800/80 border-t border-white/10">
+                            <div className="flex gap-2">
+                                <textarea
+                                    className="flex-1 bg-slate-900 text-white rounded-xl border border-white/10 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
+                                    placeholder={`Message Prof. ${selectedProf.name}...`}
+                                    value={replyText}
+                                    onChange={e => setReplyText(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                                />
+                                <button
+                                    onClick={handleSendMessage}
+                                    disabled={isSending || !replyText.trim()}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
+                                >
+                                    {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
+                                </button>
+                            </div>
+                            <div className="text-[10px] text-center text-slate-500 mt-2">
+                                Message sent securely via email & portal.
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-slate-600 relative">
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="absolute top-4 left-4 p-2 rounded-lg hover:bg-white/5 transition-colors text-slate-400">
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <Mail className="w-16 h-16 opacity-20 mb-4" />
+                        <p>Select a professor to start messaging.</p>
+                    </div>
+                )}
             </div>
 
             <p className="text-xs text-center text-slate-500">
