@@ -1,0 +1,12 @@
+flask
+flask_sqlalchemy
+flask_cors
+flask_jwt_extended
+werkzeug
+boto3
+requests
+python-dotenv
+python-docx
+python-pptx
+pdfkit
+reportlab
