@@ -7,7 +7,7 @@ import {
     Book, Bell, Settings, Briefcase, User, Mail, Lock, GraduationCap, ClipboardList,
     BriefcaseBusiness, DollarSign, Award, MessageSquare, Upload, RefreshCw,
     Trash2, Save, Home, Search, Download, Check, Atom, Star, Sparkles, Plus, Filter, Eye, EyeOff, Edit,
-    BrainCircuit, AlertTriangle, Target, Lightbulb, Send as SendIcon, Paperclip
+    BrainCircuit, AlertTriangle, Target, Lightbulb, Send as SendIcon, Paperclip, Menu, History, Bot
 } from 'lucide-react';
 
 // --- COMPONENTS IMPORT ---
@@ -1510,8 +1510,8 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
 
                             <button
                                 className={`p-3 rounded-xl transition-all duration-200 ${!question.trim() && !selectedFile
-                                        ? "bg-slate-700/50 text-slate-500 cursor-not-allowed"
-                                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 active:scale-95"
+                                    ? "bg-slate-700/50 text-slate-500 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 active:scale-95"
                                     }`}
                                 onClick={askQuestion}
                                 disabled={isLoading || (!question.trim() && !selectedFile)}
