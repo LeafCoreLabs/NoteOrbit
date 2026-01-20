@@ -231,13 +231,13 @@ function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonCla
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Intelligence.</span>
                 </h1>
                 <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 hero-text-item leading-relaxed">
-                    Where Imagination is Redefined! | © 2025 LeafCore Labs
+                    Where Imagination is Redefined! | © 2026 LeafCore Labs
                 </p>
             </div>
 
             {/* Right: Role Selection Cards */}
             <div className="w-full max-w-md space-y-6">
-                <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
+                <div className="bg-black/20 md:bg-slate-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-32 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition duration-1000" />
 
                     <h3 className="text-xl font-bold text-white mb-6 relative z-10 flex items-center gap-2">
@@ -510,7 +510,7 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
             <div ref={cardRef} className="relative w-full transition-all duration-500" style={{ transformStyle: "preserve-3d" }}>
 
                 {/* BACK FACE (Register) */}
-                <div className={`${authMode === 'register' ? 'relative' : 'absolute inset-0'} w-full min-h-[400px] bg-slate-900/80 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden`}
+                <div className={`${authMode === 'register' ? 'relative' : 'absolute inset-0'} w-full min-h-[400px] bg-slate-900/40 md:bg-slate-900/80 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden`}
                     style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden" }}>
 
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50" />
@@ -568,7 +568,7 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                 </div>
 
                 {/* FRONT FACE (Login) */}
-                <div className={`${authMode === 'login' ? 'relative' : 'absolute inset-0'} w-full bg-slate-900/60 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden`}
+                <div className={`${authMode === 'login' ? 'relative' : 'absolute inset-0'} w-full bg-black/20 md:bg-slate-900/60 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden`}
                     style={{ backfaceVisibility: "hidden" }}>
 
                     {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} showMessage={showMessage} primaryButtonClass={primaryButtonClass} userRole={userRole} />}
