@@ -725,6 +725,10 @@ def send_otp_endpoint():
          if not user.parent_email:
              return jsonify({"success": False, "message": "No parent email registered for this student."}), 400
          email_to_use = user.parent_email
+    elif mode == "signup":
+        # Check if user already exists
+        if User.query.filter_by(email=email_to_use).first():
+            return jsonify({"success": False, "message": "Email already registered. Please login."}), 400
 
     # Generate OTP
     otp_code = generate_otp()
@@ -782,6 +786,31 @@ def lookup_user_endpoint():
     return jsonify({
         "success": True, 
         "masked_email": mask_email(user.email),
+        "email_exists": True
+    })
+
+
+@app.route("/auth/lookup-parent", methods=["POST"])
+def lookup_parent_endpoint():
+    """Lookup parent by Ward's SRN and return masked email for confirmation."""
+    data = request.json or {}
+    srn = data.get("srn", "").strip()
+    
+    if not srn:
+        return jsonify({"success": False, "message": "SRN required"}), 400
+        
+    # Find student by SRN
+    student = User.query.filter_by(srn=srn).first()
+    
+    if not student:
+        return jsonify({"success": False, "message": "Student not found with this SRN"}), 404
+        
+    if not student.parent_email:
+        return jsonify({"success": False, "message": "No parent email registered for this student"}), 404
+        
+    return jsonify({
+        "success": True, 
+        "masked_email": mask_email(student.parent_email),
         "email_exists": True
     })
 
