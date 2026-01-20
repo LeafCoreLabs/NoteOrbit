@@ -1220,7 +1220,7 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const fileInputRef = useRef(null);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
 
     const WELCOME_MSG = { role: "ai", text: "Hello! I am Orbit Bot, your academic assistant. Ask me anything about your studies, or upload notes for me to analyze." };
 
@@ -2269,7 +2269,7 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
         <div className="flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
                 <h5 className="text-lg font-bold text-emerald-400 mb-4 ml-2">Faculty Tools</h5>
-                <nav className="space-y-1 relative" ref={navRef}>
+                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
                     <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-emerald-600/20 border border-emerald-500/30 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {navigation.map(item => (
                         <button
@@ -2286,6 +2286,24 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                         </button>
                     ))}
                 </nav>
+                {/* Mobile Navigation Dropdown */}
+                <div className="md:hidden">
+                    <div className="relative">
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400 pointer-events-none" />
+                        <select
+                            value={view}
+                            onChange={(e) => setView(e.target.value)}
+                            className="w-full bg-slate-800/80 border border-emerald-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-lg font-semibold"
+                        >
+                            {navigation.map(item => (
+                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                    {item.label}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
             </div>
             <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -3843,12 +3861,12 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         <div className="flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-64 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0">
                 <h5 className="text-lg font-bold text-amber-400 mb-4 ml-2">Admin Tools</h5>
-                <nav className="space-y-1 relative" ref={navRef}>
+                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
                     <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-amber-600/20 border border-amber-500/30 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {[
                         { key: 'approvals', label: 'Student Approvals', icon: User },
                         { key: 'student-list', label: 'Student Directory', icon: GraduationCap },
-                        { key: 'faculty_mgmt', label: 'Faculty Allocations', icon: ClipboardList }, // RE-ADDED
+                        { key: 'faculty_mgmt', label: 'Faculty Allocations', icon: ClipboardList },
                         { key: 'hostel-config', label: 'Hostel Config', icon: Home },
                         { key: 'complaints-admin', label: 'Hostel Complaints', icon: Mail },
                         { key: 'library-upload', label: 'Book Upload', icon: Upload },
@@ -3866,6 +3884,34 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                         </button>
                     ))}
                 </nav>
+                {/* Mobile Navigation Dropdown */}
+                <div className="md:hidden">
+                    <div className="relative">
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-400 pointer-events-none" />
+                        <select
+                            value={view}
+                            onChange={(e) => setView(e.target.value)}
+                            className="w-full bg-slate-800/80 border border-amber-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-amber-500/50 shadow-lg font-semibold"
+                        >
+                            {[
+                                { key: 'approvals', label: 'Student Approvals' },
+                                { key: 'student-list', label: 'Student Directory' },
+                                { key: 'faculty_mgmt', label: 'Faculty Allocations' },
+                                { key: 'hostel-config', label: 'Hostel Config' },
+                                { key: 'complaints-admin', label: 'Hostel Complaints' },
+                                { key: 'library-upload', label: 'Book Upload' },
+                                { key: 'faculty-onboard', label: 'Add Faculty' },
+                                { key: 'catalogs', label: 'Degrees/Subjects' },
+                                { key: 'fees-admin', label: 'Manage Fees' },
+                            ].map(item => (
+                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                    {item.label}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
             </div>
             <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative">{renderView()}</div>
         </div>
@@ -4161,7 +4207,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
         <div className="flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
                 <h5 className="text-lg font-bold text-blue-400 mb-4 ml-2">Student Hub</h5>
-                <nav className="space-y-1 relative" ref={navRef}>
+                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
                     <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-blue-600/20 border border-blue-500/30 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {navigation.map(item => (
                         <button
@@ -4178,6 +4224,24 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
                         </button>
                     ))}
                 </nav>
+                {/* Mobile Navigation Dropdown */}
+                <div className="md:hidden">
+                    <div className="relative">
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
+                        <select
+                            value={view}
+                            onChange={(e) => setView(e.target.value)}
+                            className="w-full bg-slate-800/80 border border-blue-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-blue-500/50 shadow-lg font-semibold"
+                        >
+                            {navigation.map(item => (
+                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                    {item.label}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
             </div>
             <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -4464,7 +4528,7 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
                     <p className="text-xs text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
                 </div>
 
-                <nav className="space-y-1 relative" ref={navRef}>
+                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
                     <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-rose-600/20 border border-rose-500/30 rounded-xl shadow-[0_0_15px_rgba(225,29,72,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {navigation.map(item => (
                         <button
@@ -4481,6 +4545,24 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
                         </button>
                     ))}
                 </nav>
+                {/* Mobile Navigation Dropdown */}
+                <div className="md:hidden">
+                    <div className="relative">
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-400 pointer-events-none" />
+                        <select
+                            value={view}
+                            onChange={(e) => setView(e.target.value)}
+                            className="w-full bg-slate-800/80 border border-rose-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-rose-500/50 shadow-lg font-semibold"
+                        >
+                            {navigation.map(item => (
+                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                    {item.label}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
             </div>
             <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
