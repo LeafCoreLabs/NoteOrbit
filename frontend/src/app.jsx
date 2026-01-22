@@ -29,9 +29,8 @@ function useCatalogs() {
     const fetchBasics = useCallback(async () => {
         try {
             // Using unauth() for public catalog lists
-            const [deg, sec] = await Promise.all([
+            const [deg] = await Promise.all([
                 unauth().get("/admin/degrees"),
-                unauth().get("/admin/sections")
             ]);
             setDegrees(deg.data.degrees || []);
             // Sections now depend on context, don't fetch globally
@@ -62,19 +61,24 @@ function useCatalogs() {
     }, []);
 
     const fetchSections = useCallback(async (degree, semester) => {
-        if (!degree || !semester) return [];
+        if (!degree || !semester) {
+            setSections([]);
+            return [];
+        }
         try {
             const res = await unauth().get("/admin/sections", { params: { degree, semester } });
             const secNames = res.data.sections || [];
+            setSections(secNames);
             return secNames;
         } catch (e) {
             console.error("Failed to fetch sections:", e);
+            setSections([]);
             return [];
         }
     }, []);
 
     useEffect(() => { fetchBasics(); }, [fetchBasics]);
-    return { degrees, subjects, fetchSubjects, fetchSections, loaded, fetchBasics };
+    return { degrees, sections, subjects, fetchSubjects, fetchSections, loaded, fetchBasics };
 }
 
 function useLocalUser() {
@@ -472,6 +476,20 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         if (loaded && degrees?.length > 0) !degree && setDegree(degrees[0]);
         if (loaded && sections?.length > 0) !section && setSection(sections[0]);
     }, [loaded, degrees, sections]);
+
+    useEffect(() => {
+        // On the registration details step, sections are context-dependent (degree + semester)
+        if (!isStudent || regStep !== 2) return;
+        if (!degree || !semester) return;
+        (async () => {
+            const secs = await catalogs.fetchSections(degree, semester);
+            if (!secs?.length) {
+                setSection("");
+                return;
+            }
+            if (!secs.includes(section)) setSection(secs[0]);
+        })();
+    }, [isStudent, regStep, degree, semester, catalogs, section]);
 
     // Flip Animation Effect
     useEffect(() => {
@@ -2905,7 +2923,7 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
 
 // --- NEW ADMIN MODULE: Student List Filter ---
 function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonClass }) {
-    const { degrees, loaded } = catalogs; // removed sections from catalogs destructure
+    const { degrees, loaded, fetchSections } = catalogs; // destructure fetchSections
     const [students, setStudents] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -2933,6 +2951,17 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
             setAvailableFilterSections([]);
         }
     }, [filterDegree, filterSemester, catalogs]);
+
+    // NEW: Fetch sections for Edit Modal
+    const [editSections, setEditSections] = useState([]);
+    useEffect(() => {
+        if (editStudent?.degree && editStudent?.semester) {
+            const { fetchSections } = catalogs;
+            fetchSections(editStudent.degree, editStudent.semester).then(setEditSections);
+        } else {
+            setEditSections([]);
+        }
+    }, [editStudent?.degree, editStudent?.semester, catalogs]);
 
     const fetchStudents = useCallback(async () => {
         setIsLoading(true);
@@ -3100,7 +3129,7 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
                             <div className="space-y-1">
                                 <label className="text-xs text-slate-400">Section</label>
                                 <Select value={editStudent.section} onChange={e => setEditStudent({ ...editStudent, section: e.target.value })}>
-                                    {(sections || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
+                                    {(editSections || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                                 </Select>
                             </div>
                         </div>
