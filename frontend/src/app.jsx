@@ -229,6 +229,8 @@ function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonCla
                 opacity: 0, y: -20, duration: 0.3, onComplete: () => {
                     setUserRole(selectedRole);
                     setPage('credentials');
+                    // Scroll to top on mobile when transitioning to credentials page
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             });
         }
@@ -4029,14 +4031,25 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         }
     }, [fetchSections]);
 
+    // Track previous values to prevent duplicate calls
+    const prevDegreeRef = useRef("");
+    const prevSemesterRef = useRef("");
+
     // Fetch sections when view degree/semester changes
     useEffect(() => {
+        // Only fetch if values actually changed
         if (viewSectionDegree && viewSectionSemester) {
-            fetchCurrentSections(viewSectionDegree, viewSectionSemester);
+            if (prevDegreeRef.current !== viewSectionDegree || prevSemesterRef.current !== viewSectionSemester) {
+                prevDegreeRef.current = viewSectionDegree;
+                prevSemesterRef.current = viewSectionSemester;
+                fetchCurrentSections(viewSectionDegree, viewSectionSemester);
+            }
         } else {
             setCurrentSections([]);
+            prevDegreeRef.current = "";
+            prevSemesterRef.current = "";
         }
-    }, [viewSectionDegree, viewSectionSemester, fetchCurrentSections]);
+    }, [viewSectionDegree, viewSectionSemester]); // Removed fetchCurrentSections from deps to prevent loop
 
     const addSection = async () => {
         if (!newSectionDegree || !newSectionSemester || !newSection.trim()) return showMessage("Select Degree, Sem and enter Name.", "error");
@@ -5130,6 +5143,24 @@ function App() {
         }
     }, [user, isLoading]);
 
+    // Scroll to top when page changes to credentials (fixes mobile scroll issue)
+    useEffect(() => {
+        if (page === 'credentials') {
+            // Immediate scroll to top, then smooth scroll to form
+            window.scrollTo({ top: 0, behavior: 'auto' });
+            // Small delay to ensure DOM is ready, then scroll to credentials form
+            setTimeout(() => {
+                const credentialsForm = document.getElementById('credentials-form');
+                if (credentialsForm) {
+                    credentialsForm.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+                } else {
+                    // Fallback: scroll window to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }, 150);
+        }
+    }, [page]);
+
     const showMessage = (text, type = 'error') => setMessage({ text, type });
     const clearMessage = () => setMessage({ text: null, type: null });
 
@@ -5210,6 +5241,21 @@ function App() {
     const dangerButtonClass = "bg-red-600 hover:bg-red-700 text-white";
 
 
+    // Scroll to top when page changes to credentials (fixes mobile scroll issue)
+    useEffect(() => {
+        if (page === 'credentials') {
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Also scroll the main container if needed
+                const mainContainer = document.querySelector('.min-h-screen');
+                if (mainContainer) {
+                    mainContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        }
+    }, [page]);
+
     const renderContent = () => {
         if (isLoading || page === null) {
             return (
@@ -5227,7 +5273,7 @@ function App() {
                 return (<UserTypeSelection setUserRole={setUserRole} setPage={setPage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} />);
             case 'credentials':
                 return (
-                    <div key={authMode} className="animate-in fade-in slide-in-from-right-10 duration-500 w-full max-w-lg mx-auto">
+                    <div key={authMode} className="animate-in fade-in slide-in-from-right-10 duration-500 w-full max-w-lg mx-auto" id="credentials-form">
                         <CredentialsView showMessage={showMessage} userRole={userRole} authMode={authMode} setAuthMode={setAuthMode} setPage={setPage} onLogin={doLogin} onRegister={doRegister} catalogs={catalogs} primaryButtonClass={primaryButtonClass} successButtonClass={successButtonClass} buttonClass={buttonClass} />
                     </div>
                 );
