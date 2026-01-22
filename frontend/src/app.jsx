@@ -3816,7 +3816,7 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
 
 
 function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, dangerButtonClass, user }) { // 🛑 ADDED user PROP
-    const { degrees, sections, loaded, fetchBasics } = catalogs;
+    const { degrees, sections, loaded, fetchBasics, fetchSections } = catalogs;
 
     const [pending, setPending] = useState([]);
     const [newDegree, setNewDegree] = useState("");
