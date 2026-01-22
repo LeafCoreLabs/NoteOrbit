@@ -4004,51 +4004,39 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     const [newSection, setNewSection] = useState("");
     const [newSectionDegree, setNewSectionDegree] = useState("");
     const [newSectionSemester, setNewSectionSemester] = useState("1");
-    // All sections grouped by degree and semester
-    const [allSections, setAllSections] = useState([]);
+    // Selected degree/semester for viewing sections
+    const [viewSectionDegree, setViewSectionDegree] = useState("");
+    const [viewSectionSemester, setViewSectionSemester] = useState("");
+    // Sections for selected degree/semester only
+    const [currentSections, setCurrentSections] = useState([]);
     const [isLoadingSections, setIsLoadingSections] = useState(false);
 
-    // Fetch all sections grouped by degree and semester
-    const fetchAllSections = useCallback(async () => {
-        if (!degrees || degrees.length === 0) return;
+    // Fetch sections only for selected degree and semester
+    const fetchCurrentSections = useCallback(async (degree, semester) => {
+        if (!degree || !semester) {
+            setCurrentSections([]);
+            return;
+        }
         setIsLoadingSections(true);
         try {
-            const sectionsByGroup = {};
-            // Fetch sections for each degree and semester combination
-            for (const deg of degrees) {
-                for (let sem = 1; sem <= 8; sem++) {
-                    try {
-                        const sections = await fetchSections(deg, sem);
-                        if (sections && sections.length > 0) {
-                            const key = `${deg}_${sem}`;
-                            sectionsByGroup[key] = {
-                                degree: deg,
-                                semester: sem,
-                                sections: sections
-                            };
-                        }
-                    } catch (e) {
-                        // Skip if no sections for this combo
-                    }
-                }
-            }
-            // Convert to array format
-            const grouped = Object.values(sectionsByGroup);
-            setAllSections(grouped);
+            const sections = await fetchSections(degree, semester);
+            setCurrentSections(sections || []);
         } catch (e) {
             console.error("Failed to fetch sections", e);
-            setAllSections([]);
+            setCurrentSections([]);
         } finally {
             setIsLoadingSections(false);
         }
-    }, [degrees, fetchSections]);
+    }, [fetchSections]);
 
-    // Refresh all sections when degrees change or after add/delete
+    // Fetch sections when view degree/semester changes
     useEffect(() => {
-        if (loaded && degrees && degrees.length > 0) {
-            fetchAllSections();
+        if (viewSectionDegree && viewSectionSemester) {
+            fetchCurrentSections(viewSectionDegree, viewSectionSemester);
+        } else {
+            setCurrentSections([]);
         }
-    }, [loaded, degrees, fetchAllSections]);
+    }, [viewSectionDegree, viewSectionSemester, fetchCurrentSections]);
 
     const addSection = async () => {
         if (!newSectionDegree || !newSectionSemester || !newSection.trim()) return showMessage("Select Degree, Sem and enter Name.", "error");
@@ -4056,18 +4044,23 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
             await auth().post("/admin/sections", { name: newSection, degree: newSectionDegree, semester: newSectionSemester });
             showMessage("Section added!", "success");
             setNewSection("");
-            await fetchAllSections(); // Refresh all sections
+            // Refresh sections if viewing the same degree/semester
+            if (viewSectionDegree === newSectionDegree && viewSectionSemester === newSectionSemester) {
+                await fetchCurrentSections(newSectionDegree, newSectionSemester);
+            }
         } catch (e) {
             showMessage(e.response?.data?.message || "Failed to add section", "error");
         }
     };
 
-    const deleteSection = async (name, degree, semester) => {
-        if (!confirm(`Delete Section ${name} from ${degree} Sem ${semester}?`)) return;
+    const deleteSection = async (name) => {
+        if (!viewSectionDegree || !viewSectionSemester) return;
+        if (!confirm(`Delete Section ${name} from ${viewSectionDegree} Sem ${viewSectionSemester}?`)) return;
         try {
-            await auth().delete("/admin/sections", { data: { name, degree, semester } });
+            await auth().delete("/admin/sections", { data: { name, degree: viewSectionDegree, semester: viewSectionSemester } });
             showMessage("Section deleted!", "success");
-            await fetchAllSections(); // Refresh all sections
+            // Refresh current sections
+            await fetchCurrentSections(viewSectionDegree, viewSectionSemester);
         } catch (e) {
             showMessage(e.response?.data?.message || "Failed to delete section", "error");
         }
@@ -4277,12 +4270,12 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                             
                             {/* Add Section Form */}
                             <div className="bg-slate-800/40 p-4 rounded-lg border border-white/5 space-y-3">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Select value={newSectionDegree} onChange={e => setNewSectionDegree(e.target.value)} disabled={!degrees.length}>
+                                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
+                                    <Select value={newSectionDegree} onChange={e => setNewSectionDegree(e.target.value)} disabled={!degrees.length} className="w-full">
                                         <option value="">Select Degree</option>
                                         {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                                     </Select>
-                                    <Select value={newSectionSemester} onChange={e => setNewSectionSemester(e.target.value)}>
+                                    <Select value={newSectionSemester} onChange={e => setNewSectionSemester(e.target.value)} className="w-full">
                                         {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
                                     </Select>
                                 </div>
@@ -4293,43 +4286,71 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                             {/* Sections Display - Dropdown Menu */}
                             <div>
                                 <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">View & Delete Sections</label>
-                                {isLoadingSections ? (
-                                    <div className="text-center p-6"><Loader2 className="animate-spin w-5 h-5 mx-auto text-yellow-500" /></div>
-                                ) : allSections.length === 0 ? (
-                                    <div className="text-center p-6 bg-slate-800/20 rounded-lg border border-white/5 text-slate-500 text-sm">
-                                        No sections found. Add sections using the form above.
-                                    </div>
-                                ) : (
+                                
+                                {/* Select Degree & Semester to View Sections - Mobile Optimized */}
+                                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 mb-3">
                                     <Select 
-                                        className="w-full bg-slate-800/50 border border-white/10 text-white"
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            if (value && value !== '') {
-                                                const [degree, semester, section] = value.split('|');
-                                                if (confirm(`Delete Section ${section} from ${degree} Sem ${semester}?`)) {
-                                                    deleteSection(section, degree, semester);
-                                                }
-                                                e.target.value = ''; // Reset dropdown
-                                            }
+                                        value={viewSectionDegree} 
+                                        onChange={e => {
+                                            setViewSectionDegree(e.target.value);
+                                            setViewSectionSemester(""); // Reset semester when degree changes
                                         }}
+                                        disabled={!degrees.length}
+                                        className="w-full"
                                     >
-                                        <option value="" className="text-slate-900">Select a section to delete...</option>
-                                        {allSections.map((group) => 
-                                            group.sections.map(s => (
-                                                <option 
-                                                    key={`${group.degree}_${group.semester}_${s}`} 
-                                                    value={`${group.degree}|${group.semester}|${s}`}
-                                                    className="text-slate-900"
-                                                >
-                                                    {group.degree} • Sem {group.semester} • Section {s}
-                                                </option>
-                                            ))
-                                        )}
+                                        <option value="" className="text-slate-900">Select Degree</option>
+                                        {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                                     </Select>
-                                )}
-                                {allSections.length > 0 && (
-                                    <div className="mt-3 text-xs text-slate-400 text-center">
-                                        Total: {allSections.reduce((sum, g) => sum + g.sections.length, 0)} sections across {allSections.length} degree/semester combinations
+                                    <Select 
+                                        value={viewSectionSemester} 
+                                        onChange={e => setViewSectionSemester(e.target.value)}
+                                        disabled={!viewSectionDegree}
+                                        className="w-full"
+                                    >
+                                        <option value="" className="text-slate-900">Select Semester</option>
+                                        {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                                    </Select>
+                                </div>
+
+                                {/* Sections Dropdown - Only shows when degree & semester selected - Mobile Optimized */}
+                                {viewSectionDegree && viewSectionSemester ? (
+                                    isLoadingSections ? (
+                                        <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-yellow-500" /></div>
+                                    ) : currentSections.length === 0 ? (
+                                        <div className="text-center p-4 bg-slate-800/20 rounded-lg border border-white/5 text-slate-500 text-sm">
+                                            No sections found for {viewSectionDegree} Sem {viewSectionSemester}.
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Select 
+                                                className="w-full bg-slate-800/50 border border-white/10 text-white py-2.5 text-base"
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (value && value !== '') {
+                                                        deleteSection(value);
+                                                        e.target.value = ''; // Reset dropdown
+                                                    }
+                                                }}
+                                            >
+                                                <option value="" className="text-slate-900">Select a section to delete...</option>
+                                                {currentSections.map(s => (
+                                                    <option 
+                                                        key={s} 
+                                                        value={s}
+                                                        className="text-slate-900"
+                                                    >
+                                                        Section {s}
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                            <div className="mt-2 text-xs text-slate-400 text-center">
+                                                {currentSections.length} {currentSections.length === 1 ? 'section' : 'sections'} for {viewSectionDegree} Sem {viewSectionSemester}
+                                            </div>
+                                        </>
+                                    )
+                                ) : (
+                                    <div className="text-center p-4 bg-slate-800/20 rounded-lg border border-white/5 text-slate-400 text-sm">
+                                        Select a degree and semester above to view sections.
                                     </div>
                                 )}
                             </div>
