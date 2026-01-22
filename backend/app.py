@@ -407,7 +407,12 @@ class Degree(db.Model):
 
 class Section(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(20), unique=True, nullable=False)
+    degree = db.Column(db.String(50), nullable=False)
+    semester = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(20), nullable=False)
+    __table_args__ = (
+        db.UniqueConstraint("degree", "semester", "name", name="uq_section_deg_sem_name"),
+    )
 
 
 class Subject(db.Model):
@@ -1298,6 +1303,11 @@ def manage_degrees():
 
 @app.route("/admin/sections", methods=["GET", "POST", "DELETE"])
 def manage_sections():
+    # Helper to clean/int input
+    def get_data():
+        d = request.json or {}
+        return d.get("degree"), d.get("semester"), d.get("name")
+
     if request.method in ["POST", "DELETE"]:
         try:
             verify_jwt_in_request()
@@ -1308,21 +1318,51 @@ def manage_sections():
             return jsonify({"success": False, "message": "Admin access required"}), 403
 
     if request.method == "POST":
-        name = (request.json or {}).get("name")
-        if not name or Section.query.filter_by(name=name).first():
-            return jsonify({"success": False, "message": "Invalid or duplicate section"}), 400
-        db.session.add(Section(name=name)); db.session.commit()
+        degree, semester, name = get_data()
+        if not (degree and semester and name):
+            return jsonify({"success": False, "message": "Missing fields"}), 400
+        
+        try:
+            sem = int(semester)
+        except:
+             return jsonify({"success": False, "message": "Invalid semester"}), 400
+
+        if Section.query.filter_by(degree=degree, semester=sem, name=name).first():
+            return jsonify({"success": False, "message": "Duplicate section"}), 400
+            
+        db.session.add(Section(degree=degree, semester=sem, name=name))
+        db.session.commit()
     
     if request.method == "DELETE":
-        name = (request.json or {}).get("name")
-        s = Section.query.filter_by(name=name).first()
+        degree, semester, name = get_data()
+        if not (degree and semester and name):
+             return jsonify({"success": False, "message": "Missing fields for deletion"}), 400
+             
+        s = Section.query.filter_by(degree=degree, semester=int(semester), name=name).first()
         if not s:
             return jsonify({"success": False, "message": "Section not found"}), 404
         db.session.delete(s)
         db.session.commit()
         return jsonify({"success": True, "message": "Section deleted"})
 
-    data = [s.name for s in Section.query.order_by(Section.name).all()]
+    # GET: Filter by degree/sem query params
+    degree = request.args.get("degree")
+    semester = request.args.get("semester")
+    
+    q = Section.query
+    if degree: q = q.filter_by(degree=degree)
+    if semester:
+        try:
+            q = q.filter_by(semester=int(semester))
+        except:
+            pass
+            
+    # Return list of names? Or objects? 
+    # Current frontend expects list of strings. But now sections are context-dependent.
+    # If filtered, returning names is fine. If not filtered, returning unique names might be confusing 
+    # but let's stick to returning names for the filtered context.
+    
+    data = [s.name for s in q.order_by(Section.name).all()]
     return jsonify({"success": True, "sections": data})
 
 

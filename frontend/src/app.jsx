@@ -34,11 +34,10 @@ function useCatalogs() {
                 unauth().get("/admin/sections")
             ]);
             setDegrees(deg.data.degrees || []);
-            setSections(sec.data.sections || []);
+            // Sections now depend on context, don't fetch globally
         } catch (e) {
             console.error("Failed to fetch basics from backend:", e);
             setDegrees([]);
-            setSections([]);
         } finally {
             setLoaded(true);
         }
@@ -62,8 +61,20 @@ function useCatalogs() {
         }
     }, []);
 
+    const fetchSections = useCallback(async (degree, semester) => {
+        if (!degree || !semester) return [];
+        try {
+            const res = await unauth().get("/admin/sections", { params: { degree, semester } });
+            const secNames = res.data.sections || [];
+            return secNames;
+        } catch (e) {
+            console.error("Failed to fetch sections:", e);
+            return [];
+        }
+    }, []);
+
     useEffect(() => { fetchBasics(); }, [fetchBasics]);
-    return { degrees, sections, subjects, fetchSubjects, loaded, fetchBasics };
+    return { degrees, subjects, fetchSubjects, fetchSections, loaded, fetchBasics };
 }
 
 function useLocalUser() {
@@ -2350,7 +2361,7 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
 
 // --- NEW ADMIN MODULE: Note Upload (Reuses Faculty Endpoint)
 function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalogs }) {
-    const { degrees, sections, fetchSubjects } = catalogs;
+    const { degrees, fetchSubjects, fetchSections } = catalogs;
     const [title, setTitle] = useState("");
     const [degree, setDegree] = useState("");
     const [semester, setSemester] = useState("1");
@@ -2360,23 +2371,25 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
     const [file, setFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Dynamic Subjects
+    // Dynamic Lists
     const [availableSubjects, setAvailableSubjects] = useState([]);
+    const [availableSections, setAvailableSections] = useState([]);
 
     // Initialize defaults
     useEffect(() => {
         if (degrees.length && !degree) setDegree(degrees[0]);
-        if (sections.length && !section) setSection(sections[0]);
-    }, [degrees, sections, degree, section]);
+    }, [degrees, degree]);
 
-    // Fetch Subjects on Deg/Sem change
+    // Fetch Subjects & Sections on Deg/Sem change
     useEffect(() => {
         if (degree && semester) {
             fetchSubjects(degree, semester).then(setAvailableSubjects);
+            fetchSections(degree, semester).then(setAvailableSections);
         } else {
             setAvailableSubjects([]);
+            setAvailableSections([]);
         }
-    }, [degree, semester, fetchSubjects]);
+    }, [degree, semester, fetchSubjects, fetchSections]);
 
     // Reset subject if not in new list
     useEffect(() => {
@@ -2435,7 +2448,7 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
                 <Select value={section} onChange={e => setSection(e.target.value)} disabled={isLoading}>
                     <option value="" className="text-slate-900">Select Section</option>
                     <option value="ALL" className="text-amber-400 font-bold">All Sections</option>
-                    {(sections || []).map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
+                    {(availableSections || []).map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
                 </Select>
             </div>
 
@@ -2892,7 +2905,7 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
 
 // --- NEW ADMIN MODULE: Student List Filter ---
 function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonClass }) {
-    const { degrees, sections, loaded } = catalogs;
+    const { degrees, loaded } = catalogs; // removed sections from catalogs destructure
     const [students, setStudents] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -2907,8 +2920,19 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
 
     useEffect(() => {
         if (loaded && degrees.length && !filterDegree) setFilterDegree(degrees[0]);
-        if (loaded && sections.length && !filterSection) setFilterSection(sections[0]);
-    }, [loaded, degrees, sections, filterDegree, filterSection]);
+        // FIXED: Do NOT default section to sections[0]. Let it be "" (All Sections).
+    }, [loaded, degrees, filterDegree]);
+
+    // NEW: Fetch sections for filter dropdown when Degree/Sem changes
+    const [availableFilterSections, setAvailableFilterSections] = useState([]);
+    useEffect(() => {
+        const { fetchSections } = catalogs;
+        if (filterDegree && filterSemester) {
+            fetchSections(filterDegree, filterSemester).then(setAvailableFilterSections);
+        } else {
+            setAvailableFilterSections([]);
+        }
+    }, [filterDegree, filterSemester, catalogs]);
 
     const fetchStudents = useCallback(async () => {
         setIsLoading(true);
@@ -2985,9 +3009,9 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
                     <option value="" className="text-slate-900">All Sems</option>
                     {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                 </Select>
-                <Select value={filterSection} onChange={e => setFilterSection(e.target.value)} disabled={!sections.length}>
+                <Select value={filterSection} onChange={e => setFilterSection(e.target.value)} disabled={!availableFilterSections.length}>
                     <option value="" className="text-slate-900">All Sections</option>
-                    {(sections || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
+                    {(availableFilterSections || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                 </Select>
                 <button
                     onClick={fetchStudents}
@@ -3797,6 +3821,43 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     const [pending, setPending] = useState([]);
     const [newDegree, setNewDegree] = useState("");
     const [newSection, setNewSection] = useState("");
+    const [newSectionDegree, setNewSectionDegree] = useState("");
+    const [newSectionSemester, setNewSectionSemester] = useState("1");
+    // Managed sections list for the admin view
+    const [managedSections, setManagedSections] = useState([]);
+
+    // Refresh managed sections when deg/sem changes
+    useEffect(() => {
+        if (newSectionDegree && newSectionSemester) {
+            fetchSections(newSectionDegree, newSectionSemester).then(setManagedSections);
+        } else {
+            setManagedSections([]);
+        }
+    }, [newSectionDegree, newSectionSemester, fetchSections]);
+
+    const addSection = async () => {
+        if (!newSectionDegree || !newSectionSemester || !newSection.trim()) return showMessage("Select Degree, Sem and enter Name.", "error");
+        try {
+            await auth().post("/admin/sections", { name: newSection, degree: newSectionDegree, semester: newSectionSemester });
+            showMessage("Section added!", "success");
+            setNewSection("");
+            fetchSections(newSectionDegree, newSectionSemester).then(setManagedSections); // Refresh local list
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Failed to add section", "error");
+        }
+    };
+
+    const deleteSection = async (name) => {
+        if (!newSectionDegree || !newSectionSemester) return;
+        if (!confirm(`Delete Section ${name} from ${newSectionDegree} Sem ${newSectionSemester}?`)) return;
+        try {
+            await auth().delete("/admin/sections", { data: { name, degree: newSectionDegree, semester: newSectionSemester } });
+            showMessage("Section deleted!", "success");
+            fetchSections(newSectionDegree, newSectionSemester).then(setManagedSections); // Refresh local list
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Failed to delete section", "error");
+        }
+    };
     const [subjectDegree, setSubjectDegree] = useState('');
     const [subjectSemester, setSubjectSemester] = useState("1");
     const [newSubject, setNewSubject] = useState("");
@@ -3999,13 +4060,25 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                         </div>
                         <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
                             <h4 className="text-xl font-bold text-yellow-400">Manage Sections</h4>
-                            <Input placeholder="New section" value={newSection} onChange={e => setNewSection(e.target.value)} />
-                            <button className={`${buttonClass} ${primaryButtonClass}`} onClick={() => addCatalogItem("sections", newSection, "Section added!")}>Add Section</button>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {(sections || []).map(s => (
+                            <div className="grid grid-cols-2 gap-2">
+                                <Select value={newSectionDegree} onChange={e => setNewSectionDegree(e.target.value)} disabled={!degrees.length}>
+                                    <option value="">Select Degree</option>
+                                    {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                                </Select>
+                                <Select value={newSectionSemester} onChange={e => setNewSectionSemester(e.target.value)}>
+                                    <option value="1">Sem 1</option>
+                                    {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
+                                </Select>
+                            </div>
+                            <Input placeholder="New section name (e.g. A)" value={newSection} onChange={e => setNewSection(e.target.value)} />
+                            <button className={`${buttonClass} ${primaryButtonClass}`} onClick={addSection}>Add Section</button>
+
+                            <div className="flex flex-wrap gap-2 mt-2 min-h-[40px] border border-white/5 rounded p-2 bg-slate-900/30">
+                                {(managedSections || []).length === 0 && <span className="text-xs text-slate-500 italic p-1">No sections or select degree/sem</span>}
+                                {(managedSections || []).map(s => (
                                     <div key={s} className="bg-slate-800 text-white text-xs px-2 py-1 rounded-md flex items-center border border-slate-600">
                                         {s}
-                                        <button onClick={() => deleteCatalogItem("sections", s)} className="ml-2 text-red-400 hover:text-red-300 font-bold">×</button>
+                                        <button onClick={() => deleteSection(s)} className="ml-2 text-red-400 hover:text-red-300 font-bold">×</button>
                                     </div>
                                 ))}
                             </div>
