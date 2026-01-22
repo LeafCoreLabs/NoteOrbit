@@ -5277,6 +5277,92 @@ function App() {
                 <div className="mt-6">
                     {renderContent()}
                 </div>
+
+                {/* Footer with About Section */}
+                <footer className="mt-12 mb-8 pt-8 border-t border-white/10">
+                    <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 p-6 sm:p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            {/* About Section */}
+                            <div>
+                                <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center">
+                                    <Book className="w-5 h-5 mr-2" />
+                                    About NoteOrbit
+                                </h3>
+                                <p className="text-sm text-slate-300 leading-relaxed">
+                                    A comprehensive academic management system designed to streamline student-faculty interactions, 
+                                    manage academic resources, and enhance the learning experience.
+                                </p>
+                            </div>
+
+                            {/* Core Team Section */}
+                            <div>
+                                <h3 className="text-lg font-bold text-emerald-400 mb-3 flex items-center">
+                                    <User className="w-5 h-5 mr-2" />
+                                    Core Team
+                                </h3>
+                                <div className="space-y-3 text-xs text-slate-300">
+                                    <div>
+                                        <div className="font-semibold text-emerald-300 mb-1">Sumit Kumar Sinha (3CSE37)</div>
+                                        <div className="text-slate-400 pl-2">Fullstack Developer, Database Designer</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar (3CSE32)</div>
+                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS1906 • Backend Developer</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-emerald-300 mb-1">Santosh Kumar Sah (3CSE32)</div>
+                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS1895 • Frontend Developer, Bugs Analyst</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-emerald-300 mb-1">Roshan Kumar (3CSE29)</div>
+                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS1711 • UI/UX Designer</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar Thakur (3CSE32)</div>
+                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS1908 • Bugs Analyst, UI/UX Tester</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* College & Contact Section */}
+                            <div>
+                                <h3 className="text-lg font-bold text-yellow-400 mb-3 flex items-center">
+                                    <GraduationCap className="w-5 h-5 mr-2" />
+                                    Institution & Contact
+                                </h3>
+                                <div className="space-y-3 text-sm text-slate-300">
+                                    <div>
+                                        <div className="font-semibold text-yellow-300 mb-1">Sapthagiri NPS University</div>
+                                        <div className="text-slate-400 text-xs">Academic Year 2024-2025</div>
+                                    </div>
+                                    <div className="pt-2 border-t border-white/5">
+                                        <div className="flex items-start mb-2">
+                                            <Mail className="w-4 h-4 mr-2 mt-0.5 text-yellow-400 flex-shrink-0" />
+                                            <a href="mailto:info.noteorbit@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors break-all">
+                                                info.noteorbit@gmail.com
+                                            </a>
+                                        </div>
+                                        <div className="flex items-center text-xs text-slate-400">
+                                            <span className="mr-2">📞</span>
+                                            <span>9771719891, 7033688853</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Copyright & Branding */}
+                        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div className="text-xs text-slate-400 text-center sm:text-left">
+                                <p>© 2026 NoteOrbit Academic Management System</p>
+                                <p className="mt-1">Powered by <span className="text-blue-400 font-semibold">LeafCore Labs</span></p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                                <span>Where Imagination is Redefined!</span>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </div>
     );
