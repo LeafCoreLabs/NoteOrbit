@@ -483,15 +483,22 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         // On the registration details step, sections are context-dependent (degree + semester)
         if (!isStudent || regStep !== 2) return;
         if (!degree || !semester) return;
+
+        const { fetchSections } = catalogs;
+
         (async () => {
-            const secs = await catalogs.fetchSections(degree, semester);
+            const secs = await fetchSections(degree, semester);
             if (!secs?.length) {
                 setSection("");
                 return;
             }
-            if (!secs.includes(section)) setSection(secs[0]);
+            // Only set if not already set or not in list
+            if (!section || !secs.includes(section)) {
+                setSection(secs[0]);
+            }
         })();
-    }, [isStudent, regStep, degree, semester, catalogs, section]);
+        // Removed 'section' and 'catalogs' to avoid loops. 'degree' and 'semester' changing is the trigger.
+    }, [isStudent, regStep, degree, semester, catalogs.fetchSections]);
 
     // Flip Animation Effect
     useEffect(() => {
