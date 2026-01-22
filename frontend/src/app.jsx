@@ -688,7 +688,7 @@ function StudentFeedback({ showMessage }) {
 function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, buttonClass }) {
     const { fetchSubjects, subjects } = catalogs;
     const [selectedSubject, setSelectedSubject] = useState('');
-    const [selectedDocType, setSelectedDocType] = useState('ALL');
+    const [selectedDocType, setSelectedDocType] = useState('');
     const [notes, setNotes] = useState([]);
     const [notices, setNotices] = useState([]);
     const [isFetching, setIsFetching] = useState(false);
@@ -702,7 +702,7 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
 
     const filteredNotes = useMemo(() => {
         if (!Array.isArray(notes)) return [];
-        if (!selectedDocType || selectedDocType === 'ALL') return notes;
+        if (!selectedDocType || selectedDocType.trim() === '') return [];
         return notes.filter(n => (n?.document_type || '').trim() === selectedDocType);
     }, [notes, selectedDocType]);
 
@@ -770,7 +770,7 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
                         {Array.isArray(subjects) && subjects.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                     </Select>
                     <Select className="flex-1 max-w-xs" value={selectedDocType} onChange={e => setSelectedDocType(e.target.value)} disabled={isFetching || notes.length === 0}>
-                        <option value="ALL" className="text-slate-900">All Documents</option>
+                        <option value="" className="text-slate-900">Select Document Type</option>
                         {availableDocTypes.map(t => <option key={t} value={t} className="text-slate-900">{t}</option>)}
                     </Select>
                     <button className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-white text-sm sm:w-48 py-2.5`} onClick={handleRefresh} disabled={isFetching || !selectedSubject}>
@@ -783,30 +783,39 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
             <div>
                 <h4 className="text-xl font-bold mt-4 mb-4 text-blue-400 flex items-center"><Book className="w-5 h-5 mr-2" /> Notes for "{selectedSubject || '...'}"</h4>
                 {isFetching && <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-blue-500" /></div>}
-                {!isFetching && notes.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">No notes uploaded for {selectedSubject} yet.</div>}
-                {!isFetching && notes.length > 0 && filteredNotes.length === 0 && (
+                {!isFetching && !selectedDocType && (
+                    <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-300 text-sm text-center">
+                        Please select a document type (Notes, Question Bank, or Reference Book) to view documents.
+                    </div>
+                )}
+                {!isFetching && selectedDocType && notes.length === 0 && (
+                    <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">No notes uploaded for {selectedSubject} yet.</div>
+                )}
+                {!isFetching && selectedDocType && notes.length > 0 && filteredNotes.length === 0 && (
                     <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">
                         No documents found for <b className="text-slate-200">{selectedDocType}</b>.
                     </div>
                 )}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredNotes.map(n => (
-                        <div key={n.id} className="p-4 rounded-xl shadow-md border-l-4 border-blue-500 bg-slate-800 hover:bg-slate-700 transition duration-200">
-                            <div className="font-bold text-lg text-white truncate">{n.title} <span className="text-xs text-blue-400">({n.document_type})</span></div>
-                            <div className="flex items-center gap-2 mt-1">
-                                {n.uploader_role === 'admin' ? (
-                                    <span className="bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30">Uploaded by Admin</span>
-                                ) : n.uploader_role === 'professor' ? (
-                                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30">Uploaded by Faculty</span>
-                                ) : null}
-                                <div className="text-xs text-slate-400">{n.subject} | {new Date(n.timestamp).toLocaleDateString()}</div>
+                {!isFetching && selectedDocType && filteredNotes.length > 0 && (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredNotes.map(n => (
+                            <div key={n.id} className="p-4 rounded-xl shadow-md border-l-4 border-blue-500 bg-slate-800 hover:bg-slate-700 transition duration-200">
+                                <div className="font-bold text-lg text-white truncate">{n.title} <span className="text-xs text-blue-400">({n.document_type})</span></div>
+                                <div className="flex items-center gap-2 mt-1">
+                                    {n.uploader_role === 'admin' ? (
+                                        <span className="bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30">Uploaded by Admin</span>
+                                    ) : n.uploader_role === 'professor' ? (
+                                        <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30">Uploaded by Faculty</span>
+                                    ) : null}
+                                    <div className="text-xs text-slate-400">{n.subject} | {new Date(n.timestamp).toLocaleDateString()}</div>
+                                </div>
+                                <div className="mt-3">
+                                    {n.file_url && <a className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">Download</a>}
+                                </div>
                             </div>
-                            <div className="mt-3">
-                                {n.file_url && <a className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">Download</a>}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div>
