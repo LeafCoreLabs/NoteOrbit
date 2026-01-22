@@ -5350,7 +5350,7 @@ function App() {
                                 <div className="space-y-3 text-xs text-slate-300">
                                     <div>
                                         <div className="font-semibold text-emerald-300 mb-1">Sumit Kumar Sinha (3CSE37)</div>
-                                        <div className="text-slate-400 pl-2">Fullstack Developer, Database Designer</div>
+                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS2175 •  Fullstack Developer, Database Designer</div>
                                     </div>
                                     <div>
                                         <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar (3CSE32)</div>
