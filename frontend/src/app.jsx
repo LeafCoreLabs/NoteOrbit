@@ -540,7 +540,7 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         const hasLowerCase = /[a-z]/.test(password);
         const hasNumber = /[0-9]/.test(password);
         const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-        
+
         return {
             isValid: password.length >= minLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar,
             errors: {
@@ -562,16 +562,16 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         if (!degree) return showMessage("Please select a degree.", "error");
         if (!semester) return showMessage("Please select a semester.", "error");
         if (!section) return showMessage("Please select a section.", "error");
-        
+
         // Validate password format
         const passwordValidation = validatePassword(regPassword);
         if (!passwordValidation.isValid) {
             return showMessage("Password must contain: at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.", "error");
         }
-        
+
         // Validate password match
         if (regPassword !== regConfirmPassword) return showMessage("Passwords do not match.", "error");
-        
+
         // Prepare payload with OTP for backend re-verification
         onRegister({ srn, name, email: regEmail, password: regPassword, degree, semester: parseInt(semester), section, otp, role: userRole.toLowerCase() });
     };
@@ -2598,112 +2598,112 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
 
     return (
         <div className="space-y-6">
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-green-500/20 space-y-4">
-            <h4 className="text-2xl font-bold mb-4 text-green-400 flex items-center"><Book className="w-6 h-6 mr-2" /> Upload Study Material (Admin)</h4>
+            <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-green-500/20 space-y-4">
+                <h4 className="text-2xl font-bold mb-4 text-green-400 flex items-center"><Book className="w-6 h-6 mr-2" /> Upload Study Material (Admin)</h4>
 
-            <Input placeholder="Title (e.g., Module 1 PPT)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
+                <Input placeholder="Title (e.g., Module 1 PPT)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
 
-            <div className="grid grid-cols-3 gap-3">
-                <Select value={degree} onChange={e => setDegree(e.target.value)} disabled={isLoading}>
-                    <option value="" className="text-slate-900">Select Degree</option>
-                    {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                <div className="grid grid-cols-3 gap-3">
+                    <Select value={degree} onChange={e => setDegree(e.target.value)} disabled={isLoading}>
+                        <option value="" className="text-slate-900">Select Degree</option>
+                        {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                    </Select>
+                    <Select value={semester} onChange={e => setSemester(e.target.value)} disabled={isLoading}>
+                        {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                    </Select>
+                    <Select value={section} onChange={e => setSection(e.target.value)} disabled={isLoading}>
+                        <option value="" className="text-slate-900">All Sections (Manage)</option>
+                        <option value="ALL" className="text-amber-400 font-bold">All Sections</option>
+                        {(availableSections || []).map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
+                    </Select>
+                </div>
+
+                <Select value={subject} onChange={e => setSubject(e.target.value)} icon={Book} disabled={isLoading || !availableSubjects.length}>
+                    <option value="" className="text-slate-900">Select Subject</option>
+                    {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                 </Select>
-                <Select value={semester} onChange={e => setSemester(e.target.value)} disabled={isLoading}>
-                    {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+
+                <Select value={documentType} onChange={e => setDocumentType(e.target.value)} disabled={isLoading}>
+                    <option value="Notes" className="text-slate-900">Notes</option>
+                    <option value="Question Bank" className="text-slate-900">Question Bank</option>
+                    <option value="Reference Book" className="text-slate-900">Reference Book</option>
                 </Select>
-                <Select value={section} onChange={e => setSection(e.target.value)} disabled={isLoading}>
-                    <option value="" className="text-slate-900">All Sections (Manage)</option>
-                    <option value="ALL" className="text-amber-400 font-bold">All Sections</option>
-                    {(availableSections || []).map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
-                </Select>
-            </div>
 
-            <Select value={subject} onChange={e => setSubject(e.target.value)} icon={Book} disabled={isLoading || !availableSubjects.length}>
-                <option value="" className="text-slate-900">Select Subject</option>
-                {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
-            </Select>
+                <label className="block text-sm text-slate-300 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
+                <input
+                    id="adminNoteFile"
+                    type="file"
+                    onChange={e => setFile(e.target.files[0])}
+                    className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition duration-200"
+                    disabled={isLoading}
+                />
 
-            <Select value={documentType} onChange={e => setDocumentType(e.target.value)} disabled={isLoading}>
-                <option value="Notes" className="text-slate-900">Notes</option>
-                <option value="Question Bank" className="text-slate-900">Question Bank</option>
-                <option value="Reference Book" className="text-slate-900">Reference Book</option>
-            </Select>
-
-            <label className="block text-sm text-slate-300 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
-            <input
-                id="adminNoteFile"
-                type="file"
-                onChange={e => setFile(e.target.files[0])}
-                className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition duration-200"
-                disabled={isLoading}
-            />
-
-            <button
-                className={`${buttonClass} ${primaryButtonClass} w-full`}
-                onClick={handleUpload}
-                disabled={isLoading || !title || !file || !degree || !subject}
-            >
-                {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Upload className="w-5 h-5 mr-2" />}
-                {isLoading ? 'Uploading...' : 'Upload Material'}
-            </button>
-        </div>
-
-        <div className="bg-slate-900/40 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10">
-            <div className="flex items-center justify-between gap-3 mb-4">
-                <h5 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                    <History className="w-5 h-5 text-slate-400" /> Manage Uploaded Materials
-                </h5>
                 <button
-                    className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-white text-sm`}
-                    onClick={fetchUploaded}
-                    disabled={isListLoading || !degree || !semester}
+                    className={`${buttonClass} ${primaryButtonClass} w-full`}
+                    onClick={handleUpload}
+                    disabled={isLoading || !title || !file || !degree || !subject}
                 >
-                    {isListLoading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                    Refresh
+                    {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Upload className="w-5 h-5 mr-2" />}
+                    {isLoading ? 'Uploading...' : 'Upload Material'}
                 </button>
             </div>
 
-            {!degree && <div className="text-sm text-slate-400">Select Degree/Semester to view uploaded materials.</div>}
-
-            {degree && semester && !isListLoading && uploadedItems.length === 0 && (
-                <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">
-                    No uploaded materials found for the selected filters.
+            <div className="bg-slate-900/40 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                    <h5 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                        <History className="w-5 h-5 text-slate-400" /> Manage Uploaded Materials
+                    </h5>
+                    <button
+                        className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-white text-sm`}
+                        onClick={fetchUploaded}
+                        disabled={isListLoading || !degree || !semester}
+                    >
+                        {isListLoading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                        Refresh
+                    </button>
                 </div>
-            )}
 
-            {isListLoading && (
-                <div className="text-center py-8">
-                    <Loader2 className="animate-spin w-6 h-6 mx-auto text-slate-300" />
-                </div>
-            )}
+                {!degree && <div className="text-sm text-slate-400">Select Degree/Semester to view uploaded materials.</div>}
 
-            <div className="space-y-3">
-                {uploadedItems.map((n) => (
-                    <div key={n.id} className="p-4 rounded-xl border border-white/10 bg-slate-800/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="min-w-0">
-                            <div className="font-bold text-white truncate">{n.title}</div>
-                            <div className="text-xs text-slate-400 mt-1">
-                                {n.degree} • Sem {n.semester} • Sec {n.section} • {n.subject} • <span className="text-blue-300">{n.document_type}</span>
+                {degree && semester && !isListLoading && uploadedItems.length === 0 && (
+                    <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">
+                        No uploaded materials found for the selected filters.
+                    </div>
+                )}
+
+                {isListLoading && (
+                    <div className="text-center py-8">
+                        <Loader2 className="animate-spin w-6 h-6 mx-auto text-slate-300" />
+                    </div>
+                )}
+
+                <div className="space-y-3">
+                    {uploadedItems.map((n) => (
+                        <div key={n.id} className="p-4 rounded-xl border border-white/10 bg-slate-800/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="min-w-0">
+                                <div className="font-bold text-white truncate">{n.title}</div>
+                                <div className="text-xs text-slate-400 mt-1">
+                                    {n.degree} • Sem {n.semester} • Sec {n.section} • {n.subject} • <span className="text-blue-300">{n.document_type}</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 flex-shrink-0">
+                                {n.file_url && (
+                                    <a className={`py-2 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">
+                                        Download
+                                    </a>
+                                )}
+                                <button
+                                    className={`${buttonClass} bg-red-600 hover:bg-red-700 text-white text-sm`}
+                                    onClick={() => handleDelete(n.id)}
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete
+                                </button>
                             </div>
                         </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                            {n.file_url && (
-                                <a className={`py-2 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">
-                                    Download
-                                </a>
-                            )}
-                            <button
-                                className={`${buttonClass} bg-red-600 hover:bg-red-700 text-white text-sm`}
-                                onClick={() => handleDelete(n.id)}
-                            >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
-        </div>
         </div>
     );
 }
@@ -3150,24 +3150,22 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
     // NEW: Fetch sections for filter dropdown when Degree/Sem changes
     const [availableFilterSections, setAvailableFilterSections] = useState([]);
     useEffect(() => {
-        const { fetchSections } = catalogs;
         if (filterDegree && filterSemester) {
             fetchSections(filterDegree, filterSemester).then(setAvailableFilterSections);
         } else {
             setAvailableFilterSections([]);
         }
-    }, [filterDegree, filterSemester, catalogs]);
+    }, [filterDegree, filterSemester, fetchSections]);
 
     // NEW: Fetch sections for Edit Modal
     const [editSections, setEditSections] = useState([]);
     useEffect(() => {
         if (editStudent?.degree && editStudent?.semester) {
-            const { fetchSections } = catalogs;
             fetchSections(editStudent.degree, editStudent.semester).then(setEditSections);
         } else {
             setEditSections([]);
         }
-    }, [editStudent?.degree, editStudent?.semester, catalogs]);
+    }, [editStudent?.degree, editStudent?.semester, fetchSections]);
 
     const fetchStudents = useCallback(async () => {
         setIsLoading(true);
@@ -4347,7 +4345,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                         </div>
                         <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-4">
                             <h4 className="text-xl font-bold text-yellow-400">Manage Sections</h4>
-                            
+
                             {/* Add Section Form */}
                             <div className="bg-slate-800/40 p-4 rounded-lg border border-white/5 space-y-3">
                                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
@@ -4366,11 +4364,11 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                             {/* Sections Display - Dropdown Menu */}
                             <div>
                                 <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">View & Delete Sections</label>
-                                
+
                                 {/* Select Degree & Semester to View Sections - Mobile Optimized */}
                                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 mb-3">
-                                    <Select 
-                                        value={viewSectionDegree} 
+                                    <Select
+                                        value={viewSectionDegree}
                                         onChange={e => {
                                             setViewSectionDegree(e.target.value);
                                             setViewSectionSemester(""); // Reset semester when degree changes
@@ -4381,8 +4379,8 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                         <option value="" className="text-slate-900">Select Degree</option>
                                         {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                                     </Select>
-                                    <Select 
-                                        value={viewSectionSemester} 
+                                    <Select
+                                        value={viewSectionSemester}
                                         onChange={e => setViewSectionSemester(e.target.value)}
                                         disabled={!viewSectionDegree}
                                         className="w-full"
@@ -4402,7 +4400,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                         </div>
                                     ) : (
                                         <>
-                                            <Select 
+                                            <Select
                                                 className="w-full bg-slate-800/50 border border-white/10 text-white py-2.5 text-base"
                                                 onChange={(e) => {
                                                     const value = e.target.value;
@@ -4414,8 +4412,8 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                             >
                                                 <option value="" className="text-slate-900">Select a section to delete...</option>
                                                 {currentSections.map(s => (
-                                                    <option 
-                                                        key={s} 
+                                                    <option
+                                                        key={s}
                                                         value={s}
                                                         className="text-slate-900"
                                                     >
@@ -5393,94 +5391,94 @@ function App() {
 
                 {/* Footer with About Section - Only show when not logged in */}
                 {!user && (
-                <footer className="mt-12 mb-8 pt-8 border-t border-white/10">
-                    <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 p-6 sm:p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            {/* About Section */}
-                            <div>
-                                <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center">
-                                    <Book className="w-5 h-5 mr-2" />
-                                    About NoteOrbit
-                                </h3>
-                                <p className="text-sm text-slate-300 leading-relaxed">
-                                    A comprehensive academic management system designed to streamline student-faculty interactions, 
-                                    manage academic resources, and enhance the learning experience.
-                                </p>
-                            </div>
+                    <footer className="mt-12 mb-8 pt-8 border-t border-white/10">
+                        <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 p-6 sm:p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                {/* About Section */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center">
+                                        <Book className="w-5 h-5 mr-2" />
+                                        About NoteOrbit
+                                    </h3>
+                                    <p className="text-sm text-slate-300 leading-relaxed">
+                                        A comprehensive academic management system designed to streamline student-faculty interactions,
+                                        manage academic resources, and enhance the learning experience.
+                                    </p>
+                                </div>
 
-                            {/* Core Team Section */}
-                            <div>
-                                <h3 className="text-lg font-bold text-emerald-400 mb-3 flex items-center">
-                                    <User className="w-5 h-5 mr-2" />
-                                    Core Team
-                                </h3>
-                                <div className="space-y-3 text-xs text-slate-300">
-                                    <div>
-                                        <div className="font-semibold text-emerald-300 mb-1">Sumit Kumar Sinha (3CSE37)</div>
-                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS2175 •  Fullstack Developer, Database Designer</div>
+                                {/* Core Team Section */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-emerald-400 mb-3 flex items-center">
+                                        <User className="w-5 h-5 mr-2" />
+                                        Core Team
+                                    </h3>
+                                    <div className="space-y-3 text-xs text-slate-300">
+                                        <div>
+                                            <div className="font-semibold text-emerald-300 mb-1">Sumit Kumar Sinha (3CSE37)</div>
+                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS2175 •  Fullstack Developer, Database Designer</div>
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar (3CSE32)</div>
+                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1906 • Backend Developer</div>
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-emerald-300 mb-1">Santosh Kumar Sah (3CSE32)</div>
+                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1895 • Frontend Developer, Bugs Analyst</div>
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-emerald-300 mb-1">Raushan Kumar (3CSE29)</div>
+                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1711 • UI/UX Designer</div>
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar Thakur (3CSE32)</div>
+                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1908 • Bugs Analyst, UI/UX Tester</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar (3CSE32)</div>
-                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS1906 • Backend Developer</div>
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-emerald-300 mb-1">Santosh Kumar Sah (3CSE32)</div>
-                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS1895 • Frontend Developer, Bugs Analyst</div>
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-emerald-300 mb-1">Raushan Kumar (3CSE29)</div>
-                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS1711 • UI/UX Designer</div>
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar Thakur (3CSE32)</div>
-                                        <div className="text-slate-400 pl-2">SRN: 24SUUBECS1908 • Bugs Analyst, UI/UX Tester</div>
+                                </div>
+
+                                {/* College & Contact Section */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-yellow-400 mb-3 flex items-center">
+                                        <GraduationCap className="w-5 h-5 mr-2" />
+                                        Institution & Contact
+                                    </h3>
+                                    <div className="space-y-3 text-sm text-slate-300">
+                                        <div>
+                                            <div className="font-semibold text-yellow-300 mb-1">Sapthagiri NPS University</div>
+                                            <div className="text-slate-400 text-xs mb-2">Academic Year 2024-2028</div>
+                                            <div className="flex items-start text-xs text-slate-400">
+                                                <Home className="w-4 h-4 mr-2 mt-0.5 text-yellow-400 flex-shrink-0" />
+                                                <span>#14/5, Chikkasandra, Hesarghatta Main Road, Bengaluru – 560057</span>
+                                            </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-white/5">
+                                            <div className="flex items-start mb-2">
+                                                <Mail className="w-4 h-4 mr-2 mt-0.5 text-yellow-400 flex-shrink-0" />
+                                                <a href="mailto:info.noteorbit@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors break-all">
+                                                    info.noteorbit@gmail.com
+                                                </a>
+                                            </div>
+                                            <div className="flex items-center text-xs text-slate-400">
+                                                <span className="mr-2">📞</span>
+                                                <span>9771719891, 7033688853</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* College & Contact Section */}
-                            <div>
-                                <h3 className="text-lg font-bold text-yellow-400 mb-3 flex items-center">
-                                    <GraduationCap className="w-5 h-5 mr-2" />
-                                    Institution & Contact
-                                </h3>
-                                <div className="space-y-3 text-sm text-slate-300">
-                                    <div>
-                                        <div className="font-semibold text-yellow-300 mb-1">Sapthagiri NPS University</div>
-                                        <div className="text-slate-400 text-xs mb-2">Academic Year 2024-2028</div>
-                                        <div className="flex items-start text-xs text-slate-400">
-                                            <Home className="w-4 h-4 mr-2 mt-0.5 text-yellow-400 flex-shrink-0" />
-                                            <span>#14/5, Chikkasandra, Hesarghatta Main Road, Bengaluru – 560057</span>
-                                        </div>
-                                    </div>
-                                    <div className="pt-2 border-t border-white/5">
-                                        <div className="flex items-start mb-2">
-                                            <Mail className="w-4 h-4 mr-2 mt-0.5 text-yellow-400 flex-shrink-0" />
-                                            <a href="mailto:info.noteorbit@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors break-all">
-                                                info.noteorbit@gmail.com
-                                            </a>
-                                        </div>
-                                        <div className="flex items-center text-xs text-slate-400">
-                                            <span className="mr-2">📞</span>
-                                            <span>9771719891, 7033688853</span>
-                                        </div>
-                                    </div>
+                            {/* Copyright & Branding */}
+                            <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+                                <div className="text-xs text-slate-400 text-center sm:text-left">
+                                    <p>© 2026 NoteOrbit Academic Management System</p>
+                                    <p className="mt-1">Powered by <span className="text-blue-400 font-semibold">LeafCore Labs</span></p>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    <span>Where Imagination is Redefined!</span>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Copyright & Branding */}
-                        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-                            <div className="text-xs text-slate-400 text-center sm:text-left">
-                                <p>© 2026 NoteOrbit Academic Management System</p>
-                                <p className="mt-1">Powered by <span className="text-blue-400 font-semibold">LeafCore Labs</span></p>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                                <span>Where Imagination is Redefined!</span>
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                    </footer>
                 )}
             </div>
         </div>
