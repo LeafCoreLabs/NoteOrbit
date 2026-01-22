@@ -1296,20 +1296,32 @@ def manage_degrees():
     return jsonify({"success": True, "degrees": data})
 
 
-@app.route("/admin/sections", methods=["GET", "POST"])
+@app.route("/admin/sections", methods=["GET", "POST", "DELETE"])
 def manage_sections():
-    if request.method == "POST":
+    if request.method in ["POST", "DELETE"]:
         try:
             verify_jwt_in_request()
         except Exception:
-            return jsonify({"success": False, "message": "Authentication required to modify sections"}), 401
+            return jsonify({"success": False, "message": "Authentication required"}), 401
         user = User.query.get(get_jwt_identity())
         if user.role != "admin":
-            return jsonify({"success": False, "message": "Admin access required to modify sections"}), 403
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+
+    if request.method == "POST":
         name = (request.json or {}).get("name")
         if not name or Section.query.filter_by(name=name).first():
             return jsonify({"success": False, "message": "Invalid or duplicate section"}), 400
         db.session.add(Section(name=name)); db.session.commit()
+    
+    if request.method == "DELETE":
+        name = (request.json or {}).get("name")
+        s = Section.query.filter_by(name=name).first()
+        if not s:
+            return jsonify({"success": False, "message": "Section not found"}), 404
+        db.session.delete(s)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Section deleted"})
+
     data = [s.name for s in Section.query.order_by(Section.name).all()]
     return jsonify({"success": True, "sections": data})
 
@@ -2637,9 +2649,8 @@ def init_db():
             db.session.add(Degree(name=d))
         db.session.commit()
     if Section.query.count() == 0:
-        for s in ["A", "B", "C"]:
-            db.session.add(Section(name=s))
-        db.session.commit()
+        # Default seeding removed per request to specific deletions
+        pass
         
     # NEW: Initial Hostel/Room for testing (Optional but helpful)
     if Hostel.query.count() == 0:

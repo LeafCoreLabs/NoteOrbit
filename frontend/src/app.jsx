@@ -3888,6 +3888,17 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         }
     };
 
+    const deleteCatalogItem = async (endpoint, name) => {
+        if (!confirm(`Delete ${name}? This might affect data linked to it.`)) return;
+        try {
+            await auth().delete(`/admin/${endpoint}`, { data: { name } });
+            showMessage("Deleted successfully", "success");
+            await fetchBasics();
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Deletion failed", "error");
+        }
+    };
+
     const addSubject = async () => {
         if (!newSubject.trim()) return showMessage("Subject cannot be empty", "error");
         try {
@@ -3990,7 +4001,14 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                             <h4 className="text-xl font-bold text-yellow-400">Manage Sections</h4>
                             <Input placeholder="New section" value={newSection} onChange={e => setNewSection(e.target.value)} />
                             <button className={`${buttonClass} ${primaryButtonClass}`} onClick={() => addCatalogItem("sections", newSection, "Section added!")}>Add Section</button>
-                            <div className="text-xs text-slate-500">Current: {(sections || []).join(", ")}</div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {(sections || []).map(s => (
+                                    <div key={s} className="bg-slate-800 text-white text-xs px-2 py-1 rounded-md flex items-center border border-slate-600">
+                                        {s}
+                                        <button onClick={() => deleteCatalogItem("sections", s)} className="ml-2 text-red-400 hover:text-red-300 font-bold">×</button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                         <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
                             <h4 className="text-xl font-bold text-yellow-400">Add Subject</h4>
