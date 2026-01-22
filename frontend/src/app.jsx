@@ -741,7 +741,14 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
                     {notes.map(n => (
                         <div key={n.id} className="p-4 rounded-xl shadow-md border-l-4 border-blue-500 bg-slate-800 hover:bg-slate-700 transition duration-200">
                             <div className="font-bold text-lg text-white truncate">{n.title} <span className="text-xs text-blue-400">({n.document_type})</span></div>
-                            <div className="text-xs text-slate-400 mt-1">{n.subject} | Uploaded: {new Date(n.timestamp).toLocaleDateString()}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                                {n.uploader_role === 'admin' ? (
+                                    <span className="bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30">Uploaded by Admin</span>
+                                ) : n.uploader_role === 'professor' ? (
+                                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30">Uploaded by Faculty</span>
+                                ) : null}
+                                <div className="text-xs text-slate-400">{n.subject} | {new Date(n.timestamp).toLocaleDateString()}</div>
+                            </div>
                             <div className="mt-3">
                                 {n.file_url && <a className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">Download</a>}
                             </div>
@@ -2427,6 +2434,7 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
                 </Select>
                 <Select value={section} onChange={e => setSection(e.target.value)} disabled={isLoading}>
                     <option value="" className="text-slate-900">Select Section</option>
+                    <option value="ALL" className="text-amber-400 font-bold">All Sections</option>
                     {(sections || []).map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
                 </Select>
             </div>

@@ -1410,10 +1410,16 @@ def get_notes():
     except:
         return jsonify({"success": False, "message": "Invalid semester"}), 400
     q = Note.query.filter_by(degree=degree, semester=sem)
-    if section: q = q.filter_by(section=section)
+    if section:
+        # Support "ALL" sections + User's specific section
+        q = q.filter(or_(Note.section == section, Note.section == 'ALL'))
+        
     if subject: q = q.filter_by(subject=subject)
     notes = q.order_by(Note.timestamp.desc()).all()
     out = []
+    
+    # Pre-fetch user roles to avoid N+1 query problem (simple optimization)
+    # Or just fetch per item since traffic is low
     for n in notes:
         try:
             file_url = s3_client.generate_presigned_url(
@@ -1421,10 +1427,19 @@ def get_notes():
             )
         except Exception:
             file_url = None
+            
+        # Get uploader info
+        uploader = User.query.get(n.uploaded_by)
+        uploader_role = uploader.role if uploader else "unknown"
+        uploader_name = uploader.name if uploader else "Unknown"
+
         out.append({
             "id": n.id, "title": n.title, "degree": n.degree, "semester": n.semester, "section": n.section,
             "subject": n.subject, "document_type": n.document_type, "file_url": file_url,
-            "uploaded_by": n.uploaded_by, "timestamp": n.timestamp.isoformat() if n.timestamp else None
+            "uploaded_by": n.uploaded_by, 
+            "uploader_role": uploader_role, # Added Role
+            "uploader_name": uploader_name, # Added Name
+            "timestamp": n.timestamp.isoformat() if n.timestamp else None
         })
     return jsonify({"success": True, "notes": out})
 
