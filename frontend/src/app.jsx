@@ -1,5 +1,5 @@
 // NoteOrbitStudentHostel.jsx (FINAL IMPLEMENTATION - Including Live Hostel Complaint Tracking)
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import axios from 'axios';
 import gsap from 'gsap';
 import {
@@ -688,9 +688,23 @@ function StudentFeedback({ showMessage }) {
 function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, buttonClass }) {
     const { fetchSubjects, subjects } = catalogs;
     const [selectedSubject, setSelectedSubject] = useState('');
+    const [selectedDocType, setSelectedDocType] = useState('ALL');
     const [notes, setNotes] = useState([]);
     const [notices, setNotices] = useState([]);
     const [isFetching, setIsFetching] = useState(false);
+
+    const availableDocTypes = useMemo(() => {
+        const types = (notes || [])
+            .map(n => (n?.document_type || '').trim())
+            .filter(Boolean);
+        return Array.from(new Set(types)).sort((a, b) => a.localeCompare(b));
+    }, [notes]);
+
+    const filteredNotes = useMemo(() => {
+        if (!Array.isArray(notes)) return [];
+        if (!selectedDocType || selectedDocType === 'ALL') return notes;
+        return notes.filter(n => (n?.document_type || '').trim() === selectedDocType);
+    }, [notes, selectedDocType]);
 
     const fetchContent = useCallback(async (subjectToFetch) => {
         if (!subjectToFetch || !user.degree || !user.semester) {
@@ -755,6 +769,10 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
                     <Select className="flex-1 max-w-xs" value={selectedSubject || ''} onChange={e => setSelectedSubject(e.target.value)} disabled={!subjects.length || isFetching}>
                         {Array.isArray(subjects) && subjects.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                     </Select>
+                    <Select className="flex-1 max-w-xs" value={selectedDocType} onChange={e => setSelectedDocType(e.target.value)} disabled={isFetching || notes.length === 0}>
+                        <option value="ALL" className="text-slate-900">All Documents</option>
+                        {availableDocTypes.map(t => <option key={t} value={t} className="text-slate-900">{t}</option>)}
+                    </Select>
                     <button className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-white text-sm sm:w-48 py-2.5`} onClick={handleRefresh} disabled={isFetching || !selectedSubject}>
                         {isFetching ? <Loader2 className="animate-spin w-5 h-5 mr-1" /> : <RefreshCw className="w-5 h-5 mr-1" />}
                         {isFetching ? 'Refreshing...' : 'Refresh Content'}
@@ -766,8 +784,13 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
                 <h4 className="text-xl font-bold mt-4 mb-4 text-blue-400 flex items-center"><Book className="w-5 h-5 mr-2" /> Notes for "{selectedSubject || '...'}"</h4>
                 {isFetching && <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-blue-500" /></div>}
                 {!isFetching && notes.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">No notes uploaded for {selectedSubject} yet.</div>}
+                {!isFetching && notes.length > 0 && filteredNotes.length === 0 && (
+                    <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">
+                        No documents found for <b className="text-slate-200">{selectedDocType}</b>.
+                    </div>
+                )}
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {notes.map(n => (
+                    {filteredNotes.map(n => (
                         <div key={n.id} className="p-4 rounded-xl shadow-md border-l-4 border-blue-500 bg-slate-800 hover:bg-slate-700 transition duration-200">
                             <div className="font-bold text-lg text-white truncate">{n.title} <span className="text-xs text-blue-400">({n.document_type})</span></div>
                             <div className="flex items-center gap-2 mt-1">
