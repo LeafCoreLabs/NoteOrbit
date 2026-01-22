@@ -4290,46 +4290,46 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                 <button className={`${buttonClass} ${primaryButtonClass} w-full`} onClick={addSection}>Add Section</button>
                             </div>
 
-                            {/* Sections Display - Card Layout */}
+                            {/* Sections Display - Dropdown Menu */}
                             <div>
-                                <h5 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3">All Sections by Degree & Semester</h5>
+                                <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">View & Delete Sections</label>
                                 {isLoadingSections ? (
-                                    <div className="text-center p-8"><Loader2 className="animate-spin w-6 h-6 mx-auto text-yellow-500" /></div>
+                                    <div className="text-center p-6"><Loader2 className="animate-spin w-5 h-5 mx-auto text-yellow-500" /></div>
                                 ) : allSections.length === 0 ? (
-                                    <div className="text-center p-8 bg-slate-800/20 rounded-lg border border-white/5 text-slate-500 text-sm">
+                                    <div className="text-center p-6 bg-slate-800/20 rounded-lg border border-white/5 text-slate-500 text-sm">
                                         No sections found. Add sections using the form above.
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                                        {allSections.map((group, idx) => (
-                                            <div key={`${group.degree}_${group.semester}`} className="bg-slate-800/20 rounded-xl border border-white/5 p-5 hover:bg-slate-800/40 hover:border-white/10 transition-all duration-300">
-                                                <div className="flex justify-between items-center mb-4">
-                                                    <div>
-                                                        <div className="font-bold text-white text-lg">{group.degree}</div>
-                                                        <div className="text-xs text-slate-400 font-mono mt-0.5">Semester {group.semester}</div>
-                                                    </div>
-                                                    <span className="bg-yellow-500/10 text-yellow-500 text-[10px] font-bold px-2 py-1 rounded border border-yellow-500/20 uppercase tracking-widest">
-                                                        {group.sections.length} {group.sections.length === 1 ? 'SECTION' : 'SECTIONS'}
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    {group.sections.map(s => (
-                                                        <div key={s} className="flex justify-between items-center bg-slate-900/60 p-2.5 rounded-lg border border-white/5 text-sm group/item hover:border-white/10 transition-colors">
-                                                            <div className="flex items-center">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50 mr-3"></div>
-                                                                <span className="text-slate-200 font-medium">Section {s}</span>
-                                                            </div>
-                                                            <button 
-                                                                onClick={() => deleteSection(s, group.degree, group.semester)} 
-                                                                className="text-slate-600 hover:text-red-400 p-1 opacity-0 group-hover/item:opacity-100 transition-all"
-                                                            >
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <Select 
+                                        className="w-full bg-slate-800/50 border border-white/10 text-white"
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (value && value !== '') {
+                                                const [degree, semester, section] = value.split('|');
+                                                if (confirm(`Delete Section ${section} from ${degree} Sem ${semester}?`)) {
+                                                    deleteSection(section, degree, semester);
+                                                }
+                                                e.target.value = ''; // Reset dropdown
+                                            }
+                                        }}
+                                    >
+                                        <option value="" className="text-slate-900">Select a section to delete...</option>
+                                        {allSections.map((group) => 
+                                            group.sections.map(s => (
+                                                <option 
+                                                    key={`${group.degree}_${group.semester}_${s}`} 
+                                                    value={`${group.degree}|${group.semester}|${s}`}
+                                                    className="text-slate-900"
+                                                >
+                                                    {group.degree} • Sem {group.semester} • Section {s}
+                                                </option>
+                                            ))
+                                        )}
+                                    </Select>
+                                )}
+                                {allSections.length > 0 && (
+                                    <div className="mt-3 text-xs text-slate-400 text-center">
+                                        Total: {allSections.reduce((sum, g) => sum + g.sections.length, 0)} sections across {allSections.length} degree/semester combinations
                                     </div>
                                 )}
                             </div>
