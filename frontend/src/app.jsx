@@ -3504,7 +3504,7 @@ function AdminHostelComplaints({ showMessage, buttonClass, primaryButtonClass })
 
 
 function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryButtonClass }) {
-    const { degrees, sections, loaded, fetchBasics, subjects, fetchSubjects } = catalogs; // Added subjects, fetchSubjects
+    const { degrees, loaded, fetchBasics, subjects, fetchSubjects, fetchSections } = catalogs; // Added fetchSections, Removed sections (global)
     const [faculty, setFaculty] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -3521,13 +3521,27 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
     const [filterDegree, setFilterDegree] = useState("");
     const [filterSemester, setFilterSemester] = useState("");
     const [filterSection, setFilterSection] = useState("");
+    const [availableFilterSections, setAvailableFilterSections] = useState([]);
 
-    // Fetch subjects when degree/sem changes
+    // Update filter sections
+    useEffect(() => {
+        if (filterDegree && filterSemester) {
+            fetchSections(filterDegree, filterSemester).then(setAvailableFilterSections);
+        } else {
+            setAvailableFilterSections([]);
+        }
+    }, [filterDegree, filterSemester, fetchSections]);
+
+    // Fetch subjects & sections when degree/sem changes
+    const [availableSections, setAvailableSections] = useState([]);
     useEffect(() => {
         if (allocDegree && allocSemester) {
             fetchSubjects(allocDegree, allocSemester);
+            fetchSections(allocDegree, allocSemester).then(setAvailableSections);
+        } else {
+            setAvailableSections([]);
         }
-    }, [allocDegree, allocSemester, fetchSubjects]);
+    }, [allocDegree, allocSemester, fetchSubjects, fetchSections]);
 
     // Fetch Faculty List
     const fetchFaculty = useCallback(async () => {
@@ -3548,8 +3562,8 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
     // Initialize dropdowns
     useEffect(() => {
         if (loaded && degrees.length && !allocDegree) setAllocDegree(degrees[0]);
-        if (loaded && sections.length && !allocSection) setAllocSection(sections[0]);
-    }, [loaded, degrees, sections, allocDegree, allocSection]);
+        // Do not force section default
+    }, [loaded, degrees, allocDegree]);
 
     // Filter Logic
     const filtersActive = filterDegree || filterSemester || filterSection;
@@ -3714,7 +3728,8 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
                                 {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s}>Sem {s}</option>)}
                             </Select>
                             <Select value={allocSection} onChange={e => setAllocSection(e.target.value)}>
-                                {sections.map(s => <option key={s} value={s}>Sec {s}</option>)}
+                                <option value="">Select Section</option>
+                                {(availableSections || []).map(s => <option key={s} value={s}>Sec {s}</option>)}
                             </Select>
                         </div>
                         <div className="flex gap-2">
@@ -3755,7 +3770,7 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
                         </select>
                         <select className="bg-slate-900 border border-white/10 text-xs rounded px-2 py-1 text-slate-300 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterSection} onChange={e => setFilterSection(e.target.value)}>
                             <option value="">Section</option>
-                            {(sections || []).map(s => <option key={s} value={s}>Sec {s}</option>)}
+                            {(availableFilterSections || []).map(s => <option key={s} value={s}>Sec {s}</option>)}
                         </select>
                     </div>
                 </div>
