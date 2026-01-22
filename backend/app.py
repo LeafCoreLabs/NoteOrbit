@@ -1455,6 +1455,7 @@ def get_notes():
     degree = request.args.get("degree") or user.degree; semester = request.args.get("semester") or user.semester
     section = request.args.get("section") or user.section
     subject = request.args.get("subject")
+    document_type = request.args.get("document_type")
     if not degree or not semester:
         return jsonify({"success": False, "message": "degree and semester are required"}), 400
     try:
@@ -1467,6 +1468,7 @@ def get_notes():
         q = q.filter(or_(Note.section == section, Note.section == 'ALL'))
         
     if subject: q = q.filter_by(subject=subject)
+    if document_type: q = q.filter_by(document_type=document_type)
     notes = q.order_by(Note.timestamp.desc()).all()
     out = []
     
@@ -1494,6 +1496,26 @@ def get_notes():
             "timestamp": n.timestamp.isoformat() if n.timestamp else None
         })
     return jsonify({"success": True, "notes": out})
+
+
+@app.route("/admin/notes/<int:note_id>", methods=["DELETE"])
+@roles_allowed(["admin"])
+def admin_delete_note(note_id):
+    note = Note.query.get(note_id)
+    if not note:
+        return jsonify({"success": False, "message": "Note not found"}), 404
+
+    # Best-effort delete from MinIO/S3 first (avoid orphaned objects)
+    if note.file_path:
+        try:
+            s3_client.delete_object(Bucket=S3_BUCKET, Key=note.file_path)
+        except Exception as e:
+            # If object doesn't exist / transient error, still allow DB delete to proceed
+            print(f"Failed to delete note object from storage: {e}")
+
+    db.session.delete(note)
+    db.session.commit()
+    return jsonify({"success": True, "message": "Note deleted"})
 
 
 # RENAMED and UPDATED for Admin Library Book Upload
