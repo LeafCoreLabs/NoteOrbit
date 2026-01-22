@@ -4004,17 +4004,51 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     const [newSection, setNewSection] = useState("");
     const [newSectionDegree, setNewSectionDegree] = useState("");
     const [newSectionSemester, setNewSectionSemester] = useState("1");
-    // Managed sections list for the admin view
-    const [managedSections, setManagedSections] = useState([]);
+    // All sections grouped by degree and semester
+    const [allSections, setAllSections] = useState([]);
+    const [isLoadingSections, setIsLoadingSections] = useState(false);
 
-    // Refresh managed sections when deg/sem changes
-    useEffect(() => {
-        if (newSectionDegree && newSectionSemester) {
-            fetchSections(newSectionDegree, newSectionSemester).then(setManagedSections);
-        } else {
-            setManagedSections([]);
+    // Fetch all sections grouped by degree and semester
+    const fetchAllSections = useCallback(async () => {
+        if (!degrees || degrees.length === 0) return;
+        setIsLoadingSections(true);
+        try {
+            const sectionsByGroup = {};
+            // Fetch sections for each degree and semester combination
+            for (const deg of degrees) {
+                for (let sem = 1; sem <= 8; sem++) {
+                    try {
+                        const sections = await fetchSections(deg, sem);
+                        if (sections && sections.length > 0) {
+                            const key = `${deg}_${sem}`;
+                            sectionsByGroup[key] = {
+                                degree: deg,
+                                semester: sem,
+                                sections: sections
+                            };
+                        }
+                    } catch (e) {
+                        // Skip if no sections for this combo
+                    }
+                }
+            }
+            // Convert to array format
+            const grouped = Object.values(sectionsByGroup);
+            setAllSections(grouped);
+        } catch (e) {
+            console.error("Failed to fetch sections", e);
+            setAllSections([]);
+        } finally {
+            setIsLoadingSections(false);
         }
-    }, [newSectionDegree, newSectionSemester, fetchSections]);
+    }, [degrees, fetchSections]);
+
+    // Refresh all sections when degrees change or after add/delete
+    useEffect(() => {
+        if (loaded && degrees && degrees.length > 0) {
+            fetchAllSections();
+        }
+    }, [loaded, degrees, fetchAllSections]);
 
     const addSection = async () => {
         if (!newSectionDegree || !newSectionSemester || !newSection.trim()) return showMessage("Select Degree, Sem and enter Name.", "error");
@@ -4022,19 +4056,18 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
             await auth().post("/admin/sections", { name: newSection, degree: newSectionDegree, semester: newSectionSemester });
             showMessage("Section added!", "success");
             setNewSection("");
-            fetchSections(newSectionDegree, newSectionSemester).then(setManagedSections); // Refresh local list
+            await fetchAllSections(); // Refresh all sections
         } catch (e) {
             showMessage(e.response?.data?.message || "Failed to add section", "error");
         }
     };
 
-    const deleteSection = async (name) => {
-        if (!newSectionDegree || !newSectionSemester) return;
-        if (!confirm(`Delete Section ${name} from ${newSectionDegree} Sem ${newSectionSemester}?`)) return;
+    const deleteSection = async (name, degree, semester) => {
+        if (!confirm(`Delete Section ${name} from ${degree} Sem ${semester}?`)) return;
         try {
-            await auth().delete("/admin/sections", { data: { name, degree: newSectionDegree, semester: newSectionSemester } });
+            await auth().delete("/admin/sections", { data: { name, degree, semester } });
             showMessage("Section deleted!", "success");
-            fetchSections(newSectionDegree, newSectionSemester).then(setManagedSections); // Refresh local list
+            await fetchAllSections(); // Refresh all sections
         } catch (e) {
             showMessage(e.response?.data?.message || "Failed to delete section", "error");
         }
@@ -4239,29 +4272,66 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                             <button className={`${buttonClass} ${primaryButtonClass}`} onClick={() => addCatalogItem("degrees", newDegree, "Degree added!")}>Add Degree</button>
                             <div className="text-xs text-slate-500">Current: {(degrees || []).join(", ")}</div>
                         </div>
-                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
+                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-4">
                             <h4 className="text-xl font-bold text-yellow-400">Manage Sections</h4>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Select value={newSectionDegree} onChange={e => setNewSectionDegree(e.target.value)} disabled={!degrees.length}>
-                                    <option value="">Select Degree</option>
-                                    {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
-                                </Select>
-                                <Select value={newSectionSemester} onChange={e => setNewSectionSemester(e.target.value)}>
-                                    <option value="1">Sem 1</option>
-                                    {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
-                                </Select>
+                            
+                            {/* Add Section Form */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-white/5 space-y-3">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Select value={newSectionDegree} onChange={e => setNewSectionDegree(e.target.value)} disabled={!degrees.length}>
+                                        <option value="">Select Degree</option>
+                                        {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                                    </Select>
+                                    <Select value={newSectionSemester} onChange={e => setNewSectionSemester(e.target.value)}>
+                                        {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                                    </Select>
+                                </div>
+                                <Input placeholder="New section name (e.g. A)" value={newSection} onChange={e => setNewSection(e.target.value)} />
+                                <button className={`${buttonClass} ${primaryButtonClass} w-full`} onClick={addSection}>Add Section</button>
                             </div>
-                            <Input placeholder="New section name (e.g. A)" value={newSection} onChange={e => setNewSection(e.target.value)} />
-                            <button className={`${buttonClass} ${primaryButtonClass}`} onClick={addSection}>Add Section</button>
 
-                            <div className="flex flex-wrap gap-2 mt-2 min-h-[40px] border border-white/5 rounded p-2 bg-slate-900/30">
-                                {(managedSections || []).length === 0 && <span className="text-xs text-slate-500 italic p-1">No sections or select degree/sem</span>}
-                                {(managedSections || []).map(s => (
-                                    <div key={s} className="bg-slate-800 text-white text-xs px-2 py-1 rounded-md flex items-center border border-slate-600">
-                                        {s}
-                                        <button onClick={() => deleteSection(s)} className="ml-2 text-red-400 hover:text-red-300 font-bold">×</button>
+                            {/* Sections Display - Card Layout */}
+                            <div>
+                                <h5 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3">All Sections by Degree & Semester</h5>
+                                {isLoadingSections ? (
+                                    <div className="text-center p-8"><Loader2 className="animate-spin w-6 h-6 mx-auto text-yellow-500" /></div>
+                                ) : allSections.length === 0 ? (
+                                    <div className="text-center p-8 bg-slate-800/20 rounded-lg border border-white/5 text-slate-500 text-sm">
+                                        No sections found. Add sections using the form above.
                                     </div>
-                                ))}
+                                ) : (
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                        {allSections.map((group, idx) => (
+                                            <div key={`${group.degree}_${group.semester}`} className="bg-slate-800/20 rounded-xl border border-white/5 p-5 hover:bg-slate-800/40 hover:border-white/10 transition-all duration-300">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <div>
+                                                        <div className="font-bold text-white text-lg">{group.degree}</div>
+                                                        <div className="text-xs text-slate-400 font-mono mt-0.5">Semester {group.semester}</div>
+                                                    </div>
+                                                    <span className="bg-yellow-500/10 text-yellow-500 text-[10px] font-bold px-2 py-1 rounded border border-yellow-500/20 uppercase tracking-widest">
+                                                        {group.sections.length} {group.sections.length === 1 ? 'SECTION' : 'SECTIONS'}
+                                                    </span>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {group.sections.map(s => (
+                                                        <div key={s} className="flex justify-between items-center bg-slate-900/60 p-2.5 rounded-lg border border-white/5 text-sm group/item hover:border-white/10 transition-colors">
+                                                            <div className="flex items-center">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50 mr-3"></div>
+                                                                <span className="text-slate-200 font-medium">Section {s}</span>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => deleteSection(s, group.degree, group.semester)} 
+                                                                className="text-slate-600 hover:text-red-400 p-1 opacity-0 group-hover/item:opacity-100 transition-all"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
