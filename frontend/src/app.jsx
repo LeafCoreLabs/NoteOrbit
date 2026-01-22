@@ -5278,7 +5278,8 @@ function App() {
                     {renderContent()}
                 </div>
 
-                {/* Footer with About Section */}
+                {/* Footer with About Section - Only show when not logged in */}
+                {!user && (
                 <footer className="mt-12 mb-8 pt-8 border-t border-white/10">
                     <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 p-6 sm:p-8">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -5333,7 +5334,7 @@ function App() {
                                 <div className="space-y-3 text-sm text-slate-300">
                                     <div>
                                         <div className="font-semibold text-yellow-300 mb-1">Sapthagiri NPS University</div>
-                                        <div className="text-slate-400 text-xs">Academic Year 2024-2025</div>
+                                        <div className="text-slate-400 text-xs">Academic Year 2024-2028</div>
                                     </div>
                                     <div className="pt-2 border-t border-white/5">
                                         <div className="flex items-start mb-2">
@@ -5363,6 +5364,7 @@ function App() {
                         </div>
                     </div>
                 </footer>
+                )}
             </div>
         </div>
     );
