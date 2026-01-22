@@ -2341,6 +2341,128 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
 // ----------------------------------------------
 // --- ADMIN MODULES (NEW/MODIFIED) ---
 
+// --- NEW ADMIN MODULE: Note Upload (Reuses Faculty Endpoint)
+function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalogs }) {
+    const { degrees, sections, fetchSubjects } = catalogs;
+    const [title, setTitle] = useState("");
+    const [degree, setDegree] = useState("");
+    const [semester, setSemester] = useState("1");
+    const [section, setSection] = useState("");
+    const [subject, setSubject] = useState("");
+    const [documentType, setDocumentType] = useState("Notes");
+    const [file, setFile] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Dynamic Subjects
+    const [availableSubjects, setAvailableSubjects] = useState([]);
+
+    // Initialize defaults
+    useEffect(() => {
+        if (degrees.length && !degree) setDegree(degrees[0]);
+        if (sections.length && !section) setSection(sections[0]);
+    }, [degrees, sections, degree, section]);
+
+    // Fetch Subjects on Deg/Sem change
+    useEffect(() => {
+        if (degree && semester) {
+            fetchSubjects(degree, semester).then(setAvailableSubjects);
+        } else {
+            setAvailableSubjects([]);
+        }
+    }, [degree, semester, fetchSubjects]);
+
+    // Reset subject if not in new list
+    useEffect(() => {
+        if (availableSubjects.length && !availableSubjects.includes(subject)) {
+            setSubject(availableSubjects[0]);
+        } else if (!availableSubjects.length) {
+            setSubject("");
+        }
+    }, [availableSubjects, subject]);
+
+
+    const handleUpload = async () => {
+        if (!title || !file || !degree || !semester || !section || !subject) {
+            return showMessage("All fields are required.", 'error');
+        }
+
+        setIsLoading(true);
+        const form = new FormData();
+        form.append("title", title);
+        form.append("degree", degree);
+        form.append("semester", semester);
+        form.append("section", section);
+        form.append("subject", subject);
+        form.append("document_type", documentType);
+        form.append("file", file);
+
+        try {
+            await auth().post("/upload-note", form);
+            showMessage("Study material uploaded successfully!", 'success');
+            setTitle("");
+            setFile(null);
+            if (document.getElementById('adminNoteFile')) document.getElementById('adminNoteFile').value = '';
+        } catch (err) {
+            if (err.response && err.response.status !== 401) {
+                showMessage(err.response?.data?.message || "Upload failed", 'error');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-green-500/20 space-y-4">
+            <h4 className="text-2xl font-bold mb-4 text-green-400 flex items-center"><Book className="w-6 h-6 mr-2" /> Upload Study Material (Admin)</h4>
+
+            <Input placeholder="Title (e.g., Module 1 PPT)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
+
+            <div className="grid grid-cols-3 gap-3">
+                <Select value={degree} onChange={e => setDegree(e.target.value)} disabled={isLoading}>
+                    <option value="" className="text-slate-900">Select Degree</option>
+                    {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                </Select>
+                <Select value={semester} onChange={e => setSemester(e.target.value)} disabled={isLoading}>
+                    {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                </Select>
+                <Select value={section} onChange={e => setSection(e.target.value)} disabled={isLoading}>
+                    <option value="" className="text-slate-900">Select Section</option>
+                    {(sections || []).map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
+                </Select>
+            </div>
+
+            <Select value={subject} onChange={e => setSubject(e.target.value)} icon={Book} disabled={isLoading || !availableSubjects.length}>
+                <option value="" className="text-slate-900">Select Subject</option>
+                {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
+            </Select>
+
+            <Select value={documentType} onChange={e => setDocumentType(e.target.value)} disabled={isLoading}>
+                <option value="Notes" className="text-slate-900">Notes</option>
+                <option value="Question Bank" className="text-slate-900">Question Bank</option>
+                <option value="Reference Book" className="text-slate-900">Reference Book</option>
+            </Select>
+
+            <label className="block text-sm text-slate-300 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
+            <input
+                id="adminNoteFile"
+                type="file"
+                onChange={e => setFile(e.target.files[0])}
+                className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition duration-200"
+                disabled={isLoading}
+            />
+
+            <button
+                className={`${buttonClass} ${primaryButtonClass} w-full`}
+                onClick={handleUpload}
+                disabled={isLoading || !title || !file || !degree || !subject}
+            >
+                {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Upload className="w-5 h-5 mr-2" />}
+                {isLoading ? 'Uploading...' : 'Upload Material'}
+            </button>
+        </div>
+    );
+}
+
 // --- NEW ADMIN MODULE: Book Upload
 function AdminBookUpload({ showMessage, buttonClass, primaryButtonClass, catalogs }) {
     const { degrees } = catalogs;
@@ -3845,6 +3967,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
             case 'faculty_mgmt':
                 return <AdminFacultyManagement showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} />;
             case "faculty-onboard": return <AdminFacultyOnboarding showMessage={showMessage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} catalogs={catalogs} />;
+            case "note-upload": return <AdminNoteUpload showMessage={showMessage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} catalogs={catalogs} />; // NEW VIEW
             case "library-upload": return <AdminBookUpload showMessage={showMessage} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} catalogs={catalogs} />; // NEW VIEW
             case "catalogs":
                 return (
@@ -3894,6 +4017,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                         { key: 'faculty_mgmt', label: 'Faculty Allocations', icon: ClipboardList },
                         { key: 'hostel-config', label: 'Hostel Config', icon: Home },
                         { key: 'complaints-admin', label: 'Hostel Complaints', icon: Mail },
+                        { key: 'note-upload', label: 'Upload Study Material', icon: Book },
                         { key: 'library-upload', label: 'Book Upload', icon: Upload },
                         { key: 'faculty-onboard', label: 'Add Faculty', icon: UserPlus },
                         { key: 'catalogs', label: 'Degrees/Subjects', icon: Settings },
@@ -3924,6 +4048,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                 { key: 'faculty_mgmt', label: 'Faculty Allocations' },
                                 { key: 'hostel-config', label: 'Hostel Config' },
                                 { key: 'complaints-admin', label: 'Hostel Complaints' },
+                                { key: 'note-upload', label: 'Upload Study Material' },
                                 { key: 'library-upload', label: 'Book Upload' },
                                 { key: 'faculty-onboard', label: 'Add Faculty' },
                                 { key: 'catalogs', label: 'Degrees/Subjects' },
