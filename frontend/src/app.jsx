@@ -508,7 +508,10 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
     }, [authMode]);
 
     const handleSendSignupOtp = async () => {
-        if (!regEmail) return showMessage("Enter email first.", "error");
+        if (!regEmail || !regEmail.trim()) return showMessage("Email is required.", "error");
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(regEmail)) return showMessage("Please enter a valid email address.", "error");
         setIsLoading(true);
         try {
             const res = await sendOtp(regEmail, "signup");
@@ -519,7 +522,7 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
     };
 
     const handleVerifySignupOtp = async () => {
-        if (!otp) return showMessage("Enter OTP.", "error");
+        if (!otp || otp.length !== 6) return showMessage("Please enter a valid 6-digit OTP.", "error");
         setIsLoading(true);
         try {
             await verifyOtp(regEmail, otp);
@@ -530,8 +533,45 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         finally { setIsLoading(false); }
     };
 
+    // Password validation function
+    const validatePassword = (password) => {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+        
+        return {
+            isValid: password.length >= minLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar,
+            errors: {
+                minLength: password.length >= minLength,
+                hasUpperCase,
+                hasLowerCase,
+                hasNumber,
+                hasSpecialChar
+            }
+        };
+    };
+
     const handleRegisterSubmit = async () => {
+        // Validate all required fields
+        if (!srn.trim()) return showMessage("SRN is required.", "error");
+        if (!name.trim()) return showMessage("Full Name is required.", "error");
+        if (!regPassword) return showMessage("Password is required.", "error");
+        if (!regConfirmPassword) return showMessage("Please confirm your password.", "error");
+        if (!degree) return showMessage("Please select a degree.", "error");
+        if (!semester) return showMessage("Please select a semester.", "error");
+        if (!section) return showMessage("Please select a section.", "error");
+        
+        // Validate password format
+        const passwordValidation = validatePassword(regPassword);
+        if (!passwordValidation.isValid) {
+            return showMessage("Password must contain: at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.", "error");
+        }
+        
+        // Validate password match
         if (regPassword !== regConfirmPassword) return showMessage("Passwords do not match.", "error");
+        
         // Prepare payload with OTP for backend re-verification
         onRegister({ srn, name, email: regEmail, password: regPassword, degree, semester: parseInt(semester), section, otp, role: userRole.toLowerCase() });
     };
@@ -560,31 +600,58 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                                 {regStep === 1 && (
                                     <div className="space-y-4">
                                         <div className="text-center text-sm text-slate-400 mb-2">Step 1: Verify your email</div>
-                                        <Input type="email" placeholder="Email Address" value={regEmail} onChange={e => setRegEmail(e.target.value)} disabled={isOtpSent} />
+                                        <Input type="email" placeholder="Email Address *" value={regEmail} onChange={e => setRegEmail(e.target.value)} disabled={isOtpSent} required />
                                         {!isOtpSent ? (
-                                            <button disabled={isLoading} onClick={handleSendSignupOtp} className={`w-full ${primaryButtonClass} rounded-xl py-3`}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send Verification Code"}</button>
+                                            <button disabled={isLoading || !regEmail.trim()} onClick={handleSendSignupOtp} className={`w-full ${primaryButtonClass} rounded-xl py-3 ${!regEmail.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send Verification Code"}</button>
                                         ) : (
                                             <div className="space-y-3">
-                                                <Input placeholder="Enter OTP" value={otp} onChange={e => setOtp(e.target.value)} maxLength={6} className="text-center tracking-widest font-mono" />
-                                                <button disabled={isLoading} onClick={handleVerifySignupOtp} className={`w-full ${successButtonClass} rounded-xl py-3`}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Verify & Continue"}</button>
+                                                <Input placeholder="Enter 6-digit OTP *" value={otp} onChange={e => setOtp(e.target.value)} maxLength={6} className="text-center tracking-widest font-mono" required />
+                                                <button disabled={isLoading || otp.length !== 6} onClick={handleVerifySignupOtp} className={`w-full ${successButtonClass} rounded-xl py-3 ${otp.length !== 6 ? 'opacity-50 cursor-not-allowed' : ''}`}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Verify & Continue"}</button>
                                             </div>
                                         )}
                                     </div>
                                 )}
                                 {regStep === 2 && (
                                     <div className="space-y-4">
-                                        <Input placeholder="SRN" value={srn} onChange={e => setSrn(e.target.value)} />
-                                        <Input placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} />
-                                        <Input type="password" placeholder="Password" value={regPassword} onChange={e => setRegPassword(e.target.value)} />
-                                        <Input type="password" placeholder="Confirm Password" value={regConfirmPassword} onChange={e => setRegConfirmPassword(e.target.value)} />
+                                        <Input placeholder="SRN *" value={srn} onChange={e => setSrn(e.target.value)} required />
+                                        <Input placeholder="Full Name *" value={name} onChange={e => setName(e.target.value)} required />
+                                        <div>
+                                            <Input type="password" placeholder="Password *" value={regPassword} onChange={e => setRegPassword(e.target.value)} required />
+                                            {regPassword && (
+                                                <div className="mt-2 p-3 bg-slate-800/50 rounded-lg border border-white/10 text-xs text-slate-300">
+                                                    <div className="font-semibold mb-2 text-slate-200">Password must contain:</div>
+                                                    <div className="space-y-1">
+                                                        <div className={`flex items-center ${regPassword.length >= 8 ? 'text-green-400' : 'text-slate-400'}`}>
+                                                            {regPassword.length >= 8 ? '✓' : '○'} At least 8 characters
+                                                        </div>
+                                                        <div className={`flex items-center ${/[A-Z]/.test(regPassword) ? 'text-green-400' : 'text-slate-400'}`}>
+                                                            {/[A-Z]/.test(regPassword) ? '✓' : '○'} One uppercase letter (A-Z)
+                                                        </div>
+                                                        <div className={`flex items-center ${/[a-z]/.test(regPassword) ? 'text-green-400' : 'text-slate-400'}`}>
+                                                            {/[a-z]/.test(regPassword) ? '✓' : '○'} One lowercase letter (a-z)
+                                                        </div>
+                                                        <div className={`flex items-center ${/[0-9]/.test(regPassword) ? 'text-green-400' : 'text-slate-400'}`}>
+                                                            {/[0-9]/.test(regPassword) ? '✓' : '○'} One number (0-9)
+                                                        </div>
+                                                        <div className={`flex items-center ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(regPassword) ? 'text-green-400' : 'text-slate-400'}`}>
+                                                            {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(regPassword) ? '✓' : '○'} One special character (!@#$%^&*...)
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <Input type="password" placeholder="Confirm Password *" value={regConfirmPassword} onChange={e => setRegConfirmPassword(e.target.value)} required />
                                         <div className="grid grid-cols-3 gap-2">
-                                            <Select value={degree} onChange={e => setDegree(e.target.value)}>
+                                            <Select value={degree} onChange={e => setDegree(e.target.value)} required>
+                                                <option value="" className="text-gray-900">Degree *</option>
                                                 {(degrees || []).map(d => <option key={d} value={d} className="text-gray-900">{d}</option>)}
                                             </Select>
-                                            <Select value={semester} onChange={e => setSemester(e.target.value)}>
+                                            <Select value={semester} onChange={e => setSemester(e.target.value)} required>
+                                                <option value="" className="text-gray-900">Sem *</option>
                                                 {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-gray-900">Sem {s}</option>)}
                                             </Select>
-                                            <Select value={section} onChange={e => setSection(e.target.value)}>
+                                            <Select value={section} onChange={e => setSection(e.target.value)} required disabled={!sections || sections.length === 0}>
+                                                <option value="" className="text-gray-900">Section *</option>
                                                 {(sections || []).map(s => <option key={s} value={s} className="text-gray-900">Sec {s}</option>)}
                                             </Select>
                                         </div>
