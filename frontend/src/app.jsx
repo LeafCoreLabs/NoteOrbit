@@ -5380,7 +5380,11 @@ function App() {
                                 <div className="space-y-3 text-sm text-slate-300">
                                     <div>
                                         <div className="font-semibold text-yellow-300 mb-1">Sapthagiri NPS University</div>
-                                        <div className="text-slate-400 text-xs">Academic Year 2024-2028</div>
+                                        <div className="text-slate-400 text-xs mb-2">Academic Year 2024-2028</div>
+                                        <div className="flex items-start text-xs text-slate-400">
+                                            <Home className="w-4 h-4 mr-2 mt-0.5 text-yellow-400 flex-shrink-0" />
+                                            <span>#14/5, Chikkasandra, Hesarghatta Main Road, Bengaluru – 560057</span>
+                                        </div>
                                     </div>
                                     <div className="pt-2 border-t border-white/5">
                                         <div className="flex items-start mb-2">
