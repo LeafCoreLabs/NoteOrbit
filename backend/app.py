@@ -1308,9 +1308,9 @@ def deallocate_faculty():
     return jsonify({"success": True, "message": "Allocation removed."})
 
 
-@app.route("/admin/degrees", methods=["GET", "POST"])
+@app.route("/admin/degrees", methods=["GET", "POST", "DELETE"])
 def manage_degrees():
-    if request.method == "POST":
+    if request.method in ["POST", "DELETE"]:
         try:
             verify_jwt_in_request()
         except Exception:
@@ -1318,10 +1318,24 @@ def manage_degrees():
         user = User.query.get(get_jwt_identity())
         if user.role.lower() != "admin":
             return jsonify({"success": False, "message": "Admin access required to modify degrees"}), 403
+
+    if request.method == "POST":
         name = (request.json or {}).get("name")
         if not name or Degree.query.filter_by(name=name).first():
             return jsonify({"success": False, "message": "Invalid or duplicate degree"}), 400
         db.session.add(Degree(name=name)); db.session.commit()
+
+    if request.method == "DELETE":
+        name = (request.json or {}).get("name")
+        if not name:
+            return jsonify({"success": False, "message": "Missing degree name for deletion"}), 400
+        d = Degree.query.filter_by(name=name).first()
+        if not d:
+            return jsonify({"success": False, "message": "Degree not found"}), 404
+        db.session.delete(d)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Degree deleted successfully"})
+
     data = [d.name for d in Degree.query.order_by(Degree.name).all()]
     return jsonify({"success": True, "degrees": data})
 
@@ -1390,37 +1404,46 @@ def manage_sections():
     data = [s.name for s in q.order_by(Section.name).all()]
     return jsonify({"success": True, "sections": data})
 
-@app.route("/admin/subjects", methods=["GET", "POST"])
+@app.route("/admin/subjects", methods=["GET", "POST", "DELETE"])
 def manage_subjects():
-    if request.method == "POST":
-        # === Manual Authorization & RBAC Check for POST (WRITE) requests ===
+    if request.method in ["POST", "DELETE"]:
+        # === Manual Authorization & RBAC Check for WRITE requests ===
         try:
-            # POST requests must have a token
             verify_jwt_in_request()
             admin_claims = get_jwt()
         except Exception:
             return jsonify({"success": False, "message": "Authentication required to modify subjects"}), 401
             
-        # Check if the user has permission to POST (Admin or Professor)
         if admin_claims.get("role") not in ["admin", "professor"]:
             return jsonify({"success": False, "message": "Admin/Professor access required to modify subjects"}), 403
             
-        # --- POST logic (Write operations) ---
         payload = request.json or {}
         degree = payload.get("degree"); semester = payload.get("semester"); name = payload.get("name")
-        if not (degree and semester and name):
-            return jsonify({"success": False, "message": "Missing fields"}), 400
-        if not Degree.query.filter_by(name=degree).first():
-            return jsonify({"success": False, "message": "Invalid degree"}), 400
-        try:
-            sem = int(semester)
-        except:
-            return jsonify({"success": False, "message": "Invalid semester"}), 400
-        if Subject.query.filter_by(degree=degree, semester=sem, name=name).first():
-            return jsonify({"success": False, "message": "Duplicate subject"}), 400
-        db.session.add(Subject(degree=degree, semester=sem, name=name)); db.session.commit()
+        
+        if request.method == "POST":
+            if not (degree and semester and name):
+                return jsonify({"success": False, "message": "Missing fields"}), 400
+            if not Degree.query.filter_by(name=degree).first():
+                return jsonify({"success": False, "message": "Invalid degree"}), 400
+            try:
+                sem = int(semester)
+            except:
+                return jsonify({"success": False, "message": "Invalid semester"}), 400
+            if Subject.query.filter_by(degree=degree, semester=sem, name=name).first():
+                return jsonify({"success": False, "message": "Duplicate subject"}), 400
+            db.session.add(Subject(degree=degree, semester=sem, name=name)); db.session.commit()
+
+        if request.method == "DELETE":
+            if not (degree and semester and name):
+                return jsonify({"success": False, "message": "Missing fields for deletion"}), 400
+            s = Subject.query.filter_by(degree=degree, semester=int(semester), name=name).first()
+            if not s:
+                return jsonify({"success": False, "message": "Subject not found"}), 404
+            db.session.delete(s)
+            db.session.commit()
+            return jsonify({"success": True, "message": "Subject deleted successfully"})
     
-    # --- GET logic (Read operations - Publicly accessible) ---
+    # --- GET logic (Read operations) ---
     degree = request.args.get("degree"); semester = request.args.get("semester"); q = Subject.query
     if degree: q = q.filter_by(degree=degree)
     if semester:

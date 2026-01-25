@@ -4085,6 +4085,13 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     const [currentSections, setCurrentSections] = useState([]);
     const [isLoadingSections, setIsLoadingSections] = useState(false);
 
+    // Selected degree/semester for viewing subjects
+    const [viewSubjectDegree, setViewSubjectDegree] = useState("");
+    const [viewSubjectSemester, setViewSubjectSemester] = useState("");
+    // Subjects for selected degree/semester
+    const [currentSubjects, setCurrentSubjects] = useState([]);
+    const [isLoadingSubjects, setIsLoadingSubjects] = useState(false);
+
     // Fetch sections only for selected degree and semester
     const fetchCurrentSections = useCallback(async (degree, semester) => {
         if (!degree || !semester) {
@@ -4103,25 +4110,44 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         }
     }, [fetchSections]);
 
+    const fetchCurrentSubjects = useCallback(async (degree, semester) => {
+        if (!degree || !semester) {
+            setCurrentSubjects([]);
+            return;
+        }
+        setIsLoadingSubjects(true);
+        try {
+            const subjects = await catalogs.fetchSubjects(degree, semester);
+            setCurrentSubjects(subjects || []);
+        } catch (e) {
+            console.error("Failed to fetch subjects", e);
+            setCurrentSubjects([]);
+        } finally {
+            setIsLoadingSubjects(false);
+        }
+    }, [catalogs]);
+
     // Track previous values to prevent duplicate calls
     const prevDegreeRef = useRef("");
     const prevSemesterRef = useRef("");
 
     // Fetch sections when view degree/semester changes
     useEffect(() => {
-        // Only fetch if values actually changed
         if (viewSectionDegree && viewSectionSemester) {
-            if (prevDegreeRef.current !== viewSectionDegree || prevSemesterRef.current !== viewSectionSemester) {
-                prevDegreeRef.current = viewSectionDegree;
-                prevSemesterRef.current = viewSectionSemester;
-                fetchCurrentSections(viewSectionDegree, viewSectionSemester);
-            }
+            fetchCurrentSections(viewSectionDegree, viewSectionSemester);
         } else {
             setCurrentSections([]);
-            prevDegreeRef.current = "";
-            prevSemesterRef.current = "";
         }
-    }, [viewSectionDegree, viewSectionSemester]); // Removed fetchCurrentSections from deps to prevent loop
+    }, [viewSectionDegree, viewSectionSemester, fetchCurrentSections]);
+
+    // Fetch subjects when view degree/semester changes
+    useEffect(() => {
+        if (viewSubjectDegree && viewSubjectSemester) {
+            fetchCurrentSubjects(viewSubjectDegree, viewSubjectSemester);
+        } else {
+            setCurrentSubjects([]);
+        }
+    }, [viewSubjectDegree, viewSubjectSemester, fetchCurrentSubjects]);
 
     const addSection = async () => {
         if (!newSectionDegree || !newSectionSemester || !newSection.trim()) return showMessage("Select Degree, Sem and enter Name.", "error");
@@ -4252,6 +4278,23 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         }
     };
 
+    const deleteSubject = async (name) => {
+        if (!confirm(`Delete subject ${name}?`)) return;
+        try {
+            await auth().delete("/admin/subjects", {
+                data: {
+                    degree: viewSubjectDegree,
+                    semester: parseInt(viewSubjectSemester),
+                    name
+                }
+            });
+            showMessage("Subject deleted", "success");
+            fetchCurrentSubjects(viewSubjectDegree, viewSubjectSemester);
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Deletion failed", "error");
+        }
+    };
+
     const addSubject = async () => {
         if (!newSubject.trim()) return showMessage("Subject cannot be empty", "error");
         try {
@@ -4348,7 +4391,24 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                             <h4 className="text-xl font-bold text-yellow-400">Manage Degrees</h4>
                             <Input placeholder="New degree" value={newDegree} onChange={e => setNewDegree(e.target.value)} />
                             <button className={`${buttonClass} ${primaryButtonClass}`} onClick={() => addCatalogItem("degrees", newDegree, "Degree added!")}>Add Degree</button>
-                            <div className="text-xs text-slate-500">Current: {(degrees || []).join(", ")}</div>
+
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                                <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">Current Degrees</label>
+                                <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                    {(degrees || []).map(d => (
+                                        <div key={d} className="flex justify-between items-center p-2 bg-slate-800/40 rounded border border-white/5 group">
+                                            <span className="text-white text-sm font-medium">{d}</span>
+                                            <button
+                                                onClick={() => deleteCatalogItem("degrees", d)}
+                                                className="p-1 text-slate-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                title="Delete Degree"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                         <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-4">
                             <h4 className="text-xl font-bold text-yellow-400">Manage Sections</h4>
@@ -4440,16 +4500,87 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                 )}
                             </div>
                         </div>
-                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
-                            <h4 className="text-xl font-bold text-yellow-400">Add Subject</h4>
-                            <Select value={subjectDegree} onChange={e => setSubjectDegree(e.target.value)}>
-                                {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
-                            </Select>
-                            <Select value={subjectSemester} onChange={e => setSubjectSemester(e.target.value)}>
-                                {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
-                            </Select>
-                            <Input placeholder="Subject name" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
-                            <button className={`${buttonClass} ${primaryButtonClass}`} onClick={addSubject}>Add Subject</button>
+                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-4">
+                            <h4 className="text-xl font-bold text-yellow-400">Manage Subjects</h4>
+
+                            {/* Add Subject Form */}
+                            <div className="bg-slate-800/40 p-4 rounded-lg border border-white/5 space-y-3">
+                                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
+                                    <Select value={subjectDegree} onChange={e => setSubjectDegree(e.target.value)} disabled={!degrees.length} className="w-full">
+                                        <option value="">Select Degree</option>
+                                        {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                                    </Select>
+                                    <Select value={subjectSemester} onChange={e => setSubjectSemester(e.target.value)} className="w-full">
+                                        {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                                    </Select>
+                                </div>
+                                <Input placeholder="Subject name" value={newSubject} onChange={e => setNewSubject(e.target.value)} />
+                                <button className={`${buttonClass} ${primaryButtonClass} w-full`} onClick={addSubject}>Add Subject</button>
+                            </div>
+
+                            {/* View & Delete Subjects */}
+                            <div>
+                                <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">View & Delete Subjects</label>
+
+                                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 mb-3">
+                                    <Select
+                                        value={viewSubjectDegree}
+                                        onChange={e => {
+                                            setViewSubjectDegree(e.target.value);
+                                            setViewSubjectSemester("");
+                                        }}
+                                        disabled={!degrees.length}
+                                        className="w-full"
+                                    >
+                                        <option value="" className="text-slate-900">Select Degree</option>
+                                        {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
+                                    </Select>
+                                    <Select
+                                        value={viewSubjectSemester}
+                                        onChange={e => setViewSubjectSemester(e.target.value)}
+                                        disabled={!viewSubjectDegree}
+                                        className="w-full"
+                                    >
+                                        <option value="" className="text-slate-900">Select Semester</option>
+                                        {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">Sem {s}</option>)}
+                                    </Select>
+                                </div>
+
+                                {viewSubjectDegree && viewSubjectSemester ? (
+                                    isLoadingSubjects ? (
+                                        <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-yellow-500" /></div>
+                                    ) : currentSubjects.length === 0 ? (
+                                        <div className="text-center p-4 bg-slate-800/20 rounded-lg border border-white/5 text-slate-500 text-sm">
+                                            No subjects found.
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Select
+                                                className="w-full bg-slate-800/50 border border-white/10 text-white py-2.5 text-base"
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (value) {
+                                                        deleteSubject(value);
+                                                        e.target.value = '';
+                                                    }
+                                                }}
+                                            >
+                                                <option value="" className="text-slate-900">Select a subject to delete...</option>
+                                                {currentSubjects.map(s => (
+                                                    <option key={s} value={s} className="text-slate-900">{s}</option>
+                                                ))}
+                                            </Select>
+                                            <div className="mt-2 text-xs text-slate-400 text-center">
+                                                {currentSubjects.length} subjects found.
+                                            </div>
+                                        </>
+                                    )
+                                ) : (
+                                    <div className="text-center p-4 bg-slate-800/20 rounded-lg border border-white/5 text-slate-400 text-sm">
+                                        Select context to view subjects.
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 );
