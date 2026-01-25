@@ -4071,7 +4071,7 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
 
 
 function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, dangerButtonClass, user }) { // 🛑 ADDED user PROP
-    const { degrees, sections, loaded, fetchBasics, fetchSections } = catalogs;
+    const { degrees, sections, loaded, fetchBasics, fetchSections, fetchSubjects } = catalogs;
 
     const [pending, setPending] = useState([]);
     const [newDegree, setNewDegree] = useState("");
@@ -4117,7 +4117,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         }
         setIsLoadingSubjects(true);
         try {
-            const subjects = await catalogs.fetchSubjects(degree, semester);
+            const subjects = await fetchSubjects(degree, semester);
             setCurrentSubjects(subjects || []);
         } catch (e) {
             console.error("Failed to fetch subjects", e);
@@ -4125,27 +4125,41 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         } finally {
             setIsLoadingSubjects(false);
         }
-    }, [catalogs]);
+    }, [fetchSubjects]);
 
     // Track previous values to prevent duplicate calls
-    const prevDegreeRef = useRef("");
-    const prevSemesterRef = useRef("");
+    const prevSecDeg = useRef("");
+    const prevSecSem = useRef("");
+    const prevSubDeg = useRef("");
+    const prevSubSem = useRef("");
 
     // Fetch sections when view degree/semester changes
     useEffect(() => {
         if (viewSectionDegree && viewSectionSemester) {
-            fetchCurrentSections(viewSectionDegree, viewSectionSemester);
+            if (prevSecDeg.current !== viewSectionDegree || prevSecSem.current !== viewSectionSemester) {
+                prevSecDeg.current = viewSectionDegree;
+                prevSecSem.current = viewSectionSemester;
+                fetchCurrentSections(viewSectionDegree, viewSectionSemester);
+            }
         } else {
             setCurrentSections([]);
+            prevSecDeg.current = "";
+            prevSecSem.current = "";
         }
     }, [viewSectionDegree, viewSectionSemester, fetchCurrentSections]);
 
     // Fetch subjects when view degree/semester changes
     useEffect(() => {
         if (viewSubjectDegree && viewSubjectSemester) {
-            fetchCurrentSubjects(viewSubjectDegree, viewSubjectSemester);
+            if (prevSubDeg.current !== viewSubjectDegree || prevSubSem.current !== viewSubjectSemester) {
+                prevSubDeg.current = viewSubjectDegree;
+                prevSubSem.current = viewSubjectSemester;
+                fetchCurrentSubjects(viewSubjectDegree, viewSubjectSemester);
+            }
         } else {
             setCurrentSubjects([]);
+            prevSubDeg.current = "";
+            prevSubSem.current = "";
         }
     }, [viewSubjectDegree, viewSubjectSemester, fetchCurrentSubjects]);
 
