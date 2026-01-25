@@ -66,7 +66,7 @@ SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 
 # -------------------- HARDCODED MINIO CREDENTIALS (kept in-code per request) --------------------
-S3_ENDPOINT = "http://localhost:9000"
+S3_ENDPOINT = "https://bulk-automatic-groove-sage.trycloudflare.com"
 S3_BUCKET = "noteorbit"
 S3_ACCESS_KEY = "admin"
 S3_SECRET_KEY = "password123"
@@ -90,10 +90,8 @@ CORS(
     app,
     resources={r"*": {
         "origins": [
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000"
+            "https://note-orbit.vercel.app",
+            "*",
         ],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True,
@@ -413,7 +411,6 @@ class Section(db.Model):
     __table_args__ = (
         db.UniqueConstraint("degree", "semester", "name", name="uq_section_deg_sem_name"),
     )
-
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -794,7 +791,6 @@ def lookup_user_endpoint():
         "email_exists": True
     })
 
-
 @app.route("/auth/lookup-parent", methods=["POST"])
 def lookup_parent_endpoint():
     """Lookup parent by Ward's SRN and return masked email for confirmation."""
@@ -818,7 +814,6 @@ def lookup_parent_endpoint():
         "masked_email": mask_email(student.parent_email),
         "email_exists": True
     })
-
 
 @app.route("/auth/verify-otp", methods=["POST"])
 def verify_otp_endpoint():
@@ -1074,8 +1069,6 @@ def approve_student():
         return jsonify({"success": False, "message": "Student not found"}), 404
     s.status = "APPROVED" if action == "approve" else "REJECTED"
     db.session.commit()
-    
-    # Send Notification Email
     try:
         if action == "approve":
             subject = "NoteOrbit - Account Approved"
@@ -1397,7 +1390,6 @@ def manage_sections():
     data = [s.name for s in q.order_by(Section.name).all()]
     return jsonify({"success": True, "sections": data})
 
-
 @app.route("/admin/subjects", methods=["GET", "POST"])
 def manage_subjects():
     if request.method == "POST":
@@ -1498,14 +1490,11 @@ def get_notes():
     if section:
         # Support "ALL" sections + User's specific section
         q = q.filter(or_(Note.section == section, Note.section == 'ALL'))
-        
+
     if subject: q = q.filter_by(subject=subject)
     if document_type: q = q.filter_by(document_type=document_type)
     notes = q.order_by(Note.timestamp.desc()).all()
     out = []
-    
-    # Pre-fetch user roles to avoid N+1 query problem (simple optimization)
-    # Or just fetch per item since traffic is low
     for n in notes:
         try:
             file_url = s3_client.generate_presigned_url(
@@ -1513,22 +1502,12 @@ def get_notes():
             )
         except Exception:
             file_url = None
-            
-        # Get uploader info
-        uploader = User.query.get(n.uploaded_by)
-        uploader_role = uploader.role if uploader else "unknown"
-        uploader_name = uploader.name if uploader else "Unknown"
-
         out.append({
             "id": n.id, "title": n.title, "degree": n.degree, "semester": n.semester, "section": n.section,
             "subject": n.subject, "document_type": n.document_type, "file_url": file_url,
-            "uploaded_by": n.uploaded_by, 
-            "uploader_role": uploader_role, # Added Role
-            "uploader_name": uploader_name, # Added Name
-            "timestamp": n.timestamp.isoformat() if n.timestamp else None
+            "uploaded_by": n.uploaded_by, "timestamp": n.timestamp.isoformat() if n.timestamp else None
         })
     return jsonify({"success": True, "notes": out})
-
 
 @app.route("/admin/notes/<int:note_id>", methods=["DELETE"])
 @roles_allowed(["admin"])
@@ -1548,7 +1527,6 @@ def admin_delete_note(note_id):
     db.session.delete(note)
     db.session.commit()
     return jsonify({"success": True, "message": "Note deleted"})
-
 
 # RENAMED and UPDATED for Admin Library Book Upload
 @app.route("/api/admin/library/book", methods=["POST"])
@@ -2743,8 +2721,9 @@ def init_db():
             db.session.add(Degree(name=d))
         db.session.commit()
     if Section.query.count() == 0:
-        # Default seeding removed per request to specific deletions
-        pass
+        for s in ["A", "B", "C"]:
+            db.session.add(Section(name=s))
+        db.session.commit()
         
     # NEW: Initial Hostel/Room for testing (Optional but helpful)
     if Hostel.query.count() == 0:

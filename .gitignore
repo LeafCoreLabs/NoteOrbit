@@ -12,3 +12,8 @@ minio-data/
 # Secrets
 *.key
 *.pem
+
+# Mobile App
+mobile/
+
+flutter/
