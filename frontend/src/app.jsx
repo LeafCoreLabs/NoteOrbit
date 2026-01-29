@@ -501,6 +501,19 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
     const [flipRotation, setFlipRotation] = useState(0);
     const cardRef = useRef(null);
 
+    // NEW: Handle Login with Immediate Feedback
+    const handleLogin = async () => {
+        if (!email || !password) return showMessage("Please enter email and password.", "error");
+        setIsLoading(true);
+        try {
+            await onLogin(email, password);
+            // Note: If successful, the parent component handles the transition, so we don't strictly need to set isLoading(false) here immediately,
+            // but if the parent *doesn't* unmount us immediately (e.g. wait animation), keeping it loading is good.
+            // However, onLogin is async. If it throws, we catch it.
+        } catch (e) {
+            setIsLoading(false);
+        }
+    };
     useEffect(() => {
         if (loaded && degrees?.length > 0) !degree && setDegree(degrees[0]);
         if (loaded && sections?.length > 0) !section && setSection(sections[0]);
@@ -724,8 +737,10 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                             <div className="text-right mt-2"><button onClick={() => setShowForgot(true)} className="text-xs text-blue-400 hover:text-blue-300">Forgot Password?</button></div>
                         </div>
                         <div className="flex gap-4 pt-4">
-                            <button className={`${buttonClass} flex-1 bg-slate-800 text-slate-300`} onClick={() => setPage('user_type')}><ArrowLeft className="w-5 h-5 mr-1" /> Back</button>
-                            <button className={`${buttonClass} flex-1 ${primaryButtonClass} bg-gradient-to-r from-blue-600 to-indigo-600`} onClick={() => onLogin(email, password)}>Sign In</button>
+                            <button className={`${buttonClass} flex-1 bg-slate-800 text-slate-300`} onClick={() => setPage('user_type')} disabled={isLoading}><ArrowLeft className="w-5 h-5 mr-1" /> Back</button>
+                            <button className={`${buttonClass} flex-1 ${primaryButtonClass} bg-gradient-to-r from-blue-600 to-indigo-600`} onClick={handleLogin} disabled={isLoading}>
+                                {isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Sign In"}
+                            </button>
                         </div>
                     </div>
                 </div>
