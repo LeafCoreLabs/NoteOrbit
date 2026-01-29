@@ -319,19 +319,19 @@ function UserTypeSelection({ setUserRole, setPage }) {
                 {/* Left Nav Button */}
                 <button
                     onClick={prevRole}
-                    className={`absolute left-0 md:left-10 z-50 p-2 md:p-3 rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/10 active:scale-95 animate-pulse ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
+                    className={`absolute left-0 md:left-10 z-50 p-4 text-white/80 hover:text-white transition-all active:scale-95 animate-pulse ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
                     disabled={activeIndex === 0}
                 >
-                    <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
+                    <ArrowLeft className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
                 </button>
 
                 {/* Right Nav Button */}
                 <button
                     onClick={nextRole}
-                    className={`absolute right-0 md:right-10 z-50 p-2 md:p-3 rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/10 active:scale-95 animate-pulse ${activeIndex === roles.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
+                    className={`absolute right-0 md:right-10 z-50 p-4 text-white/80 hover:text-white transition-all active:scale-95 animate-pulse ${activeIndex === roles.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
                     disabled={activeIndex === roles.length - 1}
                 >
-                    <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
+                    <ArrowRight className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
                 </button>
 
                 {roles.map((role, index) => {
@@ -350,10 +350,10 @@ function UserTypeSelection({ setUserRole, setPage }) {
                                 transform: 'perspective(1000px)'
                             }}
                         >
-                            <div className={`p-6 md:p-8 rounded-3xl backdrop-blur-xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-2xl
+                            <div className={`p-6 md:p-8 rounded-3xl backdrop-blur-md border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-xl
                                 ${isActive
-                                    ? `bg-slate-900/80 ${role.border} ring-1 ring-white/10 ${role.shadow}`
-                                    : 'bg-slate-900/40 border-white/5'}`}
+                                    ? `bg-slate-900/90 ${role.border} ring-1 ring-white/10 ${role.shadow}`
+                                    : 'bg-slate-900/60 border-white/5'}`}
                             >
                                 {isActive && <div className={`absolute inset-0 bg-gradient-to-br ${role.gradient} opacity-20 blur-xl rounded-full transform scale-150 transition-opacity duration-500`} />}
 
