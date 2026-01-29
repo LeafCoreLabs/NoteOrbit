@@ -350,7 +350,7 @@ function UserTypeSelection({ setUserRole, setPage }) {
                                 transform: 'perspective(1000px)'
                             }}
                         >
-                            <div className={`p-6 md:p-8 rounded-3xl backdrop-blur-md border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-xl
+                            <div className={`p-6 md:p-8 rounded-3xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-xl
                                 ${isActive
                                     ? `bg-slate-900/90 ${role.border} ring-1 ring-white/10 ${role.shadow}`
                                     : 'bg-slate-900/60 border-white/5'}`}
