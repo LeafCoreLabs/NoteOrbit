@@ -3315,11 +3315,19 @@ def get_today_status():
     if logs:
         # Check if it was "No Class"
         if len(logs) == 1 and logs[0].status == 'No Class':
-             return jsonify({"status": "marked_no_class", "can_mark": False})
+             msg = create_daily_message_with_ai('no_class', user.name)
+             return jsonify({"status": "marked_no_class", "can_mark": False, "fun_message": msg})
         
         # Details
         log_data = [{"subject": l.subject, "status": l.status} for l in logs]
-        return jsonify({"status": "marked", "logs": log_data, "can_mark": False})
+        
+        # Determine mood based on attendance
+        present_count = sum(1 for l in logs if l.status == 'Present')
+        total = len(logs)
+        mood = 'good' if (total > 0 and (present_count/total) > 0.75) else 'bad'
+        msg = create_daily_message_with_ai(mood, user.name)
+        
+        return jsonify({"status": "marked", "logs": log_data, "can_mark": False, "fun_message": msg})
 
     # 3. Not marked yet - Get Routine
     routine = StudentRoutine.query.filter_by(user_id=user.id, day_of_week=day_name).first()
@@ -3375,6 +3383,9 @@ def mark_attendance():
 
         elif mark_type == 'classes':
             attendance_map = data.get('data', {})
+            present_count = 0
+            total_count = 0
+            
             for sub, status in attendance_map.items():
                 log = StudentAttendanceLog(
                     user_id=user.id,
@@ -3383,12 +3394,37 @@ def mark_attendance():
                     status=status
                 )
                 db.session.add(log)
+                if status == 'Present': present_count += 1
+                total_count += 1
+                
             db.session.commit()
-            return jsonify({"success": True, "message": "Attendance Saved"})
+            
+            # Generate fun message
+            mood = 'good' if (total_count > 0 and (present_count/total_count) > 0.75) else 'bad'
+            msg = create_daily_message_with_ai(mood, user.name)
+            
+            return jsonify({"success": True, "message": "Attendance Saved", "fun_message": msg})
+        
+            
+            return jsonify({"success": True, "message": "Attendance Saved", "fun_message": msg})
         
         else:
             return jsonify({"success": False, "message": "Invalid type"}), 400
 
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@attendance_bp.route('/today', methods=['DELETE'])
+@jwt_required()
+def reset_today():
+    user_id = get_jwt_identity()
+    today = datetime.utcnow().date()
+    
+    try:
+        StudentAttendanceLog.query.filter_by(user_id=user_id, date=today).delete()
+        db.session.commit()
+        return jsonify({"success": True, "message": "Today's attendance reset."})
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500

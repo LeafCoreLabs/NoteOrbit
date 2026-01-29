@@ -5018,6 +5018,19 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
         </div>
     );
 
+    const handleResetToday = async () => {
+        if (!window.confirm("Want to change today's attendance? This will reset today's entry.")) return;
+        setIsLoading(true);
+        try {
+            await auth().delete("/attendance/today");
+            showMessage("Ready to update.", "success");
+            fetchTodayStatus();
+        } catch (e) {
+            showMessage("Failed to reset.", "error");
+            setIsLoading(false);
+        }
+    };
+
     const renderMarked = () => (
         <div className="text-center py-10 space-y-6 animate-in zoom-in duration-300">
             <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto ring-4 ring-emerald-500/10">
@@ -5034,9 +5047,15 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
                     </div>
                 )}
             </div>
-            <button onClick={fetchStats} className="text-blue-400 hover:text-blue-300 underline font-medium">
-                View My Statistics
-            </button>
+            <div className="flex justify-center gap-4 text-sm font-medium">
+                <button onClick={fetchStats} className="text-blue-400 hover:text-blue-300 underline">
+                    View My Statistics
+                </button>
+                <span className="text-slate-600">|</span>
+                <button onClick={handleResetToday} className="text-slate-400 hover:text-white flex items-center gap-1">
+                    <Edit className="w-3 h-3" /> Edit / Reset
+                </button>
+            </div>
         </div>
     );
 
