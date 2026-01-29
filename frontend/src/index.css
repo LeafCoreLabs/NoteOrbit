@@ -9,6 +9,60 @@ body {
   background-color: #0b0f1a;
 }
 
+/* Custom Animations - Mobile Optimized */
+@keyframes gradient-slow {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes pulse-slow {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@layer utilities {
+  .animate-gradient-slow {
+    animation: gradient-slow 8s ease-in-out infinite;
+    background-size: 200% 200%;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+}
+
 /* This file imports Tailwind's three main layers. 
   The 'base' layer includes the custom font definitions (Poppins) 
   and default styles configured in tailwind.config.js, 

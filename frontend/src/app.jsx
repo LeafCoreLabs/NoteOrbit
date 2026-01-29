@@ -305,16 +305,23 @@ function UserTypeSelection({ setUserRole, setPage }) {
         <div ref={containerRef} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-6 md:py-10"
             onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
 
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950/30 to-slate-950 animate-gradient-slow"></div>
+
+            {/* Ambient Radial Glows */}
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+
             {/* Centered Hero Header */}
             <div className="text-center space-y-4 mb-2 md:mb-12 z-10 animate-in fade-in slide-in-from-top-4 duration-700 px-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2">
-                    <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2_beta
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2 shadow-lg shadow-blue-500/20">
+                    <Sparkles className="w-3 h-3 animate-pulse" /> NoteOrbit rev2.2_beta
                 </div>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]">
                     Academic <br className="hidden md:block" />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Intelligence.</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 drop-shadow-[0_0_40px_rgba(124,58,237,0.5)]">Intelligence.</span>
                 </h1>
-                <p className="text-sm md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed">
+                <p className="text-sm md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed drop-shadow-lg">
                     Where Imagination is Redefined! Select your portal to begin.
                 </p>
             </div>
@@ -325,19 +332,19 @@ function UserTypeSelection({ setUserRole, setPage }) {
                 {/* Left Nav Button */}
                 <button
                     onClick={prevRole}
-                    className={`absolute left-0 md:left-10 z-50 p-4 text-white/80 hover:text-white transition-all active:scale-95 animate-pulse ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
+                    className={`absolute left-0 md:left-10 z-50 p-4 text-white/80 hover:text-white transition-all duration-300 active:scale-95 ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
                     disabled={activeIndex === 0}
                 >
-                    <ArrowLeft className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+                    <ArrowLeft className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] hover:drop-shadow-[0_0_25px_rgba(255,255,255,0.8)] transition-all" />
                 </button>
 
                 {/* Right Nav Button */}
                 <button
                     onClick={nextRole}
-                    className={`absolute right-0 md:right-10 z-50 p-4 text-white/80 hover:text-white transition-all active:scale-95 animate-pulse ${activeIndex === roles.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
+                    className={`absolute right-0 md:right-10 z-50 p-4 text-white/80 hover:text-white transition-all duration-300 active:scale-95 ${activeIndex === roles.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
                     disabled={activeIndex === roles.length - 1}
                 >
-                    <ArrowRight className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
+                    <ArrowRight className="w-8 h-8 md:w-10 md:h-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] hover:drop-shadow-[0_0_25px_rgba(255,255,255,0.8)] transition-all" />
                 </button>
 
                 {roles.map((role, index) => {
@@ -356,20 +363,24 @@ function UserTypeSelection({ setUserRole, setPage }) {
                                 transform: 'perspective(1000px)'
                             }}
                         >
-                            <div className={`p-6 md:p-8 rounded-3xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-xl
+                            <div className={`p-6 md:p-8 rounded-3xl border transition-all duration-500 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center
                                 ${isActive
-                                    ? `bg-slate-900/90 ${role.border} ring-1 ring-white/10 ${role.shadow}`
-                                    : 'bg-slate-900/60 border-white/5'}`}
+                                    ? `bg-slate-900/90 ${role.border} ring-2 ring-white/20 shadow-[0_0_60px_-15px] ${role.shadow}`
+                                    : 'bg-slate-900/60 border-white/5 shadow-xl'}`}
                             >
-                                {isActive && <div className={`absolute inset-0 bg-gradient-to-br ${role.gradient} opacity-20 blur-xl rounded-full transform scale-150 transition-opacity duration-500`} />}
+                                {/* Enhanced Active Glow */}
+                                {isActive && <div className={`absolute inset-0 bg-gradient-to-br ${role.gradient} opacity-20 blur-2xl rounded-full transform scale-150 animate-pulse-glow`} />}
 
-                                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mb-6 md:mb-8 relative z-10
-                                    bg-gradient-to-br ${role.gradient} shadow-lg`}
+                                {/* Radial Ambient Glow Behind Card */}
+                                {isActive && <div className={`absolute -inset-20 bg-gradient-to-br ${role.gradient} opacity-30 blur-[100px] -z-10`} />}
+
+                                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mb-6 md:mb-8 relative z-10 
+                                    bg-gradient-to-br ${role.gradient} shadow-lg ${isActive ? 'shadow-2xl animate-pulse-glow' : ''}`}
                                 >
-                                    <role.icon className="w-8 h-8 md:w-10 md:h-10 text-white" />
+                                    <role.icon className="w-8 h-8 md:w-10 md:h-10 text-white drop-shadow-lg" />
                                 </div>
 
-                                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 md:mb-3 relative z-10">{role.ui}</h3>
+                                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 md:mb-3 relative z-10 drop-shadow-lg">{role.ui}</h3>
                                 <p className="text-xs md:text-sm text-slate-400 font-medium relative z-10 px-2">{role.subtitle}</p>
 
                                 <button
@@ -378,9 +389,9 @@ function UserTypeSelection({ setUserRole, setPage }) {
                                         if (isActive) handleContinue(role);
                                         else setActiveIndex(index);
                                     }}
-                                    className={`mt-6 md:mt-8 px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all z-10 shadow-lg transform active:scale-95
+                                    className={`mt-6 md:mt-8 px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 z-10 shadow-lg transform active:scale-95
                                     ${isActive
-                                            ? 'bg-white text-slate-900 hover:bg-slate-100'
+                                            ? `bg-white text-slate-900 hover:bg-slate-100 hover:shadow-2xl hover:shadow-${role.gradient.split('-')[1]}-500/50`
                                             : 'bg-white/5 text-slate-500 cursor-default'}`}
                                 >
                                     {role.btnText} {isActive && <ArrowRight className="w-4 h-4 inline-block ml-1" />}
