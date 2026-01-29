@@ -3167,24 +3167,59 @@ def create_daily_message_with_ai(msg_type, user_name):
 @attendance_bp.route('/routine/upload', methods=['POST'])
 @jwt_required()
 def upload_routine():
-    """
-    AI-Powered Routine Parser.
-    Accepts text or file. Returns parsed subjects for confirmation.
-    """
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
-    # Simple Text Input for now (Fastest for MVP)
-    data = request.json
-    raw_text = data.get('routine_text', '')
-    
-    if not raw_text:
-        return jsonify({"success": False, "message": "No routine text provided"}), 400
+    # 1. Get Content (Text or File)
+    raw_text = request.form.get('routine_text', '')
+    file = request.files.get('file')
 
-    # 1. AI Parsing
+    if file:
+        try:
+            filename = secure_filename(file.filename).lower()
+            if filename.endswith('.txt'):
+                raw_text = file.read().decode('utf-8')
+            elif filename.endswith('.pdf'):
+                try:
+                    import pypdf
+                    pdf = pypdf.PdfReader(file)
+                    raw_text = " ".join([page.extract_text() for page in pdf.pages])
+                except ImportError:
+                    return jsonify({"success": False, "message": "Server missing 'pypdf' library"}), 500
+            elif filename.endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                # Use Vision Model for Images
+                import base64
+                image_data = base64.b64encode(file.read()).decode('utf-8')
+                
+                try:
+                    vision_resp = requests.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+                        json={
+                            "model": "llama-3.2-11b-vision-preview",
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": [
+                                        {"type": "text", "text": "Extract the class routine from this image. Output ONLY the raw text of the routine (e.g. 'Monday: Math 10am'). Do not structure it yet."},
+                                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
+                                    ]
+                                }
+                            ]
+                        }
+                    )
+                    raw_text = vision_resp.json()['choices'][0]['message']['content']
+                except Exception as e:
+                    return jsonify({"success": False, "message": f"Vision AI Failed: {str(e)}"}), 500
+        except Exception as e:
+            return jsonify({"success": False, "message": f"File processing failed: {str(e)}"}), 400
+
+    if not raw_text:
+        return jsonify({"success": False, "message": "No routine content found"}), 400
+
+    # 2. AI Parsing (Standard Logic)
     parsed_routine = {}
     try:
-        # Prompt AI to extract JSON
         sys_prompt = "You are a data extraction assistant. Extract class routine from the user's text. Return ONLY valid JSON where keys are Days (Monday-Saturday) and values are lists of Subject lines (e.g. 'Math 10AM'). If a day is missing, omit it. No markdown."
         
         resp = requests.post(
@@ -3204,7 +3239,7 @@ def upload_routine():
     except Exception as e:
         return jsonify({"success": False, "message": f"AI Parsing Failed: {str(e)}"}), 500
 
-    # 2. Save/Update Routine
+    # 3. Save/Update Routine
     try:
         # Clear old routine
         StudentRoutine.query.filter_by(user_id=user.id).delete()
@@ -3219,7 +3254,7 @@ def upload_routine():
                 db.session.add(new_r)
         
         db.session.commit()
-        return jsonify({"success": True, "message": "Routine updated", "routine": parsed_routine})
+        return jsonify({"success": True, "message": "Routine updated from file/text", "routine": parsed_routine})
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500

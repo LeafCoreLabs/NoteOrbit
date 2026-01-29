@@ -4796,6 +4796,7 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
     const [todayData, setTodayData] = useState(null);
     const [stats, setStats] = useState(null);
     const [routineText, setRoutineText] = useState("");
+    const [file, setFile] = useState(null);
     const [attendanceMap, setAttendanceMap] = useState({}); // { SubjectName: "Present" | "Absent" }
     const [isLoading, setIsLoading] = useState(false);
 
@@ -4832,10 +4833,16 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
 
     // Handlers
     const handleRoutineUpload = async () => {
-        if (!routineText.trim()) return showMessage("Please paste your routine.", "error");
+        if (!routineText.trim() && !file) return showMessage("Please paste text or upload a file.", "error");
         setIsLoading(true);
         try {
-            await auth().post("/attendance/routine/upload", { routine_text: routineText });
+            const formData = new FormData();
+            formData.append('routine_text', routineText);
+            if (file) formData.append('file', file);
+
+            await auth().post("/attendance/routine/upload", formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             showMessage("Routine parsed and saved!", "success");
             fetchTodayStatus(); // Refresh to go to checkin
         } catch (e) {
@@ -4862,6 +4869,24 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
         }
     };
 
+    const handleDeleteRoutine = async () => {
+        if (!window.confirm("Are you sure you want to delete your routine? You will need to re-upload it.")) return;
+        setIsLoading(true);
+        try {
+            await auth().delete("/attendance/routine");
+            showMessage("Routine deleted.", "success");
+            setView("upload");
+            setRoutineText("");
+            setFile(null);
+            setTodayData(null);
+            setAttendanceMap({});
+        } catch (e) {
+            showMessage("Failed to delete routine.", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const fetchStats = async () => {
         setIsLoading(true);
         try {
@@ -4883,14 +4908,36 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
             </div>
             <h3 className="text-2xl font-bold text-white">Setup Your Routine</h3>
             <p className="text-slate-400">
-                Paste your weekly class schedule below. Our AI will extract the subjects and times for you!
+                Paste your routine text or upload an image/PDF.
             </p>
-            <textarea
-                value={routineText}
-                onChange={e => setRoutineText(e.target.value)}
-                placeholder="Ex: Monday: Math 10am, Physics 12pm... Tuesday: Chemistry..."
-                className="w-full h-32 bg-slate-800/50 border border-white/10 rounded-xl p-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none"
-            />
+            <div className="space-y-3">
+                <textarea
+                    value={routineText}
+                    onChange={e => setRoutineText(e.target.value)}
+                    placeholder="Ex: Monday: Math 10am, Physics 12pm..."
+                    className="w-full h-32 bg-slate-800/50 border border-white/10 rounded-xl p-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none"
+                />
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-white/10" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-slate-900 px-2 text-slate-500">Or Upload File</span>
+                    </div>
+                </div>
+                <input
+                    type="file"
+                    accept=".txt,.pdf,.png,.jpg,.jpeg,.webp"
+                    onChange={e => setFile(e.target.files[0])}
+                    className="block w-full text-sm text-slate-400
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-500/10 file:text-blue-400
+                        hover:file:bg-blue-500/20
+                        cursor-pointer"
+                />
+            </div>
             <button
                 onClick={handleRoutineUpload}
                 disabled={isLoading}
@@ -4898,6 +4945,15 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
             >
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : "Process Routine with AI"}
             </button>
+            {/* Divider */}
+            <div className="pt-4 border-t border-white/5 mt-4">
+                <button
+                    onClick={() => setView("checkin")}
+                    className="text-sm text-slate-500 hover:text-white underline"
+                >
+                    Cancel / Go Back
+                </button>
+            </div>
         </div>
     );
 
@@ -4905,49 +4961,59 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-end">
                 <div>
-                    <h3 className="text-2xl font-bold text-white">Daily Check-in</h3>
-                    <p className="text-slate-400 text-sm">{new Date().toDateString()}</p>
-                </div>
-                <button onClick={fetchStats} className="text-sm text-blue-400 hover:text-blue-300 underline">View Stats</button>
-            </div>
-
-            <div className="bg-slate-800/40 p-6 rounded-2xl border border-white/5 space-y-4">
-                {todayData?.subjects.map((sub, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-white/5">
-                        <span className="font-semibold text-slate-200">{sub}</span>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setAttendanceMap(prev => ({ ...prev, [sub]: "Present" }))}
-                                className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${attendanceMap[sub] === 'Present' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
-                            >
-                                P
-                            </button>
-                            <button
-                                onClick={() => setAttendanceMap(prev => ({ ...prev, [sub]: "Absent" }))}
-                                className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${attendanceMap[sub] === 'Absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
-                            >
-                                A
-                            </button>
-                        </div>
+                    <h3 className="text-xl font-bold text-white mb-6">Today's Classes</h3>
+                    <div className="space-y-4 mb-6">
+                        {Object.keys(attendanceMap).length === 0 ? (
+                            <div className="p-4 bg-slate-800/50 rounded-xl text-slate-400 text-sm">
+                                No classes found for today in your routine.
+                            </div>
+                        ) : Object.keys(attendanceMap).map((subject, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 bg-slate-800/40 border border-white/5 rounded-xl">
+                                <span className="font-semibold text-slate-200">{subject}</span>
+                                <div className="flex bg-slate-900 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setAttendanceMap({ ...attendanceMap, [subject]: "Present" })}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Present" ? "bg-green-500 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}
+                                    >
+                                        P
+                                    </button>
+                                    <button
+                                        onClick={() => setAttendanceMap({ ...attendanceMap, [subject]: "Absent" })}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Absent" ? "bg-red-500 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}
+                                    >
+                                        A
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <button
-                    onClick={() => handleMarkAttendance('no_class')}
-                    disabled={isLoading}
-                    className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-slate-300`}
-                >
-                    No Classes Today
-                </button>
-                <button
-                    onClick={() => handleMarkAttendance('classes')}
-                    disabled={isLoading}
-                    className={`${buttonClass} ${primaryButtonClass}`}
-                >
-                    {isLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : "Submit Attendance"}
-                </button>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            onClick={() => handleMarkAttendance('classes')}
+                            disabled={isLoading || Object.keys(attendanceMap).length === 0}
+                            className={`${buttonClass} ${primaryButtonClass} w-full flex justify-center items-center gap-2`}
+                        >
+                            <Save className="w-4 h-4" /> Save Attendance
+                        </button>
+                        <button
+                            onClick={() => handleMarkAttendance('no_class')}
+                            disabled={isLoading}
+                            className={`${buttonClass} border border-slate-600 hover:bg-slate-800 w-full text-slate-300`}
+                        >
+                            No Classes Today
+                        </button>
+                    </div>
+
+                    <div className="mt-6 flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-4">
+                        <button onClick={fetchStats} className="hover:text-blue-400 flex items-center gap-1">
+                            <BarChart3 className="w-3 h-3" /> View Stats
+                        </button>
+                        <button onClick={handleDeleteRoutine} className="hover:text-red-400 flex items-center gap-1">
+                            <Trash2 className="w-3 h-3" /> Reset Routine
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -5032,7 +5098,7 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
             </div>
             <div className="flex justify-end">
                 <button
-                    onClick={() => { setRoutineText(""); setView("upload"); }}
+                    onClick={handleDeleteRoutine}
                     className="text-xs text-slate-500 hover:text-red-400 flex items-center gap-1"
                 >
                     <Trash2 className="w-3 h-3" /> Reset Routine
