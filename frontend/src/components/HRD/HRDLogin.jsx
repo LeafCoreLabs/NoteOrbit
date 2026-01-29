@@ -124,65 +124,68 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
     const buttonClass = "w-full flex items-center justify-center px-4 py-3 font-semibold rounded-full shadow-md transition duration-200";
     const primaryButtonClass = "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white";
 
+    // Scroll to top on mount (Exact scrolling behavior)
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden py-8 px-4 font-sans selection:bg-purple-500/30 selection:text-purple-200">
-            <ParticleBackground />
+        // Container with Perspective - Exact match to CredentialsView container structure
+        // Note: App.jsx wraps CredentialsView in 'max-w-lg', so we apply it here since HRDLogin is returned directly
+        <div style={{ perspective: "1000px" }} className="w-full max-w-lg mx-auto relative z-10 animate-in fade-in slide-in-from-right-10 duration-500">
+            <div ref={cardRef} className="relative w-full transition-all duration-500" style={{ transformStyle: "preserve-3d" }}>
 
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] opacity-20" />
-            </div>
+                <div className="relative w-full bg-black/20 md:bg-slate-900/60 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden"
+                    style={{ backfaceVisibility: "hidden" }}>
 
-            {/* Container with Perspective - Exact match to CredentialsView container */}
-            <div style={{ perspective: "1000px" }} className="w-full max-w-md mx-auto relative z-10 animate-in fade-in slide-in-from-right-10 duration-500">
-                <div ref={cardRef} className="relative w-full transition-all duration-500" style={{ transformStyle: "preserve-3d" }}>
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50" />
 
-                    <div className="relative w-full bg-black/20 md:bg-slate-900/60 backdrop-blur-2xl p-6 rounded-3xl shadow-2xl border border-white/10 overflow-hidden"
-                        style={{ backfaceVisibility: "hidden" }}>
+                    <h3 ref={titleRef} className="text-3xl font-bold mb-8 text-white text-center tracking-tight">HRD Portal</h3>
 
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50" />
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center animate-in fade-in slide-in-from-top-2">
+                            {error}
+                        </div>
+                    )}
 
-                        <h3 ref={titleRef} className="text-3xl font-bold mb-6 text-white text-center tracking-tight mt-2">HRD Portal</h3>
-
-                        {error && (
-                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center animate-in fade-in slide-in-from-top-2">
-                                {error}
-                            </div>
-                        )}
-
-                        <div ref={formRef} className="space-y-4">
+                    <div ref={formRef} className="space-y-5">
+                        <Input
+                            icon={Mail}
+                            type="email"
+                            placeholder="HRD Email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                        />
+                        <div>
                             <Input
-                                icon={Mail}
-                                type="email"
-                                placeholder="HRD Email"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
+                                icon={Lock}
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
                             />
-                            <div>
-                                <Input
-                                    icon={Lock}
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                />
+                            <div className="text-right mt-2">
+                                <button className="text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50" disabled>
+                                    Forgot Password?
+                                </button>
                             </div>
+                        </div>
 
-                            <div className="flex gap-4 pt-2">
-                                <button
-                                    className={`${buttonClass} flex-1 bg-slate-800 text-slate-300 hover:bg-slate-700`}
-                                    onClick={() => { setPage('user_type'); setUserRole(null); }}
-                                    disabled={loading}
-                                >
-                                    <ArrowLeft className="w-5 h-5 mr-1" /> Back
-                                </button>
-                                <button
-                                    className={`${buttonClass} flex-1 ${primaryButtonClass}`}
-                                    onClick={handleLogin}
-                                    disabled={loading}
-                                >
-                                    {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Sign In"}
-                                </button>
-                            </div>
+                        <div className="flex gap-4 pt-4">
+                            <button
+                                className={`${buttonClass} flex-1 bg-slate-800 text-slate-300 hover:bg-slate-700`}
+                                onClick={() => { setPage('user_type'); setUserRole(null); }}
+                                disabled={loading}
+                            >
+                                <ArrowLeft className="w-5 h-5 mr-1" /> Back
+                            </button>
+                            <button
+                                className={`${buttonClass} flex-1 ${primaryButtonClass}`}
+                                onClick={handleLogin}
+                                disabled={loading}
+                            >
+                                {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Sign In"}
+                            </button>
                         </div>
                     </div>
                 </div>
