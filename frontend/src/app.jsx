@@ -587,6 +587,7 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
     const isParent = userRole === 'Parent';
 
     // Refs for Animation
+    const cardRef = useRef(null);
     const titleRef = useRef(null);
     const formRef = useRef(null);
 
