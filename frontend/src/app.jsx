@@ -3266,6 +3266,9 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
             {/* Results Table */}
             {isLoading ? <div className="text-center p-10"><Loader2 className="animate-spin w-8 h-8 mx-auto text-yellow-500" /></div> : students.length === 0 ? <div className="p-4 text-slate-500 text-center bg-slate-900/60 rounded-xl shadow-md border border-white/10">No students found matching filters.</div> : (
                 <div className="overflow-x-auto rounded-xl border border-white/10">
+                    <div className="bg-slate-800/80 px-6 py-2 border-b border-white/10 text-xs font-bold text-yellow-500 uppercase tracking-widest text-right">
+                        Total Students: {students.length}
+                    </div>
                     <table className="min-w-full divide-y divide-white/10 shadow-md bg-slate-900/60 backdrop-blur-xl">
                         <thead className="bg-slate-800/80">
                             <tr>
