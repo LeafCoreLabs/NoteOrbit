@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import axios from 'axios';
 import gsap from 'gsap';
 import {
-    LogIn, UserPlus, LogOut, ArrowLeft, Loader2, CheckCircle, XCircle, ChevronDown,
+    LogIn, UserPlus, LogOut, ArrowLeft, ArrowRight, Loader2, CheckCircle, XCircle, ChevronDown,
     Book, Bell, Settings, Briefcase, User, Mail, Lock, GraduationCap, ClipboardList,
     BriefcaseBusiness, DollarSign, Award, MessageSquare, Upload, RefreshCw,
     Trash2, Save, Home, Search, Download, Check, Atom, Star, Sparkles, Plus, Filter, Eye, EyeOff, Edit,
