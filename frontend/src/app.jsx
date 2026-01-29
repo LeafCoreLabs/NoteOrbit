@@ -5241,7 +5241,8 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
         { key: 'fees', label: 'Fees & Payments', icon: DollarSign },
         { key: 'marks', label: 'Marks & Grades', icon: Award },
         { key: 'feedback', label: 'Feedback', icon: MessageSquare },
-        { key: 'attendance', label: 'My Attendance', icon: ClipboardList },
+        { key: 'attendance', label: 'Attendance (Official)', icon: ClipboardList },
+        { key: 'attendify', label: 'Attendify (Self)', icon: CheckCircle },
         { key: 'complaints', label: 'Hostel Complaints', icon: Home },
         { key: 'insights', label: 'Academic Insights', icon: BrainCircuit },
         { key: 'chat', label: 'Orbit Bot', icon: Briefcase },
@@ -5282,7 +5283,8 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
             case 'fees': return <StudentFees user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'marks': return <StudentMarks user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'feedback': return <StudentFeedback showMessage={showMessage} />; // NEW COMPONENT
-            case 'attendance': return <StudentAttendanceFeature showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'attendance': return <StudentAttendanceCalendar showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'attendify': return <StudentAttendanceFeature showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'complaints': return <HostelComplaints showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'insights': return <AcademicInsights user={user} showMessage={showMessage} />;
             case 'chat': return <AIChat showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;

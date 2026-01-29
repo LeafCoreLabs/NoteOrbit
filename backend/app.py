@@ -3201,7 +3201,7 @@ def upload_routine():
                                 {
                                     "role": "user",
                                     "content": [
-                                        {"type": "text", "text": "Extract the class routine from this image. Output ONLY the raw text of the routine (e.g. 'Monday: Math 10am'). Do not structure it yet."},
+                                        {"type": "text", "text": "Analyze this image of a class schedule. Extract every single piece of text visible, maintaining the structure as much as possible to help identify which classes belong to which days and times. Output only the raw text content."},
                                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
                                     ]
                                 }
@@ -3223,7 +3223,16 @@ def upload_routine():
     # 2. AI Parsing (Standard Logic)
     parsed_routine = {}
     try:
-        sys_prompt = "You are a data extraction assistant. Extract class routine from the user's text. Return ONLY valid JSON where keys are Days (Monday-Saturday) and values are lists of Subject lines (e.g. 'Math 10AM'). If a day is missing, omit it. No markdown."
+        sys_prompt = """You are a strict JSON data extraction assistant. Your task is to extract a weekly class routine from the provided unstructured text (which may contain OCR errors).
+    1. Identify days of the week (Monday, Tuesday, etc.).
+    2. For each day, list the classes in chronological order.
+    3. Format each class as simple text: 'SubjectName (Time)'. Example: 'Mathematics (10:00 AM)'.
+    4. Return ONLY a valid JSON object. Keys must be full English day names (e.g., 'Monday'). Values must be Lists of strings.
+    5. Ignore unrelated text, headers, or footers.
+    6. If a day has no classes, do not include it in the JSON.
+    7. Do not wrap the output in markdown code blocks.
+    8. Use standard full day names: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.
+        """
         
         resp = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -3232,7 +3241,7 @@ def upload_routine():
                 "model": "llama3-70b-8192", # Stronger model for logic
                 "messages": [
                     {"role": "system", "content": sys_prompt},
-                    {"role": "user", "content": raw_text}
+                    {"role": "user", "content": f"Extract routine from this text:\n\n{raw_text}"}
                 ],
                 "response_format": {"type": "json_object"}
             }
@@ -3397,7 +3406,7 @@ def get_stats():
 
     total_classes = len(logs)
     if total_classes == 0:
-        return jsonify({"success": True, "overall": 0, "subject_wise": {}})
+        return jsonify({"success": True, "overall": 0, "subject_wise": []})
 
     present_count = sum(1 for l in logs if l.status == 'Present')
     overall = (present_count / total_classes) * 100
