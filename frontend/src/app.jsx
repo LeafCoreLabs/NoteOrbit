@@ -4959,60 +4959,58 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
 
     const renderCheckin = () => (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-end">
-                <div>
-                    <h3 className="text-xl font-bold text-white mb-6">Today's Classes</h3>
-                    <div className="space-y-4 mb-6">
-                        {Object.keys(attendanceMap).length === 0 ? (
-                            <div className="p-4 bg-slate-800/50 rounded-xl text-slate-400 text-sm">
-                                No classes found for today in your routine.
+            <div>
+                <h3 className="text-xl font-bold text-white mb-6">Today's Classes</h3>
+                <div className="space-y-4 mb-6">
+                    {Object.keys(attendanceMap).length === 0 ? (
+                        <div className="p-4 bg-slate-800/50 rounded-xl text-slate-400 text-sm">
+                            No classes found for today in your routine.
+                        </div>
+                    ) : Object.keys(attendanceMap).map((subject, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-slate-800/40 border border-white/5 rounded-xl">
+                            <span className="font-semibold text-slate-200">{subject}</span>
+                            <div className="flex bg-slate-900 rounded-lg p-1">
+                                <button
+                                    onClick={() => setAttendanceMap({ ...attendanceMap, [subject]: "Present" })}
+                                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Present" ? "bg-green-500 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}
+                                >
+                                    P
+                                </button>
+                                <button
+                                    onClick={() => setAttendanceMap({ ...attendanceMap, [subject]: "Absent" })}
+                                    className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Absent" ? "bg-red-500 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}
+                                >
+                                    A
+                                </button>
                             </div>
-                        ) : Object.keys(attendanceMap).map((subject, i) => (
-                            <div key={i} className="flex items-center justify-between p-4 bg-slate-800/40 border border-white/5 rounded-xl">
-                                <span className="font-semibold text-slate-200">{subject}</span>
-                                <div className="flex bg-slate-900 rounded-lg p-1">
-                                    <button
-                                        onClick={() => setAttendanceMap({ ...attendanceMap, [subject]: "Present" })}
-                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Present" ? "bg-green-500 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}
-                                    >
-                                        P
-                                    </button>
-                                    <button
-                                        onClick={() => setAttendanceMap({ ...attendanceMap, [subject]: "Absent" })}
-                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Absent" ? "bg-red-500 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}
-                                    >
-                                        A
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
+                </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <button
-                            onClick={() => handleMarkAttendance('classes')}
-                            disabled={isLoading || Object.keys(attendanceMap).length === 0}
-                            className={`${buttonClass} ${primaryButtonClass} w-full flex justify-center items-center gap-2`}
-                        >
-                            <Save className="w-4 h-4" /> Save Attendance
-                        </button>
-                        <button
-                            onClick={() => handleMarkAttendance('no_class')}
-                            disabled={isLoading}
-                            className={`${buttonClass} border border-slate-600 hover:bg-slate-800 w-full text-slate-300`}
-                        >
-                            No Classes Today
-                        </button>
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <button
+                        onClick={() => handleMarkAttendance('classes')}
+                        disabled={isLoading || Object.keys(attendanceMap).length === 0}
+                        className={`${buttonClass} ${primaryButtonClass} w-full flex justify-center items-center gap-2`}
+                    >
+                        <Save className="w-4 h-4" /> Save Attendance
+                    </button>
+                    <button
+                        onClick={() => handleMarkAttendance('no_class')}
+                        disabled={isLoading}
+                        className={`${buttonClass} border border-slate-600 hover:bg-slate-800 w-full text-slate-300`}
+                    >
+                        No Classes Today
+                    </button>
+                </div>
 
-                    <div className="mt-6 flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-4">
-                        <button onClick={fetchStats} className="hover:text-blue-400 flex items-center gap-1">
-                            <BarChart3 className="w-3 h-3" /> View Stats
-                        </button>
-                        <button onClick={handleDeleteRoutine} className="hover:text-red-400 flex items-center gap-1">
-                            <Trash2 className="w-3 h-3" /> Reset Routine
-                        </button>
-                    </div>
+                <div className="mt-6 flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-4">
+                    <button onClick={fetchStats} className="hover:text-blue-400 flex items-center gap-1">
+                        <BarChart3 className="w-3 h-3" /> View Stats
+                    </button>
+                    <button onClick={handleDeleteRoutine} className="hover:text-red-400 flex items-center gap-1">
+                        <Trash2 className="w-3 h-3" /> Reset Routine
+                    </button>
                 </div>
             </div>
         </div>
