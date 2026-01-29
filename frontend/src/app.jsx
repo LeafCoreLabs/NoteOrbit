@@ -302,25 +302,25 @@ function UserTypeSelection({ setUserRole, setPage }) {
 
     return (
 
-        <div ref={containerRef} className="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden py-6 md:py-0"
+        <div ref={containerRef} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-6 md:py-10"
             onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
 
-            {/* Left Column: Branding (Desktop) / Top (Mobile) */}
-            <div className="w-full md:w-1/2 flex flex-col items-center md:items-start md:pl-20 text-center md:text-left z-10 animate-in fade-in slide-in-from-top-4 duration-700 px-4 mb-8 md:mb-0">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-4 md:mb-6">
+            {/* Centered Hero Header */}
+            <div className="text-center space-y-4 mb-2 md:mb-12 z-10 animate-in fade-in slide-in-from-top-4 duration-700 px-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2">
                     <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2_beta
                 </div>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight mb-4 md:mb-6">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight">
                     Academic <br className="hidden md:block" />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Intelligence.</span>
                 </h1>
-                <p className="text-sm md:text-lg text-slate-400 max-w-xl mx-auto md:mx-0 leading-relaxed">
+                <p className="text-sm md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed">
                     Where Imagination is Redefined! Select your portal to begin.
                 </p>
             </div>
 
-            {/* Right Column: 3D Carousel (Desktop) / Bottom (Mobile) */}
-            <div className="relative w-full md:w-1/2 max-w-6xl h-[400px] md:h-screen flex items-center justify-center perspective-1000 z-10">
+            {/* 3D Carousel Area */}
+            <div className="relative w-full max-w-6xl h-[400px] md:h-[450px] flex items-center justify-center perspective-1000 z-10">
 
                 {/* Left Nav Button */}
                 <button
