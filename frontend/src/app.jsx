@@ -679,6 +679,29 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         };
     };
 
+    const handleRegisterSubmit = async () => {
+        // Validate all required fields
+        if (!srn.trim()) return showMessage("SRN is required.", "error");
+        if (!name.trim()) return showMessage("Full Name is required.", "error");
+        if (!regPassword) return showMessage("Password is required.", "error");
+        if (!regConfirmPassword) return showMessage("Please confirm your password.", "error");
+        if (!degree) return showMessage("Please select a degree.", "error");
+        if (!semester) return showMessage("Please select a semester.", "error");
+        if (!section) return showMessage("Please select a section.", "error");
+
+        // Validate password format
+        const passwordValidation = validatePassword(regPassword);
+        if (!passwordValidation.isValid) {
+            return showMessage("Password must contain: at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.", "error");
+        }
+
+        // Validate password match
+        if (regPassword !== regConfirmPassword) return showMessage("Passwords do not match.", "error");
+
+        // Prepare payload with OTP for backend re-verification
+        onRegister({ srn, name, email: regEmail, password: regPassword, degree, semester: parseInt(semester), section, otp, role: userRole.toLowerCase() });
+    };
+
     // Enhanced Handle Login with Animations
     const handleLogin = async () => {
         if (!email || !password) {
