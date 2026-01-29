@@ -249,9 +249,14 @@ function UserTypeSelection({ setUserRole, setPage }) {
             const isActive = index === activeIndex;
 
             // Calculate properties
-            const xTrans = offset * (window.innerWidth < 768 ? 260 : 340);
+            // Reduce travel distance on desktop (340 -> 300) to keep stack tighter
+            const xTrans = offset * (window.innerWidth < 768 ? 260 : 300);
             const scale = isActive ? 1.05 : 0.85;
-            const opacity = isActive ? 1 : 0.3;
+
+            // Progressive Opacity Decay: 1 (Active) -> 0.6 (Next) -> 0.2 (Far) -> 0 (Invisible)
+            // This prevents "overlapping" visual artifacts with the text on the left
+            const opacity = isActive ? 1 : Math.max(0, 1 - Math.abs(offset) * 0.4);
+
             const zIndex = isActive ? 50 : 10 - Math.abs(offset);
             const rotateY = offset * -15;
 
