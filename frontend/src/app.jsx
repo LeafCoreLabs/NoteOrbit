@@ -5710,7 +5710,7 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
                             key={item.key}
                             data-key={item.key}
                             onClick={() => setView(item.key)}
-                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
+                            className={`w-full flex items-center p-3 rounded-xl font-semibold text-sm whitespace-nowrap transition-colors duration-200 relative z-10 ${view === item.key
                                 ? 'text-rose-300'
                                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
