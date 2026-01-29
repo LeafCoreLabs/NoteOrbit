@@ -308,7 +308,7 @@ function UserTypeSelection({ setUserRole, setPage }) {
             {/* Centered Hero Header */}
             <div className="text-center space-y-4 mb-2 md:mb-12 z-10 animate-in fade-in slide-in-from-top-4 duration-700 px-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2">
-                    <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2_beta
+                    <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2.1_beta
                 </div>
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight">
                     Academic <br className="hidden md:block" />
