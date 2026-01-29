@@ -4,7 +4,7 @@ import {
     BrainCircuit, Upload, Sparkles, Target, TrendingUp,
     FileText, Loader2, CheckCircle, AlertTriangle
 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../../api';
 
 const AIAnalysis = ({ token }) => {
     const [activeTab, setActiveTab] = useState('resume');
@@ -28,9 +28,8 @@ const AIAnalysis = ({ token }) => {
         formData.append('resume', resumeFile);
 
         try {
-            const response = await axios.post('/hrd/ai/analyze-resume', formData, {
+            const response = await api.post('/hrd/ai/analyze-resume', formData, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
@@ -46,9 +45,7 @@ const AIAnalysis = ({ token }) => {
     const calculateRoleFit = async () => {
         setLoading(true);
         try {
-            const response = await axios.post('/hrd/ai/role-fit', roleFitData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.post('/hrd/ai/role-fit', roleFitData);
             setRoleFitResult(response.data);
         } catch (error) {
             console.error('Failed to calculate role-fit:', error);
@@ -85,8 +82,8 @@ const AIAnalysis = ({ token }) => {
                 <button
                     onClick={() => setActiveTab('resume')}
                     className={`px-6 py-3 font-semibold transition-all relative ${activeTab === 'resume'
-                            ? 'text-violet-400'
-                            : 'text-slate-400 hover:text-white'
+                        ? 'text-violet-400'
+                        : 'text-slate-400 hover:text-white'
                         }`}
                 >
                     Resume Analysis
@@ -97,8 +94,8 @@ const AIAnalysis = ({ token }) => {
                 <button
                     onClick={() => setActiveTab('role-fit')}
                     className={`px-6 py-3 font-semibold transition-all relative ${activeTab === 'role-fit'
-                            ? 'text-violet-400'
-                            : 'text-slate-400 hover:text-white'
+                        ? 'text-violet-400'
+                        : 'text-slate-400 hover:text-white'
                         }`}
                 >
                     Role-Fit Calculator

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Building2, Plus, Edit, Trash2, Eye, Search, X, Save, Loader2
 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../../api';
 
 const CompanyManagement = ({ token }) => {
     const [companies, setCompanies] = useState([]);
@@ -26,9 +26,7 @@ const CompanyManagement = ({ token }) => {
 
     const fetchCompanies = async () => {
         try {
-            const response = await axios.get('/hrd/companies', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/hrd/companies');
             setCompanies(response.data.companies || []);
         } catch (error) {
             console.error('Failed to fetch companies:', error);
@@ -43,13 +41,9 @@ const CompanyManagement = ({ token }) => {
 
         try {
             if (editingCompany) {
-                await axios.put(`/hrd/companies/${editingCompany.id}`, formData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await api.put(`/hrd/companies/${editingCompany.id}`, formData);
             } else {
-                await axios.post('/hrd/companies', formData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await api.post('/hrd/companies', formData);
             }
             fetchCompanies();
             handleCloseModal();
@@ -65,9 +59,7 @@ const CompanyManagement = ({ token }) => {
         if (!confirm('Are you sure you want to delete this company?')) return;
 
         try {
-            await axios.delete(`/hrd/companies/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/hrd/companies/${id}`);
             fetchCompanies();
         } catch (error) {
             console.error('Failed to delete company:', error);

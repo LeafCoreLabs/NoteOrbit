@@ -4,7 +4,7 @@ import {
     Briefcase, Plus, Edit, Eye, Calendar, MapPin, DollarSign, Users,
     Search, X, Save, Loader2, Filter, CheckCircle, XCircle, Tag
 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../../api';
 
 const DriveManagement = ({ token }) => {
     const [drives, setDrives] = useState([]);
@@ -40,9 +40,7 @@ const DriveManagement = ({ token }) => {
 
     const fetchDrives = async () => {
         try {
-            const response = await axios.get('/hrd/drives', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/hrd/drives');
             setDrives(response.data.drives || []);
         } catch (error) {
             console.error('Failed to fetch drives:', error);
@@ -53,9 +51,7 @@ const DriveManagement = ({ token }) => {
 
     const fetchCompanies = async () => {
         try {
-            const response = await axios.get('/hrd/companies', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/hrd/companies');
             setCompanies(response.data.companies || []);
         } catch (error) {
             console.error('Failed to fetch companies:', error);
@@ -64,9 +60,7 @@ const DriveManagement = ({ token }) => {
 
     const fetchDriveDetails = async (driveId) => {
         try {
-            const response = await axios.get(`/hrd/drives/${driveId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get(`/hrd/drives/${driveId}`);
             setSelectedDrive(response.data.drive);
             setApplicants(response.data.applicants || []);
             setShowDetails(true);
@@ -80,9 +74,7 @@ const DriveManagement = ({ token }) => {
         setLoading(true);
 
         try {
-            await axios.post('/hrd/drives', formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.post('/hrd/drives', formData);
             fetchDrives();
             handleCloseModal();
         } catch (error) {

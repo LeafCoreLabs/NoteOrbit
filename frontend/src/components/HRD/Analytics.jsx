@@ -4,7 +4,7 @@ import {
     BarChart3, TrendingUp, Users, Briefcase, Award, DollarSign,
     Loader2, PieChart, Activity
 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../../api';
 
 const Analytics = ({ token }) => {
     const [stats, setStats] = useState(null);
@@ -18,12 +18,8 @@ const Analytics = ({ token }) => {
     const fetchAnalytics = async () => {
         try {
             const [overview, branches] = await Promise.all([
-                axios.get('/hrd/analytics/overview', {
-                    headers: { Authorization: `Bearer ${token}` }
-                }),
-                axios.get('/hrd/analytics/branch-stats', {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
+                api.get('/hrd/analytics/overview'),
+                api.get('/hrd/analytics/branch-stats')
             ]);
 
             setStats(overview.data);

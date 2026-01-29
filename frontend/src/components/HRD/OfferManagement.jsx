@@ -4,7 +4,7 @@ import {
     FileText, Plus, DollarSign, MapPin, Calendar, User,
     CheckCircle, XCircle, Clock, Loader2, Eye, X
 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../../api';
 
 const OfferManagement = ({ token }) => {
     const [offers, setOffers] = useState([]);
@@ -29,9 +29,7 @@ const OfferManagement = ({ token }) => {
 
     const fetchOffers = async () => {
         try {
-            const response = await axios.get('/hrd/offers', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/hrd/offers');
             setOffers(response.data.offers || []);
         } catch (error) {
             console.error('Failed to fetch offers:', error);
@@ -42,9 +40,7 @@ const OfferManagement = ({ token }) => {
 
     const fetchDrives = async () => {
         try {
-            const response = await axios.get('/hrd/drives', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/hrd/drives');
             setDrives(response.data.drives || []);
         } catch (error) {
             console.error('Failed to fetch drives:', error);
@@ -56,9 +52,7 @@ const OfferManagement = ({ token }) => {
         setLoading(true);
 
         try {
-            await axios.post('/hrd/offers', formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.post('/hrd/offers', formData);
             fetchOffers();
             handleCloseModal();
             alert('Offer created and student notified via email!');
@@ -126,8 +120,8 @@ const OfferManagement = ({ token }) => {
                         key={status}
                         onClick={() => setFilterStatus(status)}
                         className={`px-4 py-2 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${filterStatus === status
-                                ? 'bg-purple-500 text-white'
-                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            ? 'bg-purple-500 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                             }`}
                     >
                         {status.charAt(0).toUpperCase() + status.slice(1)}
