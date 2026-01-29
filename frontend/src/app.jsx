@@ -276,28 +276,6 @@ function UserTypeSelection({ setUserRole, setPage }) {
                 overwrite: "auto",
                 force3D: true // Force GPU acceleration
             });
-
-            // Universal Logo Animation - Bounce In when Active
-            const icon = cardRefs.current[index]?.querySelector('.card-icon');
-            if (icon) {
-                if (isActive) {
-                    gsap.to(icon, {
-                        scale: 1,
-                        rotation: 0,
-                        duration: 0.6,
-                        ease: "back.out(1.7)",
-                        overwrite: "auto"
-                    });
-                } else {
-                    gsap.to(icon, {
-                        scale: 0.8,
-                        rotation: -10,
-                        duration: 0.4,
-                        ease: "power2.out",
-                        overwrite: "auto"
-                    });
-                }
-            }
         });
     }, [activeIndex]);
 
@@ -6036,7 +6014,11 @@ function App() {
         const hrdToken = localStorage.getItem('noteorbit_token');
         if ((userRole && userRole.ui === 'HRD') || userRole === 'HRD') {
             if (page === 'hrd-dashboard' && hrdToken) {
-                return <HRDDashboard token={hrdToken} setPage={setPage} setToken={() => { }} />;
+                return (
+                    <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-700">
+                        <HRDDashboard token={hrdToken} setPage={setPage} setToken={() => { }} />
+                    </div>
+                );
             }
             return <HRDLogin setToken={() => { }} setPage={setPage} setUserRole={setUserRole} />;
         }
@@ -6100,8 +6082,8 @@ function App() {
                     {renderContent()}
                 </div>
 
-                {/* Footer with About Section - Only show when not logged in */}
-                {!user && (
+                {/* Footer with About Section - Only show when not logged in AND not in HRD Dashboard */}
+                {!user && page !== 'hrd-dashboard' && (
                     <footer className="mt-12 mb-8 pt-8 border-t border-white/10">
                         <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 p-6 sm:p-8">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">

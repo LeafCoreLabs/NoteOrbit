@@ -53,12 +53,6 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
             { opacity: 0, y: 30, rotationX: 15, scale: 0.9 },
             { opacity: 1, y: 0, rotationX: 0, scale: 1, duration: 0.8, force3D: true }
         )
-            // Icon bounce in
-            .fromTo(iconRef.current,
-                { scale: 0, rotation: -180 },
-                { scale: 1, rotation: 0, duration: 0.6, ease: "back.out(1.7)" },
-                "-=0.5"
-            )
             // Title slide in
             .fromTo(titleRef.current,
                 { opacity: 0, y: 20 },
@@ -142,19 +136,12 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
             <div style={{ perspective: "1000px" }} className="w-full max-w-md mx-auto relative z-10 animate-in fade-in slide-in-from-right-10 duration-500">
                 <div ref={cardRef} className="relative w-full transition-all duration-500" style={{ transformStyle: "preserve-3d" }}>
 
-                    <div className="relative w-full bg-black/20 md:bg-slate-900/60 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden"
+                    <div className="relative w-full bg-black/20 md:bg-slate-900/60 backdrop-blur-2xl p-6 rounded-3xl shadow-2xl border border-white/10 overflow-hidden"
                         style={{ backfaceVisibility: "hidden" }}>
 
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50" />
 
-                        {/* Animated Icon */}
-                        <div ref={iconRef} className="flex justify-center mb-6">
-                            <div className="p-3 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-2xl border border-white/5">
-                                <BriefcaseBusiness className="w-8 h-8 text-purple-400" />
-                            </div>
-                        </div>
-
-                        <h3 ref={titleRef} className="text-3xl font-bold mb-8 text-white text-center tracking-tight">HRD Portal</h3>
+                        <h3 ref={titleRef} className="text-3xl font-bold mb-6 text-white text-center tracking-tight mt-2">HRD Portal</h3>
 
                         {error && (
                             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center animate-in fade-in slide-in-from-top-2">
@@ -162,7 +149,7 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
                             </div>
                         )}
 
-                        <div ref={formRef} className="space-y-5">
+                        <div ref={formRef} className="space-y-4">
                             <Input
                                 icon={Mail}
                                 type="email"
@@ -180,7 +167,7 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
                                 />
                             </div>
 
-                            <div className="flex gap-4 pt-4">
+                            <div className="flex gap-4 pt-2">
                                 <button
                                     className={`${buttonClass} flex-1 bg-slate-800 text-slate-300 hover:bg-slate-700`}
                                     onClick={() => { setPage('user_type'); setUserRole(null); }}

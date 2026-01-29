@@ -195,14 +195,14 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/10 to-purple-950/10 p-4 sm:p-8">
+        <div className="flex flex-col md:flex-row gap-6">
             {/* Sidebar - Mobile Optimized like StudentPanel */}
             <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
-                <h5 className="text-lg font-bold text-purple-400 mb-4 ml-2">HRD Hub</h5>
+                <h5 className="text-lg font-bold text-blue-400 mb-4 ml-2">HRD Hub</h5>
 
                 {/* Desktop Navigation */}
                 <nav className="space-y-1 relative hidden md:block" ref={navRef}>
-                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-purple-600/20 border border-purple-500/30 rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
+                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-blue-600/20 border border-blue-500/30 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {menuItems.map(item => {
                         const Icon = item.icon;
                         const isActive = activeTab === item.id;
@@ -212,7 +212,7 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
                                 data-key={item.id}
                                 onClick={() => setActiveTab(item.id)}
                                 className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${isActive
-                                    ? 'text-purple-300'
+                                    ? 'text-blue-300'
                                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                                     }`}
                             >
@@ -226,11 +226,11 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
                 {/* Mobile Navigation Dropdown - Exact StudentPanel Style */}
                 <div className="md:hidden">
                     <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400 pointer-events-none" />
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
                         <select
                             value={activeTab}
                             onChange={(e) => setActiveTab(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-purple-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-purple-500/50 shadow-lg font-semibold"
+                            className="w-full bg-slate-800/80 border border-blue-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-blue-500/50 shadow-lg font-semibold"
                         >
                             {menuItems.map(item => (
                                 <option key={item.id} value={item.id} className="bg-slate-900 text-white py-2">
@@ -256,7 +256,7 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
 
             {/* Content Area */}
             <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
                 {renderContent()}
             </div>
         </div>
