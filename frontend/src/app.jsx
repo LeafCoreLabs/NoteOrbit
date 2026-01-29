@@ -255,16 +255,17 @@ function UserTypeSelection({ setUserRole, setPage }) {
             const zIndex = isActive ? 50 : 10 - Math.abs(offset);
             const rotateY = offset * -15;
 
-            // Animate using GSAP
+            // Animate using GSAP with Hardware Acceleration
             gsap.to(cardRefs.current[index], {
                 x: xTrans,
                 scale: scale,
                 opacity: opacity,
                 zIndex: zIndex,
                 rotateY: rotateY,
-                duration: 0.6,
-                ease: "power3.out", // Smooth easing
-                overwrite: "auto"
+                duration: 0.5, // Slightly faster for snappier feel
+                ease: "power2.out", // Snappier easing
+                overwrite: "auto",
+                force3D: true // Force GPU acceleration
             });
         });
     }, [activeIndex]);
@@ -341,7 +342,7 @@ function UserTypeSelection({ setUserRole, setPage }) {
                             key={role.ui}
                             ref={el => cardRefs.current[index] = el}
                             onClick={() => setActiveIndex(index)}
-                            className="absolute w-[260px] md:w-[320px] cursor-pointer"
+                            className="absolute w-[260px] md:w-[320px] cursor-pointer will-change-transform"
                             style={{
                                 left: '50%',
                                 marginLeft: window.innerWidth < 768 ? -130 : -160,
@@ -349,14 +350,14 @@ function UserTypeSelection({ setUserRole, setPage }) {
                                 transform: 'perspective(1000px)'
                             }}
                         >
-                            <div className={`p-6 md:p-8 rounded-3xl backdrop-blur-2xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-2xl
+                            <div className={`p-6 md:p-8 rounded-3xl backdrop-blur-xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-2xl
                                 ${isActive
                                     ? `bg-slate-900/80 ${role.border} ring-1 ring-white/10 ${role.shadow}`
                                     : 'bg-slate-900/40 border-white/5'}`}
                             >
-                                {isActive && <div className={`absolute inset-0 bg-gradient-to-br ${role.gradient} opacity-10 blur-xl rounded-full transform scale-150 animate-pulse`} />}
+                                {isActive && <div className={`absolute inset-0 bg-gradient-to-br ${role.gradient} opacity-20 blur-xl rounded-full transform scale-150 transition-opacity duration-500`} />}
 
-                                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mb-6 md:mb-8 relative z-10 
+                                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mb-6 md:mb-8 relative z-10
                                     bg-gradient-to-br ${role.gradient} shadow-lg`}
                                 >
                                     <role.icon className="w-8 h-8 md:w-10 md:h-10 text-white" />
