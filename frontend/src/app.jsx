@@ -276,6 +276,28 @@ function UserTypeSelection({ setUserRole, setPage }) {
                 overwrite: "auto",
                 force3D: true // Force GPU acceleration
             });
+
+            // Universal Logo Animation - Bounce In when Active
+            const icon = cardRefs.current[index]?.querySelector('.card-icon');
+            if (icon) {
+                if (isActive) {
+                    gsap.to(icon, {
+                        scale: 1,
+                        rotation: 0,
+                        duration: 0.6,
+                        ease: "back.out(1.7)",
+                        overwrite: "auto"
+                    });
+                } else {
+                    gsap.to(icon, {
+                        scale: 0.8,
+                        rotation: -10,
+                        duration: 0.4,
+                        ease: "power2.out",
+                        overwrite: "auto"
+                    });
+                }
+            }
         });
     }, [activeIndex]);
 

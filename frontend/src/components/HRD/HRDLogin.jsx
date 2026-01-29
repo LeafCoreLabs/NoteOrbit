@@ -138,8 +138,8 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
                 <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] opacity-20" />
             </div>
 
-            {/* Exact structure from CredentialsView */}
-            <div style={{ perspective: "1000px" }} className="w-full max-w-md mx-auto relative z-10">
+            {/* Container with Perspective - Exact match to CredentialsView container */}
+            <div style={{ perspective: "1000px" }} className="w-full max-w-md mx-auto relative z-10 animate-in fade-in slide-in-from-right-10 duration-500">
                 <div ref={cardRef} className="relative w-full transition-all duration-500" style={{ transformStyle: "preserve-3d" }}>
 
                     <div className="relative w-full bg-black/20 md:bg-slate-900/60 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden"
