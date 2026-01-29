@@ -319,19 +319,19 @@ function UserTypeSelection({ setUserRole, setPage }) {
                 {/* Left Nav Button */}
                 <button
                     onClick={prevRole}
-                    className={`absolute left-2 md:left-10 z-50 p-3 rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/10 active:scale-95 ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
+                    className={`absolute left-0 md:left-10 z-50 p-2 md:p-3 rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/10 active:scale-95 animate-pulse ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
                     disabled={activeIndex === 0}
                 >
-                    <ArrowLeft className="w-6 h-6" />
+                    <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
 
                 {/* Right Nav Button */}
                 <button
                     onClick={nextRole}
-                    className={`absolute right-2 md:right-10 z-50 p-3 rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/10 active:scale-95 ${activeIndex === roles.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
+                    className={`absolute right-0 md:right-10 z-50 p-2 md:p-3 rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/10 active:scale-95 animate-pulse ${activeIndex === roles.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
                     disabled={activeIndex === roles.length - 1}
                 >
-                    <ArrowRight className="w-6 h-6" />
+                    <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
 
                 {roles.map((role, index) => {
