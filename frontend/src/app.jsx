@@ -195,6 +195,18 @@ const MessageBar = ({ message, type, onClose }) => {
     );
 };
 
+// --- NEW COMPONENT: Welcome Loader Overlay ---
+const WelcomeLoader = () => (
+    <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="relative">
+            <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse"></div>
+            <Loader2 className="w-16 h-16 text-blue-400 animate-spin relative z-10" />
+        </div>
+        <h2 className="mt-8 text-2xl font-bold text-white tracking-wide animate-in slide-in-from-bottom-4 duration-700">Authenticating...</h2>
+        <p className="mt-2 text-slate-400 text-sm animate-in slide-in-from-bottom-4 duration-700 delay-150">Please wait while we prepare your dashboard.</p>
+    </div>
+);
+
 // ----------------------------------------------
 // --- AUTH COMPONENTS ---
 // --- REBUILT WELCOME SCREEN (HERO + SPLIT) ---
@@ -5728,6 +5740,7 @@ function App() {
     const [userRole, setUserRole] = useState(null);
     const [authMode, setAuthMode] = useState("login");
     const [message, setMessage] = useState({ text: null, type: null });
+    const [isLoginTransition, setIsLoginTransition] = useState(false); // NEW: Login Transition State
     const catalogs = useCatalogs();
 
     useEffect(() => {
@@ -5806,13 +5819,19 @@ function App() {
                 throw new Error(`Account status: ${u.status}. Wait for admin approval.`);
             }
 
-            setAuthToken(token);
-            localStorage.setItem("noteorbit_user", JSON.stringify(u));
-            setUser(u);
-            showMessage("Logged in successfully.", 'success');
-            setPage("dashboard");
+            // TRIGGER TRANSITION ANIMATION
+            setIsLoginTransition(true);
+            setTimeout(() => {
+                setAuthToken(token);
+                localStorage.setItem("noteorbit_user", JSON.stringify(u));
+                setUser(u);
+                showMessage("Logged in successfully.", 'success');
+                setPage("dashboard");
+                setIsLoginTransition(false);
+            }, 2000); // 2 Second Wait Animation
+
         } catch (err) {
-            // Note: Login/Register should not get a 401 error, 
+            // Note: Login/Register should not get a 401 error,  
             // but the general 4xx/5xx handling is still here.
             showMessage(err.response?.data?.message || err.message || "Login failed");
         }
@@ -5920,6 +5939,9 @@ function App() {
                         ) : null}
                     </div>
                 </div>
+
+                {/* NEW: Login Transition Overlay */}
+                {isLoginTransition && <WelcomeLoader />}
 
                 <MessageBar message={message.text} type={message.type} onClose={clearMessage} />
 
