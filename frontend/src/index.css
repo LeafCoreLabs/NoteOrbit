@@ -6,7 +6,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0b0f1a;
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  color: #0f172a;
 }
 
 /* This file imports Tailwind's three main layers. 

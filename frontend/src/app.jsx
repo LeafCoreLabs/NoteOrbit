@@ -113,11 +113,11 @@ function useLocalUser() {
 const OrbitLogo = () => {
     return (
         <div className="flex items-center gap-3 cursor-pointer select-none">
-            <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 ring-1 ring-white/10">
-                <Book className="w-5 h-5 text-white stroke-[2.5]" />
+            <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl shadow-xl shadow-slate-200/50 shadow-blue-500/20 ring-1 ring-white/10">
+                <Book className="w-5 h-5 text-slate-900 stroke-[2.5]" />
                 <div className="absolute top-0 right-0 -mr-1 -mt-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-slate-950" />
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">
+            <span className="text-xl font-bold text-slate-900 tracking-tight">
                 Note<span className="font-light text-blue-200">Orbit</span>
             </span>
         </div>
@@ -141,17 +141,17 @@ const Input = ({ icon: Icon, className = '', type = 'text', ...props }) => {
 
     return (
         <div className="relative group">
-            {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-400 transition-colors" />}
+            {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />}
             <input
                 {...props}
                 type={inputType}
-                className={`w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-gray-500 border border-white/10 rounded-xl py-3.5 ${Icon ? 'pl-12' : 'px-4'} ${isPassword ? 'pr-12' : 'pr-4'} focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition duration-300 hover:bg-slate-800/80 ${className}`}
+                className={`w-full bg-slate-50/50 backdrop-blur-xl text-slate-900 placeholder-gray-500 border border-slate-200 rounded-xl py-3.5 ${Icon ? 'pl-12' : 'px-4'} ${isPassword ? 'pr-12' : 'pr-4'} focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition duration-300 hover:bg-slate-50/80 ${className}`}
             />
             {isPassword && (
                 <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-slate-900 transition-colors"
                 >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -162,11 +162,11 @@ const Input = ({ icon: Icon, className = '', type = 'text', ...props }) => {
 
 const Select = ({ icon: Icon, className = '', children, ...props }) => (
     <div className="relative group">
-        {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-400 pointer-events-none transition-colors" />}
+        {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-600 pointer-events-none transition-colors" />}
         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
         <select
             {...props}
-            className={`w-full bg-slate-800/50 backdrop-blur-xl text-white border border-white/10 rounded-xl py-3.5 ${Icon ? 'pl-12 pr-10' : 'px-4'} appearance-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition duration-300 hover:bg-slate-800/80 cursor-pointer ${className}`}
+            className={`w-full bg-slate-50/50 backdrop-blur-xl text-slate-900 border border-slate-200 rounded-xl py-3.5 ${Icon ? 'pl-12 pr-10' : 'px-4'} appearance-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition duration-300 hover:bg-slate-50/80 cursor-pointer ${className}`}
         >
             {children}
         </select>
@@ -176,7 +176,7 @@ const Select = ({ icon: Icon, className = '', children, ...props }) => (
 const MessageBar = ({ message, type, onClose }) => {
     if (!message) return null;
     const isSuccess = type === 'success';
-    const baseClasses = "p-4 rounded-xl shadow-lg border backdrop-blur-xl text-sm flex items-start mt-6 animate-in fade-in slide-in-from-top-2 duration-500 relative z-50";
+    const baseClasses = "p-4 rounded-xl shadow-xl shadow-slate-200/50 border backdrop-blur-xl text-sm flex items-start mt-6 animate-in fade-in slide-in-from-top-2 duration-500 relative z-50";
     const classes = isSuccess
         ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-200"
         : "bg-red-500/10 border-red-500/20 text-red-200";
@@ -184,10 +184,10 @@ const MessageBar = ({ message, type, onClose }) => {
 
     return (
         <div className={`${baseClasses} ${classes}`}>
-            <Icon className={`w-5 h-5 mr-3 mt-0.5 flex-shrink-0 ${isSuccess ? 'text-emerald-400' : 'text-red-400'}`} />
+            <Icon className={`w-5 h-5 mr-3 mt-0.5 flex-shrink-0 ${isSuccess ? 'text-emerald-600' : 'text-red-400'}`} />
             <div className="flex-1 whitespace-pre-wrap font-medium">{message}</div>
             {onClose && (
-                <button onClick={onClose} className={`ml-4 ${isSuccess ? 'text-emerald-400 hover:text-emerald-200' : 'text-red-400 hover:text-red-200'} transition-colors`}>
+                <button onClick={onClose} className={`ml-4 ${isSuccess ? 'text-emerald-600 hover:text-emerald-200' : 'text-red-400 hover:text-red-200'} transition-colors`}>
                     <XCircle className="w-5 h-5" />
                 </button>
             )}
@@ -217,10 +217,10 @@ function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonCla
     }, []);
 
     const roles = [
-        { ui: 'Admin', icon: BriefcaseBusiness, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-500/20' },
-        { ui: 'Faculty', icon: ClipboardList, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-500/20' },
-        { ui: 'Parent', icon: Home, color: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-500/20' },
-        { ui: 'Student', icon: GraduationCap, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-500/20' },
+        { ui: 'Admin', icon: BriefcaseBusiness, color: 'text-amber-600', bg: 'bg-amber-400/10', border: 'border-amber-500/20' },
+        { ui: 'Faculty', icon: ClipboardList, color: 'text-emerald-600', bg: 'bg-emerald-400/10', border: 'border-emerald-500/20' },
+        { ui: 'Parent', icon: Home, color: 'text-rose-600', bg: 'bg-rose-400/10', border: 'border-rose-500/20' },
+        { ui: 'Student', icon: GraduationCap, color: 'text-blue-600', bg: 'bg-blue-400/10', border: 'border-blue-500/20' },
     ];
 
     const handleContinue = () => {
@@ -243,22 +243,22 @@ function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonCla
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest hero-text-item backdrop-blur-md">
                     <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2_beta
                 </div>
-                <h1 className="text-5xl lg:text-7xl font-bold text-white tracking-tight hero-text-item leading-tight">
+                <h1 className="text-5xl lg:text-7xl font-bold text-slate-900 tracking-tight hero-text-item leading-tight">
                     Academic <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Intelligence.</span>
                 </h1>
-                <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 hero-text-item leading-relaxed">
+                <p className="text-lg text-slate-500 max-w-xl mx-auto lg:mx-0 hero-text-item leading-relaxed">
                     Where Imagination is Redefined! | © 2026 LeafCore Labs
                 </p>
             </div>
 
             {/* Right: Role Selection Cards */}
             <div className="w-full max-w-md space-y-6">
-                <div className="bg-black/20 md:bg-slate-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
+                <div className="bg-black/20 md:bg-white/80 backdrop-blur-xl border border-slate-200 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-32 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition duration-1000" />
 
-                    <h3 className="text-xl font-bold text-white mb-6 relative z-10 flex items-center gap-2">
-                        <User className="w-5 h-5 text-blue-400" /> Select User
+                    <h3 className="text-xl font-bold text-slate-900 mb-6 relative z-10 flex items-center gap-2">
+                        <User className="w-5 h-5 text-blue-600" /> Select User
                     </h3>
 
                     <div className="space-y-3 relative z-10">
@@ -268,17 +268,17 @@ function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonCla
                                 onClick={() => setSelectedRole(role.ui)}
                                 className={`role-card w-full p-4 rounded-xl border transition-all duration-300 flex items-center group/card opacity-0 ${selectedRole === role.ui
                                     ? `bg-blue-600/20 border-blue-500 shadow-[0_0_30px_rgba(37,99,235,0.3)] ring-1 ring-blue-400`
-                                    : `bg-slate-800/50 border-white/5 hover:border-white/20 hover:bg-slate-800`
+                                    : `bg-slate-50/50 border-slate-100 hover:border-white/20 hover:bg-slate-50`
                                     }`}
                             >
                                 <div className={`p-3 rounded-lg ${role.bg} ${role.color} mr-4 group-hover/card:scale-110 transition-transform duration-300`}>
                                     <role.icon className="w-6 h-6" />
                                 </div>
                                 <div className="text-left">
-                                    <div className={`font-bold text-lg ${selectedRole === role.ui ? 'text-white' : 'text-slate-200'}`}>{role.ui}</div>
+                                    <div className={`font-bold text-lg ${selectedRole === role.ui ? 'text-slate-900' : 'text-slate-800'}`}>{role.ui}</div>
                                     <div className="text-xs text-slate-500">{role.description}</div>
                                 </div>
-                                {selectedRole === role.ui && <CheckCircle className="ml-auto w-5 h-5 text-blue-400 animate-in zoom-in" />}
+                                {selectedRole === role.ui && <CheckCircle className="ml-auto w-5 h-5 text-blue-600 animate-in zoom-in" />}
                             </button>
                         ))}
                     </div>
@@ -286,9 +286,9 @@ function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonCla
                     <button
                         onClick={handleContinue}
                         disabled={!selectedRole}
-                        className={`mt-8 w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] ${selectedRole
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/25 border border-white/10'
-                            : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-transparent'
+                        className={`mt-8 w-full py-4 rounded-xl font-bold text-slate-900 shadow-xl shadow-slate-200/50 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] ${selectedRole
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/25 border border-slate-200'
+                            : 'bg-slate-50 text-slate-600 cursor-not-allowed border border-transparent'
                             }`}
                     >
                         Initialize Login
@@ -386,7 +386,7 @@ const ForgotPasswordModal = ({ onClose, showMessage, primaryButtonClass, buttonC
 
     const renderStep1 = () => (
         <div className="space-y-4">
-            <p className="text-slate-400 text-sm">
+            <p className="text-slate-500 text-sm">
                 {isFaculty ? "Enter your Employee ID to find your account." :
                     isParent ? "Enter your Ward's SRN to find account." :
                         "Enter your Email Address."}
@@ -412,28 +412,28 @@ const ForgotPasswordModal = ({ onClose, showMessage, primaryButtonClass, buttonC
 
     const renderStep1Point5 = () => (
         <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
-            <div className="bg-slate-800/50 p-4 rounded-xl border border-white/10 text-center">
-                <p className="text-slate-400 text-sm mb-2">We found an account linked to:</p>
-                <p className="text-lg font-mono text-blue-400 font-bold tracking-wide">{maskedEmail}</p>
+            <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 text-center">
+                <p className="text-slate-500 text-sm mb-2">We found an account linked to:</p>
+                <p className="text-lg font-mono text-blue-600 font-bold tracking-wide">{maskedEmail}</p>
             </div>
             <button disabled={loading} onClick={handleSendOtp} className={`w-full ${primaryButtonClass} ${loading ? 'opacity-50' : ''} py-3 text-sm rounded-xl`}>
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send OTP"}
             </button>
-            <button onClick={() => setStep(1)} className="w-full text-slate-400 hover:text-white text-sm">Back</button>
+            <button onClick={() => setStep(1)} className="w-full text-slate-500 hover:text-slate-900 text-sm">Back</button>
         </div>
     );
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300">
-                <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white"><XCircle className="w-6 h-6" /></button>
-                <h3 className="text-xl font-bold text-white mb-4">Reset Password</h3>
+            <div className="bg-slate-900 border border-slate-200 rounded-2xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300">
+                <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-slate-900"><XCircle className="w-6 h-6" /></button>
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Reset Password</h3>
 
                 {step === 1 && renderStep1()}
                 {step === 1.5 && renderStep1Point5()}
                 {step === 2 && (
                     <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
-                        <p className="text-slate-400 text-sm">Enter the code sent to <b className="text-blue-400">{maskedEmail}</b>.</p>
+                        <p className="text-slate-500 text-sm">Enter the code sent to <b className="text-blue-600">{maskedEmail}</b>.</p>
                         <Input placeholder="Enter 6-digit OTP" value={otp} onChange={e => setOtp(e.target.value)} maxLength={6} className="text-center tracking-widest font-mono text-lg" />
                         <Input icon={Lock} type="password" placeholder="New Password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
                         <Input icon={Lock} type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
@@ -588,15 +588,15 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
             <div ref={cardRef} className="relative w-full transition-all duration-500" style={{ transformStyle: "preserve-3d" }}>
 
                 {/* BACK FACE (Register) */}
-                <div className={`${authMode === 'register' ? 'relative' : 'absolute inset-0'} w-full min-h-[400px] bg-slate-900/40 md:bg-slate-900/80 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden`}
+                <div className={`${authMode === 'register' ? 'relative' : 'absolute inset-0'} w-full min-h-[400px] bg-slate-900/40 md:bg-slate-900/80 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-slate-200 overflow-hidden`}
                     style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden" }}>
 
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50" />
-                    <h3 className="text-3xl font-bold mb-6 text-white text-center tracking-tight">Join NoteOrbit</h3>
+                    <h3 className="text-3xl font-bold mb-6 text-slate-900 text-center tracking-tight">Join NoteOrbit</h3>
 
                     {/* Reuse Switcher for visual consistency, but functional inside back face */}
                     <div className="flex justify-center mb-6">
-                        <button onClick={() => setAuthMode('login')} className="text-slate-400 hover:text-white text-sm flex items-center gap-2">
+                        <button onClick={() => setAuthMode('login')} className="text-slate-500 hover:text-slate-900 text-sm flex items-center gap-2">
                             <ArrowLeft className="w-4 h-4" /> Back to Sign In
                         </button>
                     </div>
@@ -606,7 +606,7 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                             <>
                                 {regStep === 1 && (
                                     <div className="space-y-4">
-                                        <div className="text-center text-sm text-slate-400 mb-2">Step 1: Verify your email</div>
+                                        <div className="text-center text-sm text-slate-500 mb-2">Step 1: Verify your email</div>
                                         <Input type="email" placeholder="Email Address *" value={regEmail} onChange={e => setRegEmail(e.target.value)} disabled={isOtpSent} required />
                                         {!isOtpSent ? (
                                             <button disabled={isLoading || !regEmail.trim()} onClick={handleSendSignupOtp} className={`w-full ${primaryButtonClass} rounded-xl py-3 ${!regEmail.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}>{isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Send Verification Code"}</button>
@@ -625,22 +625,22 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                                         <div>
                                             <Input type="password" placeholder="Password *" value={regPassword} onChange={e => setRegPassword(e.target.value)} required />
                                             {regPassword && (
-                                                <div className="mt-2 p-3 bg-slate-800/50 rounded-lg border border-white/10 text-xs text-slate-300">
-                                                    <div className="font-semibold mb-2 text-slate-200">Password must contain:</div>
+                                                <div className="mt-2 p-3 bg-slate-50/50 rounded-lg border border-slate-200 text-xs text-slate-700">
+                                                    <div className="font-semibold mb-2 text-slate-800">Password must contain:</div>
                                                     <div className="space-y-1">
-                                                        <div className={`flex items-center ${regPassword.length >= 8 ? 'text-green-400' : 'text-slate-400'}`}>
+                                                        <div className={`flex items-center ${regPassword.length >= 8 ? 'text-green-400' : 'text-slate-500'}`}>
                                                             {regPassword.length >= 8 ? '✓' : '○'} At least 8 characters
                                                         </div>
-                                                        <div className={`flex items-center ${/[A-Z]/.test(regPassword) ? 'text-green-400' : 'text-slate-400'}`}>
+                                                        <div className={`flex items-center ${/[A-Z]/.test(regPassword) ? 'text-green-400' : 'text-slate-500'}`}>
                                                             {/[A-Z]/.test(regPassword) ? '✓' : '○'} One uppercase letter (A-Z)
                                                         </div>
-                                                        <div className={`flex items-center ${/[a-z]/.test(regPassword) ? 'text-green-400' : 'text-slate-400'}`}>
+                                                        <div className={`flex items-center ${/[a-z]/.test(regPassword) ? 'text-green-400' : 'text-slate-500'}`}>
                                                             {/[a-z]/.test(regPassword) ? '✓' : '○'} One lowercase letter (a-z)
                                                         </div>
-                                                        <div className={`flex items-center ${/[0-9]/.test(regPassword) ? 'text-green-400' : 'text-slate-400'}`}>
+                                                        <div className={`flex items-center ${/[0-9]/.test(regPassword) ? 'text-green-400' : 'text-slate-500'}`}>
                                                             {/[0-9]/.test(regPassword) ? '✓' : '○'} One number (0-9)
                                                         </div>
-                                                        <div className={`flex items-center ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(regPassword) ? 'text-green-400' : 'text-slate-400'}`}>
+                                                        <div className={`flex items-center ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(regPassword) ? 'text-green-400' : 'text-slate-500'}`}>
                                                             {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(regPassword) ? '✓' : '○'} One special character (!@#$%^&*...)
                                                         </div>
                                                     </div>
@@ -667,25 +667,25 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                                 )}
                             </>
                         ) : (
-                            <div className="text-center text-slate-400">Admin/Faculty registration is restricted. Contact IT.</div>
+                            <div className="text-center text-slate-500">Admin/Faculty registration is restricted. Contact IT.</div>
                         )}
                     </div>
                 </div>
 
                 {/* FRONT FACE (Login) */}
-                <div className={`${authMode === 'login' ? 'relative' : 'absolute inset-0'} w-full bg-black/20 md:bg-slate-900/60 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden`}
+                <div className={`${authMode === 'login' ? 'relative' : 'absolute inset-0'} w-full bg-black/20 md:bg-white/80 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-slate-200 overflow-hidden`}
                     style={{ backfaceVisibility: "hidden" }}>
 
                     {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} showMessage={showMessage} primaryButtonClass={primaryButtonClass} userRole={userRole} />}
 
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
-                    <h3 className="text-3xl font-bold mb-8 text-white text-center tracking-tight">{userRole} Portal</h3>
+                    <h3 className="text-3xl font-bold mb-8 text-slate-900 text-center tracking-tight">{userRole} Portal</h3>
 
                     {isStudent && (
                         <div className="flex justify-center mb-8">
-                            <div className="flex space-x-1 bg-slate-950/50 p-1.5 rounded-full shadow-inner border border-white/5">
-                                <button onClick={() => setAuthMode('login')} className={`px-8 py-2.5 rounded-full font-bold text-sm bg-blue-600 text-white shadow-lg shadow-blue-500/25`}>Sign In</button>
-                                <button onClick={() => setAuthMode('register')} className={`px-8 py-2.5 rounded-full font-bold text-sm text-slate-400 hover:text-white hover:bg-white/5`}>Sign Up</button>
+                            <div className="flex space-x-1 bg-slate-50/50 p-1.5 rounded-full shadow-inner border border-slate-100">
+                                <button onClick={() => setAuthMode('login')} className={`px-8 py-2.5 rounded-full font-bold text-sm bg-blue-600 text-slate-900 shadow-xl shadow-slate-200/50 shadow-blue-500/25`}>Sign In</button>
+                                <button onClick={() => setAuthMode('register')} className={`px-8 py-2.5 rounded-full font-bold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100`}>Sign Up</button>
                             </div>
                         </div>
                     )}
@@ -694,10 +694,10 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                         <Input icon={isParent ? User : Mail} placeholder={isParent ? "Ward's SRN" : "Email Address"} value={email} onChange={e => setEmail(e.target.value)} />
                         <div>
                             <Input icon={Lock} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
-                            <div className="text-right mt-2"><button onClick={() => setShowForgot(true)} className="text-xs text-blue-400 hover:text-blue-300">Forgot Password?</button></div>
+                            <div className="text-right mt-2"><button onClick={() => setShowForgot(true)} className="text-xs text-blue-600 hover:text-blue-300">Forgot Password?</button></div>
                         </div>
                         <div className="flex gap-4 pt-4">
-                            <button className={`${buttonClass} flex-1 bg-slate-800 text-slate-300`} onClick={() => setPage('user_type')}><ArrowLeft className="w-5 h-5 mr-1" /> Back</button>
+                            <button className={`${buttonClass} flex-1 bg-slate-50 text-slate-700`} onClick={() => setPage('user_type')}><ArrowLeft className="w-5 h-5 mr-1" /> Back</button>
                             <button className={`${buttonClass} flex-1 ${primaryButtonClass} bg-gradient-to-r from-blue-600 to-indigo-600`} onClick={() => onLogin(email, password)}>Sign In</button>
                         </div>
                     </div>
@@ -742,14 +742,14 @@ function StudentFeedback({ showMessage }) {
         <div className="space-y-6">
             <h4 className="text-2xl font-bold text-yellow-500 flex items-center"><MessageSquare className="w-6 h-6 mr-2" /> Faculty Feedback Report</h4>
 
-            {feedback.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-400">No personalized feedback has been sent by faculty yet.</div>}
+            {feedback.length === 0 && <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-500">No personalized feedback has been sent by faculty yet.</div>}
 
             <div className="space-y-4">
                 {feedback.map((f, index) => (
-                    <div key={index} className="bg-yellow-900/20 p-5 rounded-xl shadow-lg border-l-4 border-yellow-500 backdrop-blur-sm">
+                    <div key={index} className="bg-yellow-900/20 p-5 rounded-xl shadow-xl shadow-slate-200/50 border-l-4 border-yellow-500 backdrop-blur-sm">
                         <div className="font-bold text-lg text-yellow-100 mb-2">Subject: {f.subject}</div>
 
-                        <p className="text-slate-300 whitespace-pre-wrap border-l-2 border-yellow-500/30 pl-3 py-1 text-[0.95rem]">{f.text}</p>
+                        <p className="text-slate-700 whitespace-pre-wrap border-l-2 border-yellow-500/30 pl-3 py-1 text-[0.95rem]">{f.text}</p>
 
                         <div className="text-xs text-yellow-500/60 mt-3 pt-2 border-t border-yellow-500/20">
                             Sent by Faculty ID: {f.faculty_id} on {new Date(f.created_at).toLocaleDateString()}
@@ -838,7 +838,7 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
     return (
         <div className="space-y-8">
             <div className="bg-blue-900/20 p-6 rounded-xl border border-blue-500/20 shadow-inner backdrop-blur-sm">
-                <strong className="text-xl text-blue-400 block mb-1">Content Context</strong>
+                <strong className="text-xl text-blue-600 block mb-1">Content Context</strong>
                 <div className="text-sm text-blue-200">{user.degree} (Semester {user.semester} / Section {user.section})</div>
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center pt-4">
                     <label className="text-base text-blue-100 font-bold flex-shrink-0">Filter Subject:</label>
@@ -849,7 +849,7 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
                         <option value="" className="text-slate-900">Select Document Type</option>
                         {availableDocTypes.map(t => <option key={t} value={t} className="text-slate-900">{t}</option>)}
                     </Select>
-                    <button className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-white text-sm sm:w-48 py-2.5`} onClick={handleRefresh} disabled={isFetching || !selectedSubject}>
+                    <button className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-slate-900 text-sm sm:w-48 py-2.5`} onClick={handleRefresh} disabled={isFetching || !selectedSubject}>
                         {isFetching ? <Loader2 className="animate-spin w-5 h-5 mr-1" /> : <RefreshCw className="w-5 h-5 mr-1" />}
                         {isFetching ? 'Refreshing...' : 'Refresh Content'}
                     </button>
@@ -857,33 +857,33 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
             </div>
 
             <div>
-                <h4 className="text-xl font-bold mt-4 mb-4 text-blue-400 flex items-center"><Book className="w-5 h-5 mr-2" /> Notes for "{selectedSubject || '...'}"</h4>
+                <h4 className="text-xl font-bold mt-4 mb-4 text-blue-600 flex items-center"><Book className="w-5 h-5 mr-2" /> Notes for "{selectedSubject || '...'}"</h4>
                 {isFetching && <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-blue-500" /></div>}
                 {!isFetching && !selectedDocType && (
-                    <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-300 text-sm text-center">
+                    <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-700 text-sm text-center">
                         Please select a document type (Notes, Question Bank, or Reference Book) to view documents.
                     </div>
                 )}
                 {!isFetching && selectedDocType && notes.length === 0 && (
-                    <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">No notes uploaded for {selectedSubject} yet.</div>
+                    <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-500 text-sm">No notes uploaded for {selectedSubject} yet.</div>
                 )}
                 {!isFetching && selectedDocType && notes.length > 0 && filteredNotes.length === 0 && (
-                    <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">
-                        No documents found for <b className="text-slate-200">{selectedDocType}</b>.
+                    <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-500 text-sm">
+                        No documents found for <b className="text-slate-800">{selectedDocType}</b>.
                     </div>
                 )}
                 {!isFetching && selectedDocType && filteredNotes.length > 0 && (
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredNotes.map(n => (
-                            <div key={n.id} className="p-4 rounded-xl shadow-md border-l-4 border-blue-500 bg-slate-800 hover:bg-slate-700 transition duration-200">
-                                <div className="font-bold text-lg text-white truncate">{n.title} <span className="text-xs text-blue-400">({n.document_type})</span></div>
+                            <div key={n.id} className="p-4 rounded-xl shadow-md border-l-4 border-blue-500 bg-slate-50 hover:bg-slate-700 transition duration-200">
+                                <div className="font-bold text-lg text-slate-900 truncate">{n.title} <span className="text-xs text-blue-600">({n.document_type})</span></div>
                                 <div className="flex items-center gap-2 mt-1">
                                     {n.uploader_role === 'admin' ? (
                                         <span className="bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30">Uploaded by Admin</span>
                                     ) : n.uploader_role === 'professor' ? (
                                         <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30">Uploaded by Faculty</span>
                                     ) : null}
-                                    <div className="text-xs text-slate-400">{n.subject} | {new Date(n.timestamp).toLocaleDateString()}</div>
+                                    <div className="text-xs text-slate-500">{n.subject} | {new Date(n.timestamp).toLocaleDateString()}</div>
                                 </div>
                                 <div className="mt-3">
                                     {n.file_url && <a className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">Download</a>}
@@ -896,21 +896,21 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
 
             <div>
                 <h4 className="text-xl font-bold mt-8 mb-4 text-red-400 flex items-center"><Bell className="w-5 h-5 mr-2" /> Notices for "{selectedSubject || '...'}"</h4>
-                {!isFetching && notices.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">No recent notices for {selectedSubject} matching your context.</div>}
+                {!isFetching && notices.length === 0 && <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-500 text-sm">No recent notices for {selectedSubject} matching your context.</div>}
                 <div className="space-y-4">
                     {notices.map(n => (
                         <div key={n.id} className="p-4 bg-red-900/20 border-l-4 border-red-500 rounded-xl shadow-md backdrop-blur-sm">
                             <div className="font-bold text-xl text-red-400">{n.title}</div>
-                            <div className="text-xs text-slate-400 mt-1">
+                            <div className="text-xs text-slate-500 mt-1">
                                 Subject: {n.subject} | Target: {n.degree} Sem {n.semester} Sec {n.section}
                             </div>
-                            <p className="mt-2 text-slate-200 text-[0.95rem]">{n.message}</p>
+                            <p className="mt-2 text-slate-800 text-[0.95rem]">{n.message}</p>
                             <div className="flex justify-between items-center mt-3 pt-2 border-t border-red-500/20">
                                 <div className="text-xs text-slate-500">
                                     Posted by: {n.professor_name} on {new Date(n.created_at).toLocaleDateString()}
                                     {n.deadline && <span className="font-bold text-red-400 block mt-1">Deadline: {new Date(n.deadline).toLocaleDateString()}</span>}
                                 </div>
-                                {n.attachment_url && <a href={n.attachment_url} className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center bg-red-600 hover:bg-red-700 text-white`} target="_blank" rel="noopener noreferrer">Attachment</a>}
+                                {n.attachment_url && <a href={n.attachment_url} className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center bg-red-600 hover:bg-red-700 text-slate-900`} target="_blank" rel="noopener noreferrer">Attachment</a>}
                             </div>
                         </div>
                     ))}
@@ -975,19 +975,19 @@ function StudentFees({ user, showMessage, primaryButtonClass, buttonClass }) {
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Fee Payment History</h4>
-            {fees.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500">No fee notifications found for your account.</div>}
+            <h4 className="text-2xl font-bold text-blue-600 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Fee Payment History</h4>
+            {fees.length === 0 && <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-500">No fee notifications found for your account.</div>}
 
             <div className="space-y-4">
                 {fees.map(f => (
-                    <div key={f.target_id} className={`p-4 rounded-xl shadow-lg transition duration-200 ${f.status === 'paid'
+                    <div key={f.target_id} className={`p-4 rounded-xl shadow-xl shadow-slate-200/50 transition duration-200 ${f.status === 'paid'
                         ? 'bg-green-900/20 border-l-4 border-green-500'
                         : 'bg-red-900/20 border-l-4 border-red-500'
                         }`}>
                         <div className="flex justify-between items-center">
                             <div className="flex-1">
-                                <div className="font-bold text-lg text-white">{f.title} <span className="text-xs font-normal text-slate-400">({f.category})</span></div>
-                                <div className="text-sm text-slate-300 mt-1">Amount: <strong className="text-white">₹{f.amount}</strong> | Due: {f.due_date ? new Date(f.due_date).toLocaleDateString() : 'N/A'}</div>
+                                <div className="font-bold text-lg text-slate-900">{f.title} <span className="text-xs font-normal text-slate-500">({f.category})</span></div>
+                                <div className="text-sm text-slate-700 mt-1">Amount: <strong className="text-slate-900">₹{f.amount}</strong> | Due: {f.due_date ? new Date(f.due_date).toLocaleDateString() : 'N/A'}</div>
                             </div>
                             <div className="flex-shrink-0 ml-4">
                                 {f.status === 'pending' && (
@@ -1000,7 +1000,7 @@ function StudentFees({ user, showMessage, primaryButtonClass, buttonClass }) {
                                 )}
                                 {f.status === 'paid' && (
                                     <button
-                                        className={`${buttonClass} w-32 py-2.5 bg-green-600 hover:bg-green-700 text-white`}
+                                        className={`${buttonClass} w-32 py-2.5 bg-green-600 hover:bg-green-700 text-slate-900`}
                                         onClick={() => handleReceipt(f.payment_id)}
                                     >
                                         Receipt
@@ -1008,7 +1008,7 @@ function StudentFees({ user, showMessage, primaryButtonClass, buttonClass }) {
                                 )}
                             </div>
                         </div>
-                        <div className="text-xs text-slate-500 mt-2 border-t border-white/10 pt-1">Status: **{f.status.toUpperCase()}** {f.paid_at && `on ${new Date(f.paid_at).toLocaleDateString()}`}</div>
+                        <div className="text-xs text-slate-500 mt-2 border-t border-slate-200 pt-1">Status: **{f.status.toUpperCase()}** {f.paid_at && `on ${new Date(f.paid_at).toLocaleDateString()}`}</div>
                     </div>
                 ))}
             </div>
@@ -1056,29 +1056,29 @@ function StudentMarks({ showMessage }) {
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><Award className="w-6 h-6 mr-2" /> Academic Marks Report</h4>
-            {subjectNames.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500">No marks have been recorded for your subjects yet.</div>}
+            <h4 className="text-2xl font-bold text-blue-600 flex items-center"><Award className="w-6 h-6 mr-2" /> Academic Marks Report</h4>
+            {subjectNames.length === 0 && <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-500">No marks have been recorded for your subjects yet.</div>}
 
             <div className="space-y-6">
                 {subjectNames.map(subject => {
                     const summary = calculateSubjectSummary(marks[subject]);
                     return (
-                        <div key={subject} className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-xl shadow-lg border-l-4 border-yellow-500">
-                            <div className="flex justify-between items-center pb-2 border-b border-white/10">
-                                <h5 className="text-xl font-bold text-white">{subject}</h5>
+                        <div key={subject} className="bg-white/80 backdrop-blur-xl p-5 rounded-xl shadow-xl shadow-slate-200/50 border-l-4 border-yellow-500">
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                                <h5 className="text-xl font-bold text-slate-900">{subject}</h5>
                                 <div className={`text-lg font-semibold px-3 py-1 rounded-full ${summary.percent >= 75 ? 'bg-green-900/40 text-green-300' : 'bg-yellow-900/40 text-yellow-300'}`}>
                                     {summary.percent}% Overall
                                 </div>
                             </div>
                             <div className="pt-3 space-y-2">
                                 {marks[subject].map((m, index) => (
-                                    <div key={index} className="flex justify-between text-sm text-slate-300 border-b border-dashed border-white/10 last:border-b-0 py-1">
+                                    <div key={index} className="flex justify-between text-sm text-slate-700 border-b border-dashed border-slate-200 last:border-b-0 py-1">
                                         <span className="font-medium capitalize">{m.exam_type}:</span>
-                                        <span className="font-semibold text-white">{m.marks_obtained} / {m.max_marks}</span>
+                                        <span className="font-semibold text-slate-900">{m.marks_obtained} / {m.max_marks}</span>
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-4 pt-3 border-t border-white/10 text-sm font-semibold text-white flex justify-between">
+                            <div className="mt-4 pt-3 border-t border-slate-200 text-sm font-semibold text-slate-900 flex justify-between">
                                 <span>Total:</span>
                                 <span>{summary.obtained} / {summary.max}</span>
                             </div>
@@ -1097,17 +1097,17 @@ const ComplaintAuditTimeline = ({ auditTrail }) => {
 
     return (
         <div className="mt-4 p-4 bg-slate-900 border border-red-500/20 rounded-lg">
-            <h3 className="text-md font-semibold text-slate-300 mb-3">
+            <h3 className="text-md font-semibold text-slate-700 mb-3">
                 Tracking History
             </h3>
             <div className="relative border-l border-red-500/50 pl-4 space-y-3">
                 {sortedHistory.map((entry, index) => (
                     <div key={index} className="relative">
                         <div className="absolute w-3 h-3 bg-red-500 rounded-full mt-1 -left-[18px] border-4 border-slate-900"></div>
-                        <p className="text-sm font-medium text-slate-200">
+                        <p className="text-sm font-medium text-slate-800">
                             Status: <span className="font-bold text-red-400">{entry.status}</span>
                         </p>
-                        {entry.note && <p className="text-xs text-slate-400 italic">Note: {entry.note}</p>}
+                        {entry.note && <p className="text-xs text-slate-500 italic">Note: {entry.note}</p>}
                         <p className="text-xs text-slate-500 italic mt-0.5">
                             {new Date(entry.timestamp).toLocaleString()} by {entry.by}
                         </p>
@@ -1197,29 +1197,29 @@ function HostelComplaints({ showMessage, primaryButtonClass, buttonClass }) {
                 <XCircle className="w-10 h-10 mx-auto text-red-500 mb-4" />
                 <h4 className="text-2xl font-bold text-red-400">Complaint Submission Blocked</h4>
                 <p className="text-lg text-red-300 mt-2">**Not allowed for complaining as no hostel is allotted for you.**</p>
-                <p className="text-sm text-slate-400 mt-4">Please contact the administration if you believe this is an error.</p>
+                <p className="text-sm text-slate-500 mt-4">Please contact the administration if you believe this is an error.</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-red-500/20 space-y-4">
+            <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-red-500/20 space-y-4">
                 <h4 className="text-2xl font-bold mb-4 text-red-400 flex items-center"><Home className="w-6 h-6 mr-2" /> Raise Hostel Complaint</h4>
                 <Input placeholder="Complaint Title (e.g., Water leakage in Room 101)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
-                <textarea className="w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-slate-500 border border-white/10 rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500/50 outline-none transition duration-200 h-32" placeholder="Detailed description of the issue..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} />
-                <label className="block text-sm text-slate-300 font-medium pt-2">Attach Image/File (Optional):</label>
-                <input id="complaintAttachment" type="file" onChange={e => setAttachment(e.target.files[0])} className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 transition duration-200" disabled={isLoading} />
-                <button className={`${buttonClass} ${primaryButtonClass} bg-red-600 hover:bg-red-700 text-white w-full`} onClick={handleSubmit} disabled={isLoading || !title || !description}>
+                <textarea className="w-full bg-slate-50/50 backdrop-blur-xl text-slate-900 placeholder-slate-500 border border-slate-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500/50 outline-none transition duration-200 h-32" placeholder="Detailed description of the issue..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} />
+                <label className="block text-sm text-slate-700 font-medium pt-2">Attach Image/File (Optional):</label>
+                <input id="complaintAttachment" type="file" onChange={e => setAttachment(e.target.files[0])} className="w-full text-slate-700 bg-slate-50/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-600 file:text-slate-900 hover:file:bg-red-700 transition duration-200" disabled={isLoading} />
+                <button className={`${buttonClass} ${primaryButtonClass} bg-red-600 hover:bg-red-700 text-slate-900 w-full`} onClick={handleSubmit} disabled={isLoading || !title || !description}>
                     {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Mail className="w-5 h-5 mr-2" />}
                     {isLoading ? 'Submitting...' : 'Submit Complaint'}
                 </button>
             </div>
 
-            <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10">
+            <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200">
                 <div className="flex justify-between items-center mb-4">
                     <h4 className="text-xl font-bold text-red-400 flex items-center"><ClipboardList className="w-5 h-5 mr-2" /> Your Complaint History ({userComplaints.length})</h4>
-                    <button onClick={fetchUserComplaints} className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition" disabled={isFetching}><RefreshCw className="w-5 h-5 text-slate-300" /></button>
+                    <button onClick={fetchUserComplaints} className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition" disabled={isFetching}><RefreshCw className="w-5 h-5 text-slate-700" /></button>
                 </div>
 
                 {isFetching ? (
@@ -1232,15 +1232,15 @@ function HostelComplaints({ showMessage, primaryButtonClass, buttonClass }) {
                             <div key={c.id} className={`p-4 rounded-xl shadow-md border-l-4 ${c.status === 'Resolved' || c.status === 'Closed' ? 'border-green-500 bg-green-900/20' : c.status.includes('Progress') || c.status.includes('Review') ? 'border-orange-500 bg-orange-900/20' : 'border-red-500 bg-red-900/20'}`}>
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <div className="font-bold text-lg text-white">{c.title}</div>
-                                        <div className="text-sm text-slate-400 mt-1">Room: {c.room_number} in {c.hostel_name}</div>
+                                        <div className="font-bold text-lg text-slate-900">{c.title}</div>
+                                        <div className="text-sm text-slate-500 mt-1">Room: {c.room_number} in {c.hostel_name}</div>
                                     </div>
                                     <div className={`text-sm px-3 py-1 rounded-full font-semibold ${c.status === 'Resolved' || c.status === 'Closed' ? 'bg-green-900/40 text-green-300' : 'bg-red-900/40 text-red-300'}`}>
                                         {c.status}
                                     </div>
                                 </div>
                                 <ComplaintAuditTimeline auditTrail={c.audit_trail || []} />
-                                {c.file_url && <a href={c.file_url} className="mt-3 inline-flex items-center text-xs text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">View Attachment</a>}
+                                {c.file_url && <a href={c.file_url} className="mt-3 inline-flex items-center text-xs text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">View Attachment</a>}
                             </div>
                         ))}
                     </div>
@@ -1287,7 +1287,7 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><Book className="w-6 h-6 mr-2" /> Unified Library Search</h4>
+            <h4 className="text-2xl font-bold text-blue-600 flex items-center"><Book className="w-6 h-6 mr-2" /> Unified Library Search</h4>
 
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                 <Select className="sm:w-40 flex-shrink-0" value={searchSource} onChange={e => setSearchSource(e.target.value)} disabled={isLoading}>
@@ -1315,7 +1315,7 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
             {isLoading && <div className="text-center p-4"><Loader2 className="animate-spin w-6 h-6 mx-auto text-blue-500" /></div>}
 
             {!isLoading && searchTerm.trim() && allResults.length === 0 && (
-                <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500">
+                <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-500">
                     No results found for "{searchTerm}" in the {searchSource} library.
                 </div>
             )}
@@ -1324,18 +1324,18 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
                 <div className="space-y-4">
                     <div className="text-sm text-slate-500 font-semibold">{allResults.length} result(s) found.</div>
                     {allResults.map((book, index) => (
-                        <div key={book.id || index} className={`p-4 rounded-xl shadow-md ${book.source === 'Internal' ? 'bg-green-900/20 border-l-4 border-green-500' : 'bg-slate-900/60 border-l-4 border-slate-500'}`}>
+                        <div key={book.id || index} className={`p-4 rounded-xl shadow-md ${book.source === 'Internal' ? 'bg-green-900/20 border-l-4 border-green-500' : 'bg-white/80 border-l-4 border-slate-500'}`}>
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
-                                    <div className="font-bold text-lg text-white">{book.title}</div>
-                                    <div className="text-sm text-slate-400 mt-1">
+                                    <div className="font-bold text-lg text-slate-900">{book.title}</div>
+                                    <div className="text-sm text-slate-500 mt-1">
                                         Author: **{book.author}** | ISBN: {book.isbn || 'N/A'}
                                     </div>
                                     <div className="text-xs mt-1 text-slate-500">Source: {book.source}</div>
                                 </div>
                                 <div className="ml-4 flex-shrink-0">
                                     {book.source === 'Internal' && book.file_url ? (
-                                        <a href={book.file_url} target="_blank" rel="noopener noreferrer" className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white`}>
+                                        <a href={book.file_url} target="_blank" rel="noopener noreferrer" className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center bg-blue-600 hover:bg-blue-700 text-slate-900`}>
                                             <Download className="w-4 h-4 mr-1" /> Download
                                         </a>
                                     ) : book.cover_url ? (
@@ -1343,7 +1343,7 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
                                             <img src={book.cover_url} onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/50x70/E0E0E0/505050?text=No+Cover'; }} className="w-12 h-16 object-cover rounded shadow-md" alt="Cover" />
                                         </a>
                                     ) : (
-                                        <span className="text-xs text-slate-500 bg-slate-800 p-2 rounded-full">No Download</span>
+                                        <span className="text-xs text-slate-500 bg-slate-50 p-2 rounded-full">No Download</span>
                                     )}
                                 </div>
                             </div>
@@ -1494,20 +1494,20 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
         <div className="flex h-[600px] gap-4 relative isolate overflow-hidden">
             {/* Sidebar (History) - Mobile Drawer / Desktop Static */}
             <div className={`
-                absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
-                md:static md:w-1/4 md:bg-slate-900/60 md:shadow-none md:translate-x-0 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col
+                absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-slate-200 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
+                md:static md:w-1/4 md:bg-white/80 md:shadow-none md:translate-x-0 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-0 md:p-0'}
             `}>
-                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-slate-900 to-slate-800/50">
-                    <h5 className="font-bold text-slate-200 flex items-center gap-2">
-                        <History className="w-4 h-4 text-blue-400" /> History
+                <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-900 to-slate-800/50">
+                    <h5 className="font-bold text-slate-800 flex items-center gap-2">
+                        <History className="w-4 h-4 text-blue-600" /> History
                     </h5>
                     <div className="flex items-center gap-2">
                         {/* Mobile Close Button */}
-                        <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                        <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-500 hover:text-slate-900 transition-colors">
                             <ArrowLeft className="w-5 h-5" />
                         </button>
-                        <button onClick={startNewChat} className="p-1.5 px-3 bg-blue-600 rounded-lg text-xs font-semibold text-white hover:bg-blue-500 flex items-center shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+                        <button onClick={startNewChat} className="p-1.5 px-3 bg-blue-600 rounded-lg text-xs font-semibold text-slate-900 hover:bg-blue-500 flex items-center shadow-xl shadow-slate-200/50 shadow-blue-500/20 active:scale-95 transition-all">
                             <Plus className="w-3.5 h-3.5 mr-1.5" /> New
                         </button>
                     </div>
@@ -1519,7 +1519,7 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
                             onClick={() => { loadSession(s.id); setSidebarOpen(false); }}
                             className={`p-3 rounded-xl text-sm cursor-pointer flex justify-between items-center group transition-all border border-transparent ${currentSessionId === s.id
                                 ? "bg-blue-600/20 text-blue-100 border-blue-500/30 shadow-sm"
-                                : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
+                                : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"}`}
                         >
                             <div className="truncate pr-2 flex-grow font-medium">{s.title}</div>
                             <button
@@ -1549,16 +1549,16 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
             )}
 
             {/* Main Chat Area */}
-            <div className="flex-1 w-full flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 md:border-blue-500/20 rounded-xl overflow-hidden relative shadow-2xl">
+            <div className="flex-1 w-full flex flex-col bg-white/80 backdrop-blur-xl border border-slate-200 md:border-blue-500/20 rounded-xl overflow-hidden relative shadow-2xl">
                 {/* Header */}
-                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-800/40 backdrop-blur-md z-10">
-                    <div className="flex items-center text-blue-400 font-bold text-lg">
-                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-white/5 transition-colors">
+                <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/40 backdrop-blur-md z-10">
+                    <div className="flex items-center text-blue-600 font-bold text-lg">
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-slate-100 transition-colors">
                             <Menu className="w-6 h-6" />
                         </button>
                         <div className="flex flex-col leading-none">
                             <span className="flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-blue-400" />
+                                <Sparkles className="w-5 h-5 text-blue-600" />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Orbit Bot</span>
                             </span>
                             <span className="text-[10px] font-normal text-slate-500 mt-1 hidden md:block">Powered by Llama 3.3</span>
@@ -1570,11 +1570,11 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
                 </div>
 
                 {/* Messages */}
-                <div id="chat-history" className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30 scroll-smooth">
+                <div id="chat-history" className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30 scroll-smooth">
                     {history.length === 0 && !isLoading && (
                         <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60">
                             <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
-                                <Bot className="w-8 h-8 text-blue-400" />
+                                <Bot className="w-8 h-8 text-blue-600" />
                             </div>
                             <p className="text-sm font-medium">How can I help you today?</p>
                         </div>
@@ -1582,13 +1582,13 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
                     {history.map((msg, index) => (
                         <div key={index} className={`flex ${msg.role === "ai" ? "justify-start" : "justify-end"}`}>
                             <div className={`max-w-[85%] md:max-w-[75%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-md ${msg.role === "ai"
-                                ? "bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none"
-                                : "bg-gradient-to-br from-blue-600 to-blue-700 text-white border border-blue-500/20 rounded-tr-none"
+                                ? "bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none"
+                                : "bg-gradient-to-br from-blue-600 to-blue-700 text-slate-900 border border-blue-500/20 rounded-tr-none"
                                 }`}>
                                 <div className="markdown-prose">
                                     {msg.text}
                                 </div>
-                                <div className={`text-[10px] mt-1 opacity-50 ${msg.role === "ai" ? "text-slate-400" : "text-blue-100 text-right"}`}>
+                                <div className={`text-[10px] mt-1 opacity-50 ${msg.role === "ai" ? "text-slate-500" : "text-blue-100 text-right"}`}>
                                     {msg.role === "ai" ? "Orbit AI" : "You"}
                                 </div>
                             </div>
@@ -1596,7 +1596,7 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
                     ))}
                     {isLoading && (
                         <div className="flex justify-start">
-                            <div className="bg-slate-800/80 p-3 rounded-2xl rounded-tl-none text-sm text-blue-300 flex items-center border border-white/5 shadow-sm">
+                            <div className="bg-slate-50/80 p-3 rounded-2xl rounded-tl-none text-sm text-blue-300 flex items-center border border-slate-100 shadow-sm">
                                 <Loader2 className="animate-spin w-4 h-4 mr-2.5" />
                                 <span className="font-medium animate-pulse">Thinking...</span>
                             </div>
@@ -1605,28 +1605,28 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
                 </div>
 
                 {/* Input Area - Pinned Bottom */}
-                <div className="p-3 md:p-4 bg-slate-900 border-t border-white/10 z-20">
+                <div className="p-3 md:p-4 bg-slate-900 border-t border-slate-200 z-20">
                     <div className="flex flex-col space-y-2 max-w-4xl mx-auto">
                         {selectedFile && (
                             <div className="flex items-center justify-between bg-blue-900/20 border border-blue-500/30 px-3 py-2 rounded-lg animate-in slide-in-from-bottom-2">
                                 <div className="flex items-center gap-2 overflow-hidden">
-                                    <div className="bg-blue-600/20 p-1.5 rounded text-blue-400">
+                                    <div className="bg-blue-600/20 p-1.5 rounded text-blue-600">
                                         <Paperclip className="w-3.5 h-3.5" />
                                     </div>
                                     <span className="text-xs font-medium text-blue-200 truncate">{selectedFile.name}</span>
                                 </div>
                                 <button
                                     onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                                    className="text-slate-400 hover:text-red-400 p-1 rounded-full hover:bg-white/5"
+                                    className="text-slate-500 hover:text-red-400 p-1 rounded-full hover:bg-slate-100"
                                 >
                                     <XCircle className="w-4 h-4" />
                                 </button>
                             </div>
                         )}
 
-                        <div className="flex items-end gap-2 bg-slate-800/50 p-1.5 rounded-2xl border border-white/10 focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500/50 transition-all shadow-sm">
+                        <div className="flex items-end gap-2 bg-slate-50/50 p-1.5 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500/50 transition-all shadow-sm">
                             <button
-                                className="p-3 rounded-xl text-slate-400 hover:text-blue-400 hover:bg-slate-700/50 transition-colors"
+                                className="p-3 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-700/50 transition-colors"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isLoading}
                             >
@@ -1642,7 +1642,7 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
 
                             <div className="relative flex-grow">
                                 <Input
-                                    className="w-full py-3 px-2 bg-transparent border-none focus:ring-0 text-slate-200 placeholder:text-slate-500 text-base"
+                                    className="w-full py-3 px-2 bg-transparent border-none focus:ring-0 text-slate-800 placeholder:text-slate-500 text-base"
                                     placeholder={selectedFile ? "Add a message..." : "Ask something..."}
                                     value={question}
                                     onChange={e => setQuestion(e.target.value)}
@@ -1655,7 +1655,7 @@ function AIChat({ showMessage, primaryButtonClass, buttonClass }) {
                             <button
                                 className={`p-3 rounded-xl transition-all duration-200 ${!question.trim() && !selectedFile
                                     ? "bg-slate-700/50 text-slate-500 cursor-not-allowed"
-                                    : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 active:scale-95"
+                                    : "bg-blue-600 hover:bg-blue-500 text-slate-900 shadow-xl shadow-slate-200/50 shadow-blue-600/20 active:scale-95"
                                     }`}
                                 onClick={askQuestion}
                                 disabled={isLoading || (!question.trim() && !selectedFile)}
@@ -1784,9 +1784,9 @@ function ProfessorMarksUpload({ showMessage, primaryButtonClass, buttonClass, ca
     };
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-green-500/20 space-y-4">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-green-500/20 space-y-4">
             <h4 className="text-2xl font-bold text-green-400 flex items-center"><Upload className="w-6 h-6 mr-2" /> Upload Single Mark Entry</h4>
-            <p className="text-sm text-slate-400">Enter marks directly per student.</p>
+            <p className="text-sm text-slate-500">Enter marks directly per student.</p>
 
             <div className="grid grid-cols-3 gap-3">
                 <Select value={selDegree} onChange={e => setSelDegree(e.target.value)} disabled={isLoading}>
@@ -1921,9 +1921,9 @@ function ProfessorFeedback({ showMessage, primaryButtonClass, buttonClass, catal
     };
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20 space-y-4">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-yellow-500/20 space-y-4">
             <h4 className="text-2xl font-bold text-yellow-400 flex items-center"><MessageSquare className="w-6 h-6 mr-2" /> Provide Student Feedback</h4>
-            <p className="text-sm text-slate-400">Send personalized academic comments to a specific student.</p>
+            <p className="text-sm text-slate-500">Send personalized academic comments to a specific student.</p>
 
             <div className="grid grid-cols-3 gap-3">
                 <Select value={selDegree} onChange={e => setSelDegree(e.target.value)} disabled={isLoading}>
@@ -1945,7 +1945,7 @@ function ProfessorFeedback({ showMessage, primaryButtonClass, buttonClass, catal
             </Select>
 
             <textarea
-                className="w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-slate-500 border border-white/10 rounded-xl py-3 px-4 focus:ring-2 focus:ring-yellow-500/50 outline-none transition duration-200 h-32"
+                className="w-full bg-slate-50/50 backdrop-blur-xl text-slate-900 placeholder-slate-500 border border-slate-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-yellow-500/50 outline-none transition duration-200 h-32"
                 placeholder="Detailed feedback message..."
                 value={text}
                 onChange={e => setText(e.target.value)}
@@ -1953,7 +1953,7 @@ function ProfessorFeedback({ showMessage, primaryButtonClass, buttonClass, catal
             />
 
             <button
-                className={`${buttonClass} ${primaryButtonClass} w-full bg-yellow-600 hover:bg-yellow-700 text-white`}
+                className={`${buttonClass} ${primaryButtonClass} w-full bg-yellow-600 hover:bg-yellow-700 text-slate-900`}
                 onClick={handleSubmit}
                 disabled={isLoading || !srn || !subject || !text}
             >
@@ -2040,19 +2040,19 @@ function ProfessorMessages({ showMessage }) {
         }
     };
 
-    if (isLoading && conversations.length === 0) return <div className="p-8 text-center text-slate-400">Loading chats...</div>;
+    if (isLoading && conversations.length === 0) return <div className="p-8 text-center text-slate-500">Loading chats...</div>;
 
     return (
         <div className="flex h-[600px] gap-4 relative isolate overflow-hidden">
             {/* Sidebar: Conversation List - Mobile Drawer / Desktop Static */}
             <div className={`
-                absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
-                md:static md:w-1/3 md:bg-slate-900/60 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col md:shadow-none md:translate-x-0
+                absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-slate-200 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
+                md:static md:w-1/3 md:bg-white/80 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col md:shadow-none md:translate-x-0
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-0 md:p-0'}
             `}>
-                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                    <h5 className="font-bold text-lg text-white">Messages</h5>
-                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white/5">
+                    <h5 className="font-bold text-lg text-slate-900">Messages</h5>
+                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-500 hover:text-slate-900 transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                 </div>
@@ -2064,12 +2064,12 @@ function ProfessorMessages({ showMessage }) {
                             <div
                                 key={c.student_id}
                                 onClick={() => selectStudent(c)}
-                                className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${selectedStudent?.student_id === c.student_id ? 'bg-blue-900/20 border-l-4 border-l-blue-500 chain-active' : ''}`}
+                                className={`p-4 border-b border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors ${selectedStudent?.student_id === c.student_id ? 'bg-blue-900/20 border-l-4 border-l-blue-500 chain-active' : ''}`}
                             >
                                 <div className="flex justify-between items-start mb-1">
-                                    <div className="font-semibold text-slate-200">{c.student_name}</div>
+                                    <div className="font-semibold text-slate-800">{c.student_name}</div>
                                     {c.unread_count > 0 && (
-                                        <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full">{c.unread_count} new</span>
+                                        <span className="bg-blue-500 text-slate-900 text-[10px] px-2 py-0.5 rounded-full">{c.unread_count} new</span>
                                     )}
                                 </div>
                                 <div className="text-xs text-slate-500 truncate">{c.last_message}</div>
@@ -2089,33 +2089,33 @@ function ProfessorMessages({ showMessage }) {
             )}
 
             {/* Main Chat Area */}
-            <div className={`flex-1 flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden relative transition-all duration-300 ${sidebarOpen ? 'md:w-2/3' : 'w-full'}`}>
+            <div className={`flex-1 flex flex-col bg-white/80 backdrop-blur-xl border border-slate-200 rounded-xl overflow-hidden relative transition-all duration-300 ${sidebarOpen ? 'md:w-2/3' : 'w-full'}`}>
                 {selectedStudent ? (
                     <>
                         {/* Header */}
-                        <div className="p-4 border-b border-white/10 bg-slate-800/50 flex items-center shadow-sm z-10">
-                            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-white/5 transition-colors text-white">
+                        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex items-center shadow-sm z-10">
+                            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-slate-100 transition-colors text-slate-900">
                                 <Menu className="w-6 h-6" />
                             </button>
                             <div>
-                                <h4 className="font-bold text-white">{selectedStudent.student_name}</h4>
-                                <p className="text-xs text-slate-400">SRN: {selectedStudent.student_srn}</p>
+                                <h4 className="font-bold text-slate-900">{selectedStudent.student_name}</h4>
+                                <p className="text-xs text-slate-500">SRN: {selectedStudent.student_srn}</p>
                             </div>
                         </div>
 
                         {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
                             {activeThread.map((msg, idx) => {
                                 const isMe = msg.sender === 'faculty';
                                 return (
                                     <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[85%] md:max-w-[70%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
-                                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-none border border-blue-500/20'
-                                            : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'
+                                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-slate-900 rounded-br-none border border-blue-500/20'
+                                            : 'bg-slate-50 text-slate-800 rounded-bl-none border border-slate-100'
                                             }`}>
-                                            {!isMe && <div className="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-wider">Parent</div>}
+                                            {!isMe && <div className="text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-wider">Parent</div>}
                                             {msg.body}
-                                            <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
+                                            <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-500'}`}>
                                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
@@ -2126,10 +2126,10 @@ function ProfessorMessages({ showMessage }) {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-3 md:p-4 bg-slate-900 border-t border-white/10 z-20">
+                        <div className="p-3 md:p-4 bg-slate-900 border-t border-slate-200 z-20">
                             <div className="flex gap-2 max-w-4xl mx-auto">
                                 <textarea
-                                    className="flex-1 bg-slate-900 text-white rounded-xl border border-white/10 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
+                                    className="flex-1 bg-slate-900 text-slate-900 rounded-xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
                                     placeholder="Type your reply..."
                                     value={replyText}
                                     onChange={e => setReplyText(e.target.value)}
@@ -2138,7 +2138,7 @@ function ProfessorMessages({ showMessage }) {
                                 <button
                                     onClick={handleSendReply}
                                     disabled={isSending || !replyText.trim()}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
+                                    className="bg-blue-600 hover:bg-blue-700 text-slate-900 p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
                                 >
                                     {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
                                 </button>
@@ -2151,7 +2151,7 @@ function ProfessorMessages({ showMessage }) {
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-600">
                         <div className="md:hidden absolute top-4 left-4">
-                            <button onClick={() => setSidebarOpen(true)} className="p-2 bg-slate-800 rounded-lg text-white">
+                            <button onClick={() => setSidebarOpen(true)} className="p-2 bg-slate-50 rounded-lg text-slate-900">
                                 <Menu className="w-6 h-6" />
                             </button>
                         </div>
@@ -2343,7 +2343,7 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
         switch (view) {
             case 'notes':
                 return (
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-green-500/20 space-y-3">
+                    <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-green-500/20 space-y-3">
                         <h4 className="text-2xl font-bold mb-4 text-green-400 flex items-center"><Book className="w-6 h-6 mr-2" /> Upload Study Material</h4>
                         <Input placeholder="Title (e.g., Module 1 PPT)" value={noteTitle} onChange={e => setNoteTitle(e.target.value)} disabled={isUploadLoading} />
 
@@ -2370,17 +2370,17 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                             <option value="Question Bank" className="text-slate-900">Question Bank</option>
                             <option value="Reference Book" className="text-slate-900">Reference Book</option>
                         </Select>
-                        <label className="block text-sm text-slate-300 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
-                        <input id="noteFile" type="file" onChange={e => setNoteFile(e.target.files[0])} className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition duration-200" disabled={isUploadLoading} />
+                        <label className="block text-sm text-slate-700 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
+                        <input id="noteFile" type="file" onChange={e => setNoteFile(e.target.files[0])} className="w-full text-slate-700 bg-slate-50/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-slate-900 hover:file:bg-green-700 transition duration-200" disabled={isUploadLoading} />
                         <button className={`${buttonClass} ${successButtonClass} w-full`} onClick={uploadNote} disabled={isUploadLoading || !noteTitle || !noteFile || !noteSubject}> {isUploadLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Upload className="w-5 h-5 mr-2" />} {isUploadLoading ? 'Uploading...' : 'Upload Note'} </button>
                     </div>
                 );
             case 'notices':
                 return (
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-red-500/20 space-y-3">
+                    <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-red-500/20 space-y-3">
                         <h4 className="text-2xl font-bold mb-4 text-red-500 flex items-center"><Bell className="w-6 h-6 mr-2" /> Create Notice</h4>
                         <Input placeholder="Title (e.g., Assignment 1 Due)" value={nTitle} onChange={e => setNTitle(e.target.value)} disabled={isNoticeLoading} />
-                        <textarea className="w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-slate-500 border border-white/10 rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500/50 outline-none transition duration-200 h-24" placeholder="Message details..." value={nMsg} onChange={e => setNMsg(e.target.value)} disabled={isNoticeLoading} />
+                        <textarea className="w-full bg-slate-50/50 backdrop-blur-xl text-slate-900 placeholder-slate-500 border border-slate-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500/50 outline-none transition duration-200 h-24" placeholder="Message details..." value={nMsg} onChange={e => setNMsg(e.target.value)} disabled={isNoticeLoading} />
 
                         {/* SEPARATE DROPDOWNS FOR NOTICES */}
                         <div className="grid grid-cols-3 gap-3">
@@ -2401,8 +2401,8 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                             {(availableSubjects || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                         </Select>
                         <div className="flex gap-2">
-                            <input type="date" value={nDeadline} onChange={e => setNDeadline(e.target.value)} className="bg-slate-800/50 text-white border border-white/10 rounded-lg px-4" disabled={isNoticeLoading} />
-                            <input type="file" onChange={e => setAttachment(e.target.files[0])} className="text-xs text-slate-400 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700" disabled={isNoticeLoading} />
+                            <input type="date" value={nDeadline} onChange={e => setNDeadline(e.target.value)} className="bg-slate-50/50 text-slate-900 border border-slate-200 rounded-lg px-4" disabled={isNoticeLoading} />
+                            <input type="file" onChange={e => setAttachment(e.target.files[0])} className="text-xs text-slate-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-slate-900 hover:file:bg-red-700" disabled={isNoticeLoading} />
                         </div>
                         <button className={`${buttonClass} ${dangerButtonClass} w-full`} onClick={postNotice} disabled={isNoticeLoading || !nTitle || !nMsg || !nSection || !nSubject}> {isNoticeLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Bell className="w-5 h-5 mr-2" />} {isNoticeLoading ? 'Posting...' : 'Post Notice'} </button>
                     </div>
@@ -2436,8 +2436,8 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
-                <h5 className="text-lg font-bold text-emerald-400 mb-4 ml-2">Faculty Tools</h5>
+            <div className="w-full md:w-56 bg-white/80 backdrop-blur-xl p-4 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
+                <h5 className="text-lg font-bold text-emerald-600 mb-4 ml-2">Faculty Tools</h5>
                 <nav className="space-y-1 relative hidden md:block" ref={navRef}>
                     <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-emerald-600/20 border border-emerald-500/30 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {navigation.map(item => (
@@ -2447,7 +2447,7 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                             onClick={() => setView(item.key)}
                             className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
                                 ? 'text-emerald-300'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                         >
                             <item.icon className="w-5 h-5 mr-3" />
@@ -2458,23 +2458,23 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                 {/* Mobile Navigation Dropdown */}
                 <div className="md:hidden">
                     <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400 pointer-events-none" />
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600 pointer-events-none" />
                         <select
                             value={view}
                             onChange={(e) => setView(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-emerald-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-lg font-semibold"
+                            className="w-full bg-slate-50/80 border border-emerald-500/30 rounded-xl py-3 pl-10 pr-4 text-slate-900 appearance-none outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-xl shadow-slate-200/50 font-semibold"
                         >
                             {navigation.map(item => (
-                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                <option key={item.key} value={item.key} className="bg-slate-900 text-slate-900 py-2">
                                     {item.label}
                                 </option>
                             ))}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
                     </div>
                 </div>
             </div>
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-slate-200 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
                 {renderView()}
             </div>
@@ -2605,7 +2605,7 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-green-500/20 space-y-4">
+            <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-green-500/20 space-y-4">
                 <h4 className="text-2xl font-bold mb-4 text-green-400 flex items-center"><Book className="w-6 h-6 mr-2" /> Upload Study Material (Admin)</h4>
 
                 <Input placeholder="Title (e.g., Module 1 PPT)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
@@ -2620,7 +2620,7 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
                     </Select>
                     <Select value={section} onChange={e => setSection(e.target.value)} disabled={isLoading}>
                         <option value="" className="text-slate-900">All Sections (Manage)</option>
-                        <option value="ALL" className="text-amber-400 font-bold">All Sections</option>
+                        <option value="ALL" className="text-amber-600 font-bold">All Sections</option>
                         {(availableSections || []).map(s => <option key={s} value={s} className="text-slate-900">Sec {s}</option>)}
                     </Select>
                 </div>
@@ -2636,12 +2636,12 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
                     <option value="Reference Book" className="text-slate-900">Reference Book</option>
                 </Select>
 
-                <label className="block text-sm text-slate-300 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
+                <label className="block text-sm text-slate-700 font-medium pt-2">Select File (PDF, DOCX, PPTX):</label>
                 <input
                     id="adminNoteFile"
                     type="file"
                     onChange={e => setFile(e.target.files[0])}
-                    className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition duration-200"
+                    className="w-full text-slate-700 bg-slate-50/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-slate-900 hover:file:bg-green-700 transition duration-200"
                     disabled={isLoading}
                 />
 
@@ -2655,13 +2655,13 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
                 </button>
             </div>
 
-            <div className="bg-slate-900/40 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10">
+            <div className="bg-slate-900/40 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200">
                 <div className="flex items-center justify-between gap-3 mb-4">
                     <h5 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                        <History className="w-5 h-5 text-slate-400" /> Manage Uploaded Materials
+                        <History className="w-5 h-5 text-slate-500" /> Manage Uploaded Materials
                     </h5>
                     <button
-                        className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-white text-sm`}
+                        className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-slate-900 text-sm`}
                         onClick={fetchUploaded}
                         disabled={isListLoading || !degree || !semester}
                     >
@@ -2670,26 +2670,26 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
                     </button>
                 </div>
 
-                {!degree && <div className="text-sm text-slate-400">Select Degree/Semester to view uploaded materials.</div>}
+                {!degree && <div className="text-sm text-slate-500">Select Degree/Semester to view uploaded materials.</div>}
 
                 {degree && semester && !isListLoading && uploadedItems.length === 0 && (
-                    <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500 text-sm">
+                    <div className="p-4 bg-slate-900/40 border border-slate-200 rounded-xl text-slate-500 text-sm">
                         No uploaded materials found for the selected filters.
                     </div>
                 )}
 
                 {isListLoading && (
                     <div className="text-center py-8">
-                        <Loader2 className="animate-spin w-6 h-6 mx-auto text-slate-300" />
+                        <Loader2 className="animate-spin w-6 h-6 mx-auto text-slate-700" />
                     </div>
                 )}
 
                 <div className="space-y-3">
                     {uploadedItems.map((n) => (
-                        <div key={n.id} className="p-4 rounded-xl border border-white/10 bg-slate-800/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div key={n.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="min-w-0">
-                                <div className="font-bold text-white truncate">{n.title}</div>
-                                <div className="text-xs text-slate-400 mt-1">
+                                <div className="font-bold text-slate-900 truncate">{n.title}</div>
+                                <div className="text-xs text-slate-500 mt-1">
                                     {n.degree} • Sem {n.semester} • Sec {n.section} • {n.subject} • <span className="text-blue-300">{n.document_type}</span>
                                 </div>
                             </div>
@@ -2700,7 +2700,7 @@ function AdminNoteUpload({ showMessage, buttonClass, primaryButtonClass, catalog
                                     </a>
                                 )}
                                 <button
-                                    className={`${buttonClass} bg-red-600 hover:bg-red-700 text-white text-sm`}
+                                    className={`${buttonClass} bg-red-600 hover:bg-red-700 text-slate-900 text-sm`}
                                     onClick={() => handleDelete(n.id)}
                                 >
                                     <Trash2 className="w-4 h-4 mr-2" />
@@ -2762,8 +2762,8 @@ function AdminBookUpload({ showMessage, buttonClass, primaryButtonClass, catalog
     };
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-blue-500/20 space-y-4">
-            <h4 className="text-2xl font-bold mb-4 text-blue-400 flex items-center"><Upload className="w-6 h-6 mr-2" /> Upload Internal E-Book / Resource</h4>
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-blue-500/20 space-y-4">
+            <h4 className="text-2xl font-bold mb-4 text-blue-600 flex items-center"><Upload className="w-6 h-6 mr-2" /> Upload Internal E-Book / Resource</h4>
 
             <Input placeholder="Book Title" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
             <Input placeholder="Author Name" value={author} onChange={e => setAuthor(e.target.value)} disabled={isLoading} />
@@ -2779,12 +2779,12 @@ function AdminBookUpload({ showMessage, buttonClass, primaryButtonClass, catalog
                 </Select>
             </div>
 
-            <label className="block text-sm text-slate-300 font-medium pt-2">Select Book File (PDF, EPUB, DOCX):</label>
+            <label className="block text-sm text-slate-700 font-medium pt-2">Select Book File (PDF, EPUB, DOCX):</label>
             <input
                 id="bookFile"
                 type="file"
                 onChange={e => setFile(e.target.files[0])}
-                className="w-full text-slate-300 bg-slate-800/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition duration-200"
+                className="w-full text-slate-700 bg-slate-50/50 rounded-lg p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-slate-900 hover:file:bg-blue-700 transition duration-200"
                 disabled={isLoading}
             />
 
@@ -2900,12 +2900,12 @@ function FacultyAttendance({ showMessage, buttonClass, catalogs }) {
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-emerald-400 flex items-center"><ClipboardList className="w-6 h-6 mr-2" /> Attendance Register</h4>
+            <h4 className="text-2xl font-bold text-emerald-600 flex items-center"><ClipboardList className="w-6 h-6 mr-2" /> Attendance Register</h4>
 
             {/* Controls */}
-            <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-emerald-500/20 grid grid-cols-1 md:grid-cols-3 gap-4 mx-auto">
+            <div className="bg-white/80 backdrop-blur-xl p-4 rounded-xl shadow-xl shadow-slate-200/50 border border-emerald-500/20 grid grid-cols-1 md:grid-cols-3 gap-4 mx-auto">
                 <div>
-                    <label className="text-xs text-slate-400 font-bold uppercase">Select Class</label>
+                    <label className="text-xs text-slate-500 font-bold uppercase">Select Class</label>
                     <Select value={selectedAlloc ? selectedAlloc.id : ""} onChange={e => {
                         const a = allocations.find(x => x.id === parseInt(e.target.value));
                         setSelectedAlloc(a || null);
@@ -2916,8 +2916,8 @@ function FacultyAttendance({ showMessage, buttonClass, catalogs }) {
                     {!allocations.length && <div className="text-xs text-red-500 mt-1">No classes allocated. Contact Admin.</div>}
                 </div>
                 <div>
-                    <label className="text-xs text-slate-400 font-bold uppercase">Date</label>
-                    <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="text-slate-300" />
+                    <label className="text-xs text-slate-500 font-bold uppercase">Date</label>
+                    <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="text-slate-700" />
                 </div>
                 <div className="flex items-end">
                     <button className={`${buttonClass} bg-emerald-600 hover:bg-emerald-700 w-full disabled:opacity-50 disabled:cursor-not-allowed`} onClick={submitAttendance} disabled={!selectedAlloc || isLoading || isSubmitting || isLocked}>
@@ -2933,9 +2933,9 @@ function FacultyAttendance({ showMessage, buttonClass, catalogs }) {
                         <div key={s.id} onClick={() => toggleStatus(s.id)} className={`cursor-pointer p-4 rounded-xl border transition-all duration-200 flex justify-between items-center ${s.currentStatus === 'Present' ? 'bg-emerald-900/20 border-emerald-500/30 hover:bg-emerald-900/40' : 'bg-red-900/20 border-red-500/30 hover:bg-red-900/40'} ${isLocked ? 'opacity-70 pointer-events-none' : ''}`}>
                             <div>
                                 <div className={`font-bold ${s.currentStatus === 'Present' ? 'text-emerald-300' : 'text-red-300'}`}>{s.name}</div>
-                                <div className="text-xs text-slate-400">{s.srn}</div>
+                                <div className="text-xs text-slate-500">{s.srn}</div>
                             </div>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.currentStatus === 'Present' ? 'bg-emerald-500 text-black' : 'bg-red-500 text-white'}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.currentStatus === 'Present' ? 'bg-emerald-500 text-black' : 'bg-red-500 text-slate-900'}`}>
                                 {s.currentStatus === 'Present' ? <Check className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                             </div>
                         </div>
@@ -3056,26 +3056,26 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
 
     const renderGlobalHostelView = () => (
         <div className="space-y-4">
-            <h5 className="text-xl font-bold text-blue-400">Hostel Overview (One Go)</h5>
+            <h5 className="text-xl font-bold text-blue-600">Hostel Overview (One Go)</h5>
             {isHostelLoading ? <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-blue-500" /></div> : globalHostelData.length === 0 ? <div className="text-slate-500">No hostels defined.</div> : (
-                <div className="overflow-x-auto rounded-xl border border-white/10">
-                    <table className="min-w-full divide-y divide-white/10 shadow-md bg-slate-900/60 backdrop-blur-xl">
-                        <thead className="bg-slate-800/80">
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                    <table className="min-w-full divide-y divide-white/10 shadow-md bg-white/80 backdrop-blur-xl">
+                        <thead className="bg-slate-50/80">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Hostel</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Rooms</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Capacity</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Occupancy</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Vacant Beds</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Hostel</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Rooms</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Capacity</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Occupancy</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Vacant Beds</th>
                             </tr>
                         </thead>
                         <tbody className="bg-slate-900/40 divide-y divide-white/10">
                             {globalHostelData.map(h => (
                                 <tr key={h.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-200">{h.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{h.total_rooms}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{h.total_capacity}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{h.current_occupancy}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">{h.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{h.total_rooms}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{h.total_capacity}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{h.current_occupancy}</td>
                                     <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${h.vacant_beds > 0 ? 'text-green-400' : 'text-red-400'}`}>{h.vacant_beds}</td>
                                 </tr>
                             ))}
@@ -3088,14 +3088,14 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><Home className="w-6 h-6 mr-2" /> Hostel Management</h4>
+            <h4 className="text-2xl font-bold text-blue-600 flex items-center"><Home className="w-6 h-6 mr-2" /> Hostel Management</h4>
 
             {renderGlobalHostelView()}
 
-            <div className="grid lg:grid-cols-3 gap-6 pt-4 border-t border-white/10">
+            <div className="grid lg:grid-cols-3 gap-6 pt-4 border-t border-slate-200">
 
                 {/* Add Hostel */}
-                <div className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-xl shadow-lg border border-yellow-500/20 space-y-3">
+                <div className="bg-white/80 backdrop-blur-xl p-5 rounded-xl shadow-xl shadow-slate-200/50 border border-yellow-500/20 space-y-3">
                     <h5 className="text-xl font-bold text-yellow-400">Add New Hostel</h5>
                     <Input placeholder="Hostel Name" value={newHostelName} onChange={e => setNewHostelName(e.target.value)} />
                     <Input placeholder="Address (Optional)" value={newHostelAddress} onChange={e => setNewHostelAddress(e.target.value)} />
@@ -3103,7 +3103,7 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
                 </div>
 
                 {/* Add Room */}
-                <div className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-xl shadow-lg border border-yellow-500/20 space-y-3">
+                <div className="bg-white/80 backdrop-blur-xl p-5 rounded-xl shadow-xl shadow-slate-200/50 border border-yellow-500/20 space-y-3">
                     <h5 className="text-xl font-bold text-yellow-400">Add Room to Hostel</h5>
                     <Select value={newRoomHostelId} onChange={e => setNewRoomHostelId(parseInt(e.target.value) || '')} disabled={!hostels.length}>
                         <option value="" className="text-slate-900">Select Hostel</option>
@@ -3115,7 +3115,7 @@ function AdminHostelManagement({ showMessage, buttonClass, primaryButtonClass, c
                 </div>
 
                 {/* Assign Room */}
-                <div className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-xl shadow-lg border border-yellow-500/20 space-y-3">
+                <div className="bg-white/80 backdrop-blur-xl p-5 rounded-xl shadow-xl shadow-slate-200/50 border border-yellow-500/20 space-y-3">
                     <h5 className="text-xl font-bold text-yellow-400">Assign Room to Student</h5>
                     <Input placeholder="Student SRN (e.g., SRN001)" value={srnToAssign} onChange={e => setSrnToAssign(e.target.value)} /> {/* MODIFIED: Input changed to SRN */}
                     <Select value={roomToAssign} onChange={e => setRoomToAssign(parseInt(e.target.value) || '')} disabled={!rooms.length}>
@@ -3240,7 +3240,7 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
             <h4 className="text-2xl font-bold text-yellow-400 flex items-center"><GraduationCap className="w-6 h-6 mr-2" /> Student Directory</h4>
 
             {/* Filters */}
-            <div className="bg-slate-900/40 border border-white/10 p-4 rounded-xl shadow-inner grid grid-cols-4 gap-3 items-end">
+            <div className="bg-slate-900/40 border border-slate-200 p-4 rounded-xl shadow-inner grid grid-cols-4 gap-3 items-end">
                 <Select value={filterDegree} onChange={e => setFilterDegree(e.target.value)} disabled={!degrees.length}>
                     <option value="" className="text-slate-900">All Degrees</option>
                     {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
@@ -3264,30 +3264,30 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
             </div>
 
             {/* Results Table */}
-            {isLoading ? <div className="text-center p-10"><Loader2 className="animate-spin w-8 h-8 mx-auto text-yellow-500" /></div> : students.length === 0 ? <div className="p-4 text-slate-500 text-center bg-slate-900/60 rounded-xl shadow-md border border-white/10">No students found matching filters.</div> : (
-                <div className="overflow-x-auto rounded-xl border border-white/10">
-                    <table className="min-w-full divide-y divide-white/10 shadow-md bg-slate-900/60 backdrop-blur-xl">
-                        <thead className="bg-slate-800/80">
+            {isLoading ? <div className="text-center p-10"><Loader2 className="animate-spin w-8 h-8 mx-auto text-yellow-500" /></div> : students.length === 0 ? <div className="p-4 text-slate-500 text-center bg-white/80 rounded-xl shadow-md border border-slate-200">No students found matching filters.</div> : (
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                    <table className="min-w-full divide-y divide-white/10 shadow-md bg-white/80 backdrop-blur-xl">
+                        <thead className="bg-slate-50/80">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">SRN / Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Academics</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Hostel</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">SRN / Name</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Academics</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Hostel</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-slate-900/40 divide-y divide-white/10">
                             {students.map(s => (
                                 <tr key={s.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-slate-200">{s.name}</div>
+                                        <div className="text-sm font-medium text-slate-800">{s.name}</div>
                                         <div className="text-xs text-slate-500">{s.srn}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-slate-300">{s.degree} Sem {s.semester}</div>
+                                        <div className="text-sm text-slate-700">{s.degree} Sem {s.semester}</div>
                                         <div className="text-xs text-slate-500">Section {s.section}</div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
                                         {s.hostel_info || <span className="text-xs text-red-400">Not Assigned</span>}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
@@ -3310,45 +3310,45 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
             {/* EDIT STUDENT MODAL */}
             {editStudent && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-white/10 p-6 rounded-xl w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-slate-900 border border-slate-200 p-6 rounded-xl w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-2">
                             <h5 className="text-xl font-bold text-yellow-400">Edit Student Details</h5>
-                            <button onClick={() => setEditStudent(null)} className="text-slate-500 hover:text-white"><XCircle className="w-6 h-6" /></button>
+                            <button onClick={() => setEditStudent(null)} className="text-slate-500 hover:text-slate-900"><XCircle className="w-6 h-6" /></button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400">Full Name</label>
+                                <label className="text-xs text-slate-500">Full Name</label>
                                 <Input value={editStudent.name} onChange={e => setEditStudent({ ...editStudent, name: e.target.value })} />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400">SRN</label>
+                                <label className="text-xs text-slate-500">SRN</label>
                                 <Input value={editStudent.srn} onChange={e => setEditStudent({ ...editStudent, srn: e.target.value })} />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400">Degree</label>
+                                <label className="text-xs text-slate-500">Degree</label>
                                 <Select value={editStudent.degree} onChange={e => setEditStudent({ ...editStudent, degree: e.target.value })}>
                                     {(degrees || []).map(d => <option key={d} value={d} className="text-slate-900">{d}</option>)}
                                 </Select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400">Semester</label>
+                                <label className="text-xs text-slate-500">Semester</label>
                                 <Select value={editStudent.semester} onChange={e => setEditStudent({ ...editStudent, semester: e.target.value })}>
                                     {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                                 </Select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400">Section</label>
+                                <label className="text-xs text-slate-500">Section</label>
                                 <Select value={editStudent.section} onChange={e => setEditStudent({ ...editStudent, section: e.target.value })}>
                                     {(editSections || []).map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                                 </Select>
                             </div>
                         </div>
 
-                        <div className="pt-4 border-t border-white/5 space-y-2">
-                            <h6 className="text-sm font-bold text-slate-300">Parent Portal (Read Only Access)</h6>
+                        <div className="pt-4 border-t border-slate-100 space-y-2">
+                            <h6 className="text-sm font-bold text-slate-700">Parent Portal (Read Only Access)</h6>
                             <div className="space-y-2">
-                                <label className="text-xs text-slate-400">Parent Email (Required for Login)</label>
+                                <label className="text-xs text-slate-500">Parent Email (Required for Login)</label>
                                 <div className="flex gap-2">
                                     <Input
                                         type="email"
@@ -3375,8 +3375,8 @@ function AdminStudentList({ showMessage, catalogs, buttonClass, primaryButtonCla
                             </div>
                         </div>
 
-                        <div className="flex gap-3 pt-4 border-t border-white/5">
-                            <button className={`${buttonClass} bg-slate-700 text-white flex-1 hover:bg-slate-600`} onClick={() => setEditStudent(null)}>Cancel</button>
+                        <div className="flex gap-3 pt-4 border-t border-slate-100">
+                            <button className={`${buttonClass} bg-slate-700 text-slate-900 flex-1 hover:bg-slate-600`} onClick={() => setEditStudent(null)}>Cancel</button>
                             <button className={`${buttonClass} ${primaryButtonClass} bg-green-600 flex-1`} onClick={handleUpdateStudent} disabled={isUpdating}>
                                 {isUpdating ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />} Save Changes
                             </button>
@@ -3424,7 +3424,7 @@ function AdminFacultyOnboarding({ showMessage, buttonClass, primaryButtonClass }
     };
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20 space-y-4">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-yellow-500/20 space-y-4">
             <h4 className="text-2xl font-bold mb-4 text-yellow-400 flex items-center"><UserPlus className="w-6 h-6 mr-2" /> Onboard New Faculty Member</h4>
 
             <Input placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} disabled={isLoading} />
@@ -3520,7 +3520,7 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
 
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20 space-y-4">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-yellow-500/20 space-y-4">
             <h4 className="text-2xl font-bold mb-4 text-yellow-400 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Create New Fee Notification</h4>
 
             <Input placeholder="Fee Title (e.g., Tuition Fee Sem 4)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
@@ -3540,10 +3540,10 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
                     <option value="exam" className="text-slate-900">Exam Fee</option>
                     <option value="misc" className="text-slate-900">Miscellaneous</option>
                 </Select>
-                <Input type="date" placeholder="Due Date (Optional)" value={dueDate} onChange={e => setDueDate(e.target.value)} disabled={isLoading} className="text-slate-300" />
+                <Input type="date" placeholder="Due Date (Optional)" value={dueDate} onChange={e => setDueDate(e.target.value)} disabled={isLoading} className="text-slate-700" />
             </div>
 
-            <h5 className="text-lg font-bold text-slate-300 pt-4 border-t border-white/10">Target Students:</h5>
+            <h5 className="text-lg font-bold text-slate-700 pt-4 border-t border-slate-200">Target Students:</h5>
 
             <Select value={targetType} onChange={e => setTargetType(e.target.value)} disabled={isLoading}>
                 <option value="batch" className="text-slate-900">Whole Student Body (All Degrees/Sems)</option>
@@ -3579,7 +3579,7 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
 
             {isCustomTarget && (
                 <textarea
-                    className="w-full bg-slate-800/50 backdrop-blur-xl text-white border border-white/10 rounded-xl py-3 px-4 h-24 placeholder-slate-500 focus:ring-2 focus:ring-yellow-500/50 outline-none"
+                    className="w-full bg-slate-50/50 backdrop-blur-xl text-slate-900 border border-slate-200 rounded-xl py-3 px-4 h-24 placeholder-slate-500 focus:ring-2 focus:ring-yellow-500/50 outline-none"
                     placeholder="Enter SRNs separated by commas (e.g., SRN001, SRN005, SRN010)"
                     value={customSrns}
                     onChange={e => setCustomSrns(e.target.value)}
@@ -3659,28 +3659,28 @@ function AdminHostelComplaints({ showMessage, buttonClass, primaryButtonClass })
     }
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-red-500/20">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-red-500/20">
             <div className="flex justify-between items-center mb-4">
                 <h4 className="text-2xl font-bold text-red-400 flex items-center"><Home className="w-6 h-6 mr-2" /> Active Hostel Complaints</h4>
-                <button onClick={fetchComplaints} className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition" disabled={isLoading}><RefreshCw className="w-5 h-5 text-slate-300" /></button>
+                <button onClick={fetchComplaints} className="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition" disabled={isLoading}><RefreshCw className="w-5 h-5 text-slate-700" /></button>
             </div>
 
             {/* Status Update Modal/Form (Render if statusUpdate.id is set) */}
             {statusUpdate.id && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-white/10 p-6 rounded-xl w-full max-w-md shadow-2xl space-y-4">
+                    <div className="bg-slate-900 border border-slate-200 p-6 rounded-xl w-full max-w-md shadow-2xl space-y-4">
                         <h5 className="text-xl font-bold text-red-400">Update Complaint Status</h5>
                         <Select value={statusUpdate.status} onChange={e => setStatusUpdate(prev => ({ ...prev, status: e.target.value }))}>
                             {VALID_STATUSES.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                         </Select>
                         <textarea
-                            className="w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-slate-500 border border-white/10 rounded-xl py-3 px-4 h-20 focus:ring-2 focus:ring-red-500/50 outline-none"
+                            className="w-full bg-slate-50/50 backdrop-blur-xl text-slate-900 placeholder-slate-500 border border-slate-200 rounded-xl py-3 px-4 h-20 focus:ring-2 focus:ring-red-500/50 outline-none"
                             placeholder="Internal Note (Optional)"
                             value={statusUpdate.note}
                             onChange={e => setStatusUpdate(prev => ({ ...prev, note: e.target.value }))}
                         />
                         <div className="flex gap-3">
-                            <button className={`${buttonClass} bg-slate-700 text-white flex-1 hover:bg-slate-600`} onClick={() => setStatusUpdate({ id: null, status: 'Open', note: '' })}>Cancel</button>
+                            <button className={`${buttonClass} bg-slate-700 text-slate-900 flex-1 hover:bg-slate-600`} onClick={() => setStatusUpdate({ id: null, status: 'Open', note: '' })}>Cancel</button>
                             <button className={`${buttonClass} ${primaryButtonClass} bg-green-600 flex-1`} onClick={updateComplaintStatus} disabled={isLoading}>
                                 {isLoading ? <Loader2 className="animate-spin w-5 h-5 mr-2" /> : <Save className="w-5 h-5 mr-2" />} Save Status
                             </button>
@@ -3694,13 +3694,13 @@ function AdminHostelComplaints({ showMessage, buttonClass, primaryButtonClass })
 
             <div className="space-y-4">
                 {complaints.map(c => (
-                    <div key={c.id} className={`p-4 rounded-xl shadow-md ${c.status === 'Closed' ? 'bg-slate-800/50 border-l-4 border-slate-500' : 'bg-slate-800 border-l-4 border-red-500'}`}>
+                    <div key={c.id} className={`p-4 rounded-xl shadow-md ${c.status === 'Closed' ? 'bg-slate-50/50 border-l-4 border-slate-500' : 'bg-slate-50 border-l-4 border-red-500'}`}>
                         <div className="flex justify-between items-start">
                             <div className="flex-1">
                                 <div className="font-bold text-lg text-red-400">{c.title}</div>
-                                <div className="text-sm text-slate-300 mt-1">{c.description}</div>
+                                <div className="text-sm text-slate-700 mt-1">{c.description}</div>
                                 <div className="text-xs text-slate-500 mt-1">
-                                    From: <strong className="text-slate-400">{c.hostel_name} (Room {c.room_number})</strong> | Student: <strong className="text-slate-400">{c.student_name}</strong>
+                                    From: <strong className="text-slate-500">{c.hostel_name} (Room {c.room_number})</strong> | Student: <strong className="text-slate-500">{c.student_name}</strong>
                                 </div>
                             </div>
                             <div className={`text-xs px-2 py-1 rounded-full flex-shrink-0 font-semibold ${c.status.includes('Progress') ? 'bg-orange-900/40 text-orange-300' : c.status === 'Open' ? 'bg-red-900/40 text-red-300' : 'bg-green-900/40 text-green-300'}`}>
@@ -3709,7 +3709,7 @@ function AdminHostelComplaints({ showMessage, buttonClass, primaryButtonClass })
                         </div>
 
                         {/* Audit Trail/Status Bar */}
-                        <div className="mt-3 pt-2 border-t border-white/10">
+                        <div className="mt-3 pt-2 border-t border-slate-200">
                             <div className="text-xs text-slate-500 font-semibold mb-1">Audit Trail:</div>
                             <div className="flex items-center space-x-2 text-xs overflow-x-auto pb-1">
                                 {c.audit_trail && c.audit_trail.map((step, index) => (
@@ -3723,11 +3723,11 @@ function AdminHostelComplaints({ showMessage, buttonClass, primaryButtonClass })
                             </div>
                         </div>
 
-                        <div className="flex justify-end items-center mt-3 pt-2 border-t border-white/10">
+                        <div className="flex justify-end items-center mt-3 pt-2 border-t border-slate-200">
                             <div className="flex space-x-2">
-                                {c.file_url && <a href={c.file_url} className={`py-1 px-3 text-xs font-semibold rounded-full inline-flex items-center bg-red-600 hover:bg-red-700 text-white`} target="_blank" rel="noopener noreferrer">Attachment</a>}
+                                {c.file_url && <a href={c.file_url} className={`py-1 px-3 text-xs font-semibold rounded-full inline-flex items-center bg-red-600 hover:bg-red-700 text-slate-900`} target="_blank" rel="noopener noreferrer">Attachment</a>}
                                 <button
-                                    className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-1.5 w-32`}
+                                    className={`${buttonClass} bg-yellow-600 hover:bg-yellow-700 text-slate-900 text-xs py-1.5 w-32`}
                                     onClick={() => setStatusUpdate({ id: c.id, status: c.status, note: '' })}
                                 >
                                     <RefreshCw className="w-4 h-4 mr-1" /> Update Status
@@ -3867,13 +3867,13 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center border-b border-white/10 pb-4">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-4">
                 <div>
                     <h4 className="text-3xl font-bold text-yellow-500 flex items-center tracking-tight">
                         <ClipboardList className="w-8 h-8 mr-3 opacity-80" />
                         Faculty & Allocations
                     </h4>
-                    <p className="text-slate-400 mt-1 pl-11">Manage professors and their subject allotments.</p>
+                    <p className="text-slate-500 mt-1 pl-11">Manage professors and their subject allotments.</p>
                 </div>
                 <div className="bg-yellow-500/10 px-4 py-2 rounded-lg border border-yellow-500/20 text-yellow-500 font-mono text-xs uppercase tracking-widest">
                     {faculty.length} Faculty Members
@@ -3882,7 +3882,7 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
 
             {/* Allocation Interface */}
             <div className="bg-slate-900/40 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-yellow-500/10" style={{ minHeight: '400px' }}>
-                <h5 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-6 flex items-center">
+                <h5 className="text-sm font-bold text-slate-700 uppercase tracking-widest mb-6 flex items-center">
                     <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span> New Allocation
                 </h5>
 
@@ -3895,24 +3895,24 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
                         <div className="relative" ref={dropdownRef}>
                             <div
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className={`w-full bg-slate-800/50 border ${isDropdownOpen ? 'border-yellow-500 ring-1 ring-yellow-500/50' : 'border-white/10'} rounded-xl px-4 py-3 text-white flex justify-between items-center cursor-pointer transition-all hover:bg-slate-800/80`}
+                                className={`w-full bg-slate-50/50 border ${isDropdownOpen ? 'border-yellow-500 ring-1 ring-yellow-500/50' : 'border-slate-200'} rounded-xl px-4 py-3 text-slate-900 flex justify-between items-center cursor-pointer transition-all hover:bg-slate-50/80`}
                             >
-                                <span className={selectedFaculty ? "text-white font-medium" : "text-slate-500"}>
+                                <span className={selectedFaculty ? "text-slate-900 font-medium" : "text-slate-500"}>
                                     {selectedFaculty ? `${selectedFaculty.name} (${selectedFaculty.emp_id})` : "-- Choose Faculty Member --"}
                                 </span>
-                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                             </div>
 
                             {/* Dropdown Menu */}
                             {isDropdownOpen && (
-                                <div className="absolute z-50 mt-2 w-full bg-slate-900 border border-white/10 rounded-xl shadow-2xl max-h-80 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                <div className="absolute z-50 mt-2 w-full bg-slate-900 border border-slate-200 rounded-xl shadow-2xl max-h-80 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                     {/* Search Box Sticky Top */}
-                                    <div className="p-2 border-b border-white/5 bg-slate-900 sticky top-0">
+                                    <div className="p-2 border-b border-slate-100 bg-slate-900 sticky top-0">
                                         <div className="relative">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
                                             <input
                                                 autoFocus
-                                                className="w-full bg-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:ring-1 focus:ring-yellow-500"
+                                                className="w-full bg-slate-50 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-500 outline-none focus:ring-1 focus:ring-yellow-500"
                                                 placeholder="Search faculty..."
                                                 value={allocFacultySearch}
                                                 onChange={e => setAllocFacultySearch(e.target.value)}
@@ -3934,7 +3934,7 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
                                                         setIsDropdownOpen(false);
                                                         setAllocFacultySearch(""); // Optional: reset search or keep it
                                                     }}
-                                                    className={`p-2.5 rounded-lg text-sm cursor-pointer flex items-center justify-between group transition-colors ${selectedFaculty?.id === f.id ? 'bg-yellow-500/20 text-yellow-400' : 'hover:bg-slate-800 text-slate-300 hover:text-white'}`}
+                                                    className={`p-2.5 rounded-lg text-sm cursor-pointer flex items-center justify-between group transition-colors ${selectedFaculty?.id === f.id ? 'bg-yellow-500/20 text-yellow-400' : 'hover:bg-slate-50 text-slate-700 hover:text-slate-900'}`}
                                                 >
                                                     <span className="font-medium">{f.name}</span>
                                                     <span className={`text-[10px] uppercase tracking-wider ${selectedFaculty?.id === f.id ? 'text-yellow-500/70' : 'text-slate-600 group-hover:text-slate-500'}`}>{f.emp_id}</span>
@@ -3947,10 +3947,10 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
                         </div>
 
                         {selectedFaculty && (
-                            <div className="p-3 bg-white/5 rounded-lg border border-white/5 flex items-center animate-in fade-in slide-in-from-top-2">
+                            <div className="p-3 bg-white/5 rounded-lg border border-slate-100 flex items-center animate-in fade-in slide-in-from-top-2">
                                 <div className="w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center font-bold mr-3">{selectedFaculty.name[0]}</div>
                                 <div>
-                                    <div className="text-sm font-bold text-white leading-tight">{selectedFaculty.name}</div>
+                                    <div className="text-sm font-bold text-slate-900 leading-tight">{selectedFaculty.name}</div>
                                     <div className="text-xs text-slate-500">{selectedFaculty.email}</div>
                                 </div>
                             </div>
@@ -3982,7 +3982,7 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
                                 )}
                             </Select>
                             <button
-                                className={`${buttonClass} bg-yellow-600 hover:bg-yellow-500 text-white w-auto px-6`}
+                                className={`${buttonClass} bg-yellow-600 hover:bg-yellow-500 text-slate-900 w-auto px-6`}
                                 onClick={handleAllocate}
                                 disabled={!selectedFaculty || isAllocating || !allocSubject}
                             >
@@ -3996,19 +3996,19 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
             {/* List */}
             <div className="space-y-4">
                 <div className="flex justify-between items-end">
-                    <h5 className="text-sm font-bold text-slate-300 uppercase tracking-widest pl-1">Directory & Allocations</h5>
+                    <h5 className="text-sm font-bold text-slate-700 uppercase tracking-widest pl-1">Directory & Allocations</h5>
 
                     {/* Filters UI */}
                     <div className="flex gap-2">
-                        <select className="bg-slate-900 border border-white/10 text-xs rounded px-2 py-1 text-slate-300 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterDegree} onChange={e => setFilterDegree(e.target.value)}>
+                        <select className="bg-slate-900 border border-slate-200 text-xs rounded px-2 py-1 text-slate-700 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterDegree} onChange={e => setFilterDegree(e.target.value)}>
                             <option value="">Degree</option>
                             {(degrees || []).map(d => <option key={d} value={d}>{d}</option>)}
                         </select>
-                        <select className="bg-slate-900 border border-white/10 text-xs rounded px-2 py-1 text-slate-300 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterSemester} onChange={e => setFilterSemester(e.target.value)}>
+                        <select className="bg-slate-900 border border-slate-200 text-xs rounded px-2 py-1 text-slate-700 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterSemester} onChange={e => setFilterSemester(e.target.value)}>
                             <option value="">Semester</option>
                             {Array.from({ length: 8 }, (_, i) => i + 1).map(s => <option key={s} value={s}>Sem {s}</option>)}
                         </select>
-                        <select className="bg-slate-900 border border-white/10 text-xs rounded px-2 py-1 text-slate-300 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterSection} onChange={e => setFilterSection(e.target.value)}>
+                        <select className="bg-slate-900 border border-slate-200 text-xs rounded px-2 py-1 text-slate-700 outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 cursor-pointer" value={filterSection} onChange={e => setFilterSection(e.target.value)}>
                             <option value="">Section</option>
                             {(availableFilterSections || []).map(s => <option key={s} value={s}>Sec {s}</option>)}
                         </select>
@@ -4016,24 +4016,24 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
                 </div>
 
                 {!filtersActive ? (
-                    <div className="text-center py-20 bg-slate-900/20 rounded-2xl border border-white/5 text-slate-600 animate-in fade-in zoom-in-95 duration-500">
-                        <div className="w-16 h-16 rounded-full bg-slate-800 mx-auto mb-4 flex items-center justify-center">
+                    <div className="text-center py-20 bg-slate-900/20 rounded-2xl border border-slate-100 text-slate-600 animate-in fade-in zoom-in-95 duration-500">
+                        <div className="w-16 h-16 rounded-full bg-slate-50 mx-auto mb-4 flex items-center justify-center">
                             <Filter className="w-8 h-8 text-slate-500" />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-400 mb-1">Directory Filtered</h3>
+                        <h3 className="text-lg font-bold text-slate-500 mb-1">Directory Filtered</h3>
                         <p className="text-sm text-slate-500">Please select a Degree, Semester, or Section to view faculty.</p>
                     </div>
-                ) : isLoading ? <div className="text-center p-20"><Loader2 className="animate-spin w-10 h-10 mx-auto text-yellow-500 opacity-50" /></div> : filteredFaculty.length === 0 ? <div className="text-center py-20 bg-slate-900/20 rounded-2xl border border-white/5 text-slate-600">No faculty members found matching criteria.</div> : (
+                ) : isLoading ? <div className="text-center p-20"><Loader2 className="animate-spin w-10 h-10 mx-auto text-yellow-500 opacity-50" /></div> : filteredFaculty.length === 0 ? <div className="text-center py-20 bg-slate-900/20 rounded-2xl border border-slate-100 text-slate-600">No faculty members found matching criteria.</div> : (
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {filteredFaculty.map(f => (
-                            <div key={f.id} className="bg-slate-800/20 rounded-xl border border-white/5 p-5 hover:bg-slate-800/40 hover:border-white/10 transition-all duration-300 group">
+                            <div key={f.id} className="bg-slate-50/20 rounded-xl border border-slate-100 p-5 hover:bg-slate-50/40 hover:border-slate-200 transition-all duration-300 group">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center">
-                                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-700 to-slate-800 border border-white/10 flex items-center justify-center text-slate-300 font-bold text-lg mr-3 shadow-inner">
+                                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-200 flex items-center justify-center text-slate-700 font-bold text-lg mr-3 shadow-inner">
                                             {f.name[0]}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-white group-hover:text-yellow-400 transition-colors">{f.name}</div>
+                                            <div className="font-bold text-slate-900 group-hover:text-yellow-400 transition-colors">{f.name}</div>
                                             <div className="text-xs text-slate-500 font-mono mt-0.5">{f.email} • {f.emp_id}</div>
                                         </div>
                                     </div>
@@ -4045,10 +4045,10 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
                                         <div className="text-xs text-slate-600 italic pl-1">No subjects allocated yet.</div>
                                     ) : (
                                         f.allocations.map(a => (
-                                            <div key={a.id} className="flex justify-between items-center bg-slate-900/60 p-2.5 rounded-lg border border-white/5 text-sm group/item hover:border-white/10 transition-colors">
+                                            <div key={a.id} className="flex justify-between items-center bg-white/80 p-2.5 rounded-lg border border-slate-100 text-sm group/item hover:border-slate-200 transition-colors">
                                                 <div className="flex items-center">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50 mr-3"></div>
-                                                    <span className="text-slate-200 font-medium mr-2">{a.subject}</span>
+                                                    <span className="text-slate-800 font-medium mr-2">{a.subject}</span>
                                                     <span className="text-xs text-slate-500">
                                                         {a.degree} • {a.semester}-{a.section}
                                                     </span>
@@ -4374,7 +4374,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         switch (view) {
             case "approvals":
                 return (
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20">
+                    <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-yellow-500/20">
                         <h4 className="text-2xl font-bold text-yellow-500 mb-4">Pending Student Approvals</h4>
                         {isFetchingPending && <div className="text-center p-5"><Loader2 className="animate-spin w-6 h-6 text-yellow-500 mx-auto" /></div>}
                         {!isFetchingPending && pending.length === 0 && <div className="p-4 text-slate-500 text-center">No pending students.</div>}
@@ -4382,11 +4382,11 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                         <div className="space-y-4">
                             {pending.map(s => (
                                 <div key={s.id} className="p-4 bg-yellow-900/20 border-l-4 border-yellow-500 rounded-xl shadow backdrop-blur-sm">
-                                    <div className="font-bold text-lg text-white">{s.name}</div>
-                                    <div className="text-sm text-slate-300">{s.email} • {s.degree} • Sem {s.semester}</div>
+                                    <div className="font-bold text-lg text-slate-900">{s.name}</div>
+                                    <div className="text-sm text-slate-700">{s.email} • {s.degree} • Sem {s.semester}</div>
                                     <div className="flex gap-3 mt-3">
-                                        <button className={`${buttonClass} bg-green-600 text-white`} onClick={() => take(s.id, "approve")}>Approve</button>
-                                        <button className={`${buttonClass} bg-red-600 text-white`} onClick={() => take(s.id, "reject")}>Reject</button>
+                                        <button className={`${buttonClass} bg-green-600 text-slate-900`} onClick={() => take(s.id, "approve")}>Approve</button>
+                                        <button className={`${buttonClass} bg-red-600 text-slate-900`} onClick={() => take(s.id, "reject")}>Reject</button>
                                     </div>
                                 </div>
                             ))}
@@ -4401,17 +4401,17 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
             case "catalogs":
                 return (
                     <div className="grid md:grid-cols-3 gap-6">
-                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-3">
+                        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 space-y-3">
                             <h4 className="text-xl font-bold text-yellow-400">Manage Degrees</h4>
                             <Input placeholder="New degree" value={newDegree} onChange={e => setNewDegree(e.target.value)} />
                             <button className={`${buttonClass} ${primaryButtonClass}`} onClick={() => addCatalogItem("degrees", newDegree, "Degree added!")}>Add Degree</button>
 
-                            <div className="mt-4 pt-4 border-t border-white/10">
-                                <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">Current Degrees</label>
+                            <div className="mt-4 pt-4 border-t border-slate-200">
+                                <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest mb-2">Current Degrees</label>
                                 <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                                     {(degrees || []).map(d => (
-                                        <div key={d} className="flex justify-between items-center p-2 bg-slate-800/40 rounded border border-white/5 group">
-                                            <span className="text-white text-sm font-medium">{d}</span>
+                                        <div key={d} className="flex justify-between items-center p-2 bg-slate-50/40 rounded border border-slate-100 group">
+                                            <span className="text-slate-900 text-sm font-medium">{d}</span>
                                             <button
                                                 onClick={() => deleteCatalogItem("degrees", d)}
                                                 className="p-1 text-slate-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
@@ -4424,11 +4424,11 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-4">
+                        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 space-y-4">
                             <h4 className="text-xl font-bold text-yellow-400">Manage Sections</h4>
 
                             {/* Add Section Form */}
-                            <div className="bg-slate-800/40 p-4 rounded-lg border border-white/5 space-y-3">
+                            <div className="bg-slate-50/40 p-4 rounded-lg border border-slate-100 space-y-3">
                                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
                                     <Select value={newSectionDegree} onChange={e => setNewSectionDegree(e.target.value)} disabled={!degrees.length} className="w-full">
                                         <option value="">Select Degree</option>
@@ -4444,7 +4444,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
 
                             {/* Sections Display - Dropdown Menu */}
                             <div>
-                                <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">View & Delete Sections</label>
+                                <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest mb-2">View & Delete Sections</label>
 
                                 {/* Select Degree & Semester to View Sections - Mobile Optimized */}
                                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 mb-3">
@@ -4476,13 +4476,13 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                     isLoadingSections ? (
                                         <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-yellow-500" /></div>
                                     ) : currentSections.length === 0 ? (
-                                        <div className="text-center p-4 bg-slate-800/20 rounded-lg border border-white/5 text-slate-500 text-sm">
+                                        <div className="text-center p-4 bg-slate-50/20 rounded-lg border border-slate-100 text-slate-500 text-sm">
                                             No sections found for {viewSectionDegree} Sem {viewSectionSemester}.
                                         </div>
                                     ) : (
                                         <>
                                             <Select
-                                                className="w-full bg-slate-800/50 border border-white/10 text-white py-2.5 text-base"
+                                                className="w-full bg-slate-50/50 border border-slate-200 text-slate-900 py-2.5 text-base"
                                                 onChange={(e) => {
                                                     const value = e.target.value;
                                                     if (value && value !== '') {
@@ -4502,23 +4502,23 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                                     </option>
                                                 ))}
                                             </Select>
-                                            <div className="mt-2 text-xs text-slate-400 text-center">
+                                            <div className="mt-2 text-xs text-slate-500 text-center">
                                                 {currentSections.length} {currentSections.length === 1 ? 'section' : 'sections'} for {viewSectionDegree} Sem {viewSectionSemester}
                                             </div>
                                         </>
                                     )
                                 ) : (
-                                    <div className="text-center p-4 bg-slate-800/20 rounded-lg border border-white/5 text-slate-400 text-sm">
+                                    <div className="text-center p-4 bg-slate-50/20 rounded-lg border border-slate-100 text-slate-500 text-sm">
                                         Select a degree and semester above to view sections.
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 space-y-4">
+                        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 space-y-4">
                             <h4 className="text-xl font-bold text-yellow-400">Manage Subjects</h4>
 
                             {/* Add Subject Form */}
-                            <div className="bg-slate-800/40 p-4 rounded-lg border border-white/5 space-y-3">
+                            <div className="bg-slate-50/40 p-4 rounded-lg border border-slate-100 space-y-3">
                                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
                                     <Select value={subjectDegree} onChange={e => setSubjectDegree(e.target.value)} disabled={!degrees.length} className="w-full">
                                         <option value="">Select Degree</option>
@@ -4534,7 +4534,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
 
                             {/* View & Delete Subjects */}
                             <div>
-                                <label className="block text-sm font-bold text-slate-300 uppercase tracking-widest mb-2">View & Delete Subjects</label>
+                                <label className="block text-sm font-bold text-slate-700 uppercase tracking-widest mb-2">View & Delete Subjects</label>
 
                                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2 mb-3">
                                     <Select
@@ -4564,13 +4564,13 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                     isLoadingSubjects ? (
                                         <div className="text-center p-4"><Loader2 className="animate-spin w-5 h-5 mx-auto text-yellow-500" /></div>
                                     ) : currentSubjects.length === 0 ? (
-                                        <div className="text-center p-4 bg-slate-800/20 rounded-lg border border-white/5 text-slate-500 text-sm">
+                                        <div className="text-center p-4 bg-slate-50/20 rounded-lg border border-slate-100 text-slate-500 text-sm">
                                             No subjects found.
                                         </div>
                                     ) : (
                                         <>
                                             <Select
-                                                className="w-full bg-slate-800/50 border border-white/10 text-white py-2.5 text-base"
+                                                className="w-full bg-slate-50/50 border border-slate-200 text-slate-900 py-2.5 text-base"
                                                 onChange={(e) => {
                                                     const value = e.target.value;
                                                     if (value) {
@@ -4584,13 +4584,13 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                                     <option key={s} value={s} className="text-slate-900">{s}</option>
                                                 ))}
                                             </Select>
-                                            <div className="mt-2 text-xs text-slate-400 text-center">
+                                            <div className="mt-2 text-xs text-slate-500 text-center">
                                                 {currentSubjects.length} subjects found.
                                             </div>
                                         </>
                                     )
                                 ) : (
-                                    <div className="text-center p-4 bg-slate-800/20 rounded-lg border border-white/5 text-slate-400 text-sm">
+                                    <div className="text-center p-4 bg-slate-50/20 rounded-lg border border-slate-100 text-slate-500 text-sm">
                                         Select context to view subjects.
                                     </div>
                                 )}
@@ -4608,8 +4608,8 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-64 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0">
-                <h5 className="text-lg font-bold text-amber-400 mb-4 ml-2">Admin Tools</h5>
+            <div className="w-full md:w-64 bg-white/80 backdrop-blur-xl p-4 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 flex-shrink-0">
+                <h5 className="text-lg font-bold text-amber-600 mb-4 ml-2">Admin Tools</h5>
                 <nav className="space-y-1 relative hidden md:block" ref={navRef}>
                     <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-amber-600/20 border border-amber-500/30 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {[
@@ -4628,7 +4628,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                             key={item.key}
                             data-key={item.key}
                             onClick={() => setView(item.key)}
-                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 whitespace-nowrap ${view === item.key ? "text-amber-300" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 whitespace-nowrap ${view === item.key ? "text-amber-300" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
                         >
                             <item.icon className="w-5 h-5 mr-3" />{item.label}
                         </button>
@@ -4637,11 +4637,11 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                 {/* Mobile Navigation Dropdown */}
                 <div className="md:hidden">
                     <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-400 pointer-events-none" />
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-600 pointer-events-none" />
                         <select
                             value={view}
                             onChange={(e) => setView(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-amber-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-amber-500/50 shadow-lg font-semibold"
+                            className="w-full bg-slate-50/80 border border-amber-500/30 rounded-xl py-3 pl-10 pr-4 text-slate-900 appearance-none outline-none focus:ring-2 focus:ring-amber-500/50 shadow-xl shadow-slate-200/50 font-semibold"
                         >
                             {[
                                 { key: 'approvals', label: 'Student Approvals' },
@@ -4655,16 +4655,16 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                                 { key: 'catalogs', label: 'Degrees/Subjects' },
                                 { key: 'fees-admin', label: 'Manage Fees' },
                             ].map(item => (
-                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                <option key={item.key} value={item.key} className="bg-slate-900 text-slate-900 py-2">
                                     {item.label}
                                 </option>
                             ))}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
                     </div>
                 </div>
             </div>
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative">{renderView()}</div>
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-slate-200 relative">{renderView()}</div>
         </div>
     );
 }
@@ -4715,17 +4715,17 @@ function StudentAttendanceCalendar({ showMessage, buttonClass, primaryButtonClas
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><ClipboardList className="w-6 h-6 mr-2" /> My Attendance</h4>
+            <h4 className="text-2xl font-bold text-blue-600 flex items-center"><ClipboardList className="w-6 h-6 mr-2" /> My Attendance</h4>
 
             <div className="grid md:grid-cols-2 gap-6">
                 {/* Calendar View */}
-                <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-blue-500/20">
+                <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-blue-500/20">
                     <div className="flex justify-between items-center mb-4">
-                        <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="text-slate-400 hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
-                        <h5 className="text-lg font-bold text-white uppercase tracking-wider">
+                        <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="text-slate-500 hover:text-slate-900"><ArrowLeft className="w-5 h-5" /></button>
+                        <h5 className="text-lg font-bold text-slate-900 uppercase tracking-wider">
                             {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </h5>
-                        <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="text-slate-400 hover:text-white rotate-180"><ArrowLeft className="w-5 h-5" /></button>
+                        <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="text-slate-500 hover:text-slate-900 rotate-180"><ArrowLeft className="w-5 h-5" /></button>
                     </div>
 
                     <div className="grid grid-cols-7 text-center mb-2">
@@ -4739,7 +4739,7 @@ function StudentAttendanceCalendar({ showMessage, buttonClass, primaryButtonClas
                             const status = getStatusForDay(day);
                             const isSelected = selectedDay === day;
 
-                            let bgClass = "bg-slate-800/50 border-white/5 text-slate-300";
+                            let bgClass = "bg-slate-50/50 border-slate-100 text-slate-700";
                             if (status === "Present") bgClass = "bg-green-900/40 border-green-500/30 text-green-300";
                             if (status === "Absent") bgClass = "bg-red-900/40 border-red-500/30 text-red-300";
                             if (isSelected) bgClass += " ring-2 ring-blue-500";
@@ -4756,7 +4756,7 @@ function StudentAttendanceCalendar({ showMessage, buttonClass, primaryButtonClas
                         })}
                     </div>
 
-                    <div className="flex gap-4 mt-4 text-xs text-slate-400 justify-center">
+                    <div className="flex gap-4 mt-4 text-xs text-slate-500 justify-center">
                         <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-green-500"></div> Present</div>
                         <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-red-500"></div> Absent</div>
                         <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-slate-700"></div> No Data</div>
@@ -4764,8 +4764,8 @@ function StudentAttendanceCalendar({ showMessage, buttonClass, primaryButtonClas
                 </div>
 
                 {/* Details View */}
-                <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10">
-                    <h5 className="text-xl font-bold text-slate-300 mb-4">
+                <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200">
+                    <h5 className="text-xl font-bold text-slate-700 mb-4">
                         {selectedDay ? `Details for ${viewDate.toLocaleString('default', { month: 'long' })} ${selectedDay}` : "Select a date to view details"}
                     </h5>
 
@@ -4773,7 +4773,7 @@ function StudentAttendanceCalendar({ showMessage, buttonClass, primaryButtonClas
                         <div className="space-y-3">
                             {getDayDetails(selectedDay).length > 0 ? getDayDetails(selectedDay).map((r, idx) => (
                                 <div key={idx} className={`p-3 rounded-lg border flex justify-between items-center ${r.status === 'Present' ? 'bg-green-900/10 border-green-500/20' : 'bg-red-900/10 border-red-500/20'}`}>
-                                    <span className="font-medium text-slate-200">{r.subject}</span>
+                                    <span className="font-medium text-slate-800">{r.subject}</span>
                                     <span className={`px-2 py-0.5 rounded text-xs font-bold ${r.status === 'Present' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>{r.status}</span>
                                 </div>
                             )) : <div className="text-slate-500 italic">No classes recorded for this day.</div>}
@@ -4904,10 +4904,10 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
     const renderUpload = () => (
         <div className="space-y-4 max-w-xl mx-auto text-center animate-in fade-in zoom-in duration-300">
             <div className="p-4 bg-blue-500/10 rounded-full w-fit mx-auto mb-4">
-                <Upload className="w-8 h-8 text-blue-400" />
+                <Upload className="w-8 h-8 text-blue-600" />
             </div>
-            <h3 className="text-2xl font-bold text-white">Setup Your Routine</h3>
-            <p className="text-slate-400">
+            <h3 className="text-2xl font-bold text-slate-900">Setup Your Routine</h3>
+            <p className="text-slate-500">
                 Paste your routine text or upload an image/PDF.
             </p>
             <div className="space-y-3">
@@ -4915,11 +4915,11 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
                     value={routineText}
                     onChange={e => setRoutineText(e.target.value)}
                     placeholder="Ex: Monday: Math 10am, Physics 12pm..."
-                    className="w-full h-32 bg-slate-800/50 border border-white/10 rounded-xl p-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none"
+                    className="w-full h-32 bg-slate-50/50 border border-slate-200 rounded-xl p-4 text-slate-900 focus:ring-2 focus:ring-blue-500/50 outline-none"
                 />
                 <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-white/10" />
+                        <span className="w-full border-t border-slate-200" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
                         <span className="bg-slate-900 px-2 text-slate-500">Or Upload File</span>
@@ -4929,11 +4929,11 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
                     type="file"
                     accept=".txt,.pdf,.png,.jpg,.jpeg,.webp"
                     onChange={e => setFile(e.target.files[0])}
-                    className="block w-full text-sm text-slate-400
+                    className="block w-full text-sm text-slate-500
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-blue-500/10 file:text-blue-400
+                        file:bg-blue-500/10 file:text-blue-600
                         hover:file:bg-blue-500/20
                         cursor-pointer"
                 />
@@ -4946,10 +4946,10 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
                 {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : "Process Routine with AI"}
             </button>
             {/* Divider */}
-            <div className="pt-4 border-t border-white/5 mt-4">
+            <div className="pt-4 border-t border-slate-100 mt-4">
                 <button
                     onClick={() => setView("checkin")}
-                    className="text-sm text-slate-500 hover:text-white underline"
+                    className="text-sm text-slate-500 hover:text-slate-900 underline"
                 >
                     Cancel / Go Back
                 </button>
@@ -4961,25 +4961,25 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-end">
                 <div>
-                    <h3 className="text-xl font-bold text-white mb-6">Today's Classes</h3>
+                    <h3 className="text-xl font-bold text-slate-900 mb-6">Today's Classes</h3>
                     <div className="space-y-4 mb-6">
                         {Object.keys(attendanceMap).length === 0 ? (
-                            <div className="p-4 bg-slate-800/50 rounded-xl text-slate-400 text-sm">
+                            <div className="p-4 bg-slate-50/50 rounded-xl text-slate-500 text-sm">
                                 No classes found for today in your routine.
                             </div>
                         ) : Object.keys(attendanceMap).map((subject, i) => (
-                            <div key={i} className="flex items-center justify-between p-4 bg-slate-800/40 border border-white/5 rounded-xl">
-                                <span className="font-semibold text-slate-200">{subject}</span>
+                            <div key={i} className="flex items-center justify-between p-4 bg-slate-50/40 border border-slate-100 rounded-xl">
+                                <span className="font-semibold text-slate-800">{subject}</span>
                                 <div className="flex bg-slate-900 rounded-lg p-1">
                                     <button
                                         onClick={() => setAttendanceMap({ ...attendanceMap, [subject]: "Present" })}
-                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Present" ? "bg-green-500 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Present" ? "bg-green-500 text-slate-900 shadow-xl shadow-slate-200/50" : "text-slate-500 hover:text-slate-900"}`}
                                     >
                                         P
                                     </button>
                                     <button
                                         onClick={() => setAttendanceMap({ ...attendanceMap, [subject]: "Absent" })}
-                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Absent" ? "bg-red-500 text-white shadow-lg" : "text-slate-500 hover:text-white"}`}
+                                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${attendanceMap[subject] === "Absent" ? "bg-red-500 text-slate-900 shadow-xl shadow-slate-200/50" : "text-slate-500 hover:text-slate-900"}`}
                                     >
                                         A
                                     </button>
@@ -4999,14 +4999,14 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
                         <button
                             onClick={() => handleMarkAttendance('no_class')}
                             disabled={isLoading}
-                            className={`${buttonClass} border border-slate-600 hover:bg-slate-800 w-full text-slate-300`}
+                            className={`${buttonClass} border border-slate-600 hover:bg-slate-50 w-full text-slate-700`}
                         >
                             No Classes Today
                         </button>
                     </div>
 
-                    <div className="mt-6 flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-4">
-                        <button onClick={fetchStats} className="hover:text-blue-400 flex items-center gap-1">
+                    <div className="mt-6 flex justify-between items-center text-xs text-slate-500 border-t border-slate-100 pt-4">
+                        <button onClick={fetchStats} className="hover:text-blue-600 flex items-center gap-1">
                             <BarChart3 className="w-3 h-3" /> View Stats
                         </button>
                         <button onClick={handleDeleteRoutine} className="hover:text-red-400 flex items-center gap-1">
@@ -5021,11 +5021,11 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
     const renderMarked = () => (
         <div className="text-center py-10 space-y-6 animate-in zoom-in duration-300">
             <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto ring-4 ring-emerald-500/10">
-                <CheckCircle className="w-10 h-10 text-emerald-400" />
+                <CheckCircle className="w-10 h-10 text-emerald-600" />
             </div>
             <div>
-                <h3 className="text-2xl font-bold text-white mb-2">You're All Set!</h3>
-                <p className="text-slate-400 max-w-sm mx-auto">
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">You're All Set!</h3>
+                <p className="text-slate-500 max-w-sm mx-auto">
                     {todayData?.status === 'marked_no_class' ? "Enjoy your day off! " : "Attendance for today has been recorded."}
                 </p>
                 {todayData?.fun_message && (
@@ -5034,7 +5034,7 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
                     </div>
                 )}
             </div>
-            <button onClick={fetchStats} className="text-blue-400 hover:text-blue-300 underline font-medium">
+            <button onClick={fetchStats} className="text-blue-600 hover:text-blue-300 underline font-medium">
                 View My Statistics
             </button>
         </div>
@@ -5043,10 +5043,10 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
     const renderHoliday = () => (
         <div className="text-center py-10 space-y-6 animate-in zoom-in duration-300">
             <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto ring-4 ring-amber-500/10">
-                <Sparkles className="w-10 h-10 text-amber-400" />
+                <Sparkles className="w-10 h-10 text-amber-600" />
             </div>
             <div>
-                <h3 className="text-2xl font-bold text-white mb-2">Happy Sunday!</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">Happy Sunday!</h3>
                 <div className="mt-4 p-6 bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl max-w-md mx-auto relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10"><Sparkles className="w-20 h-20" /></div>
                     <p className="text-amber-200 text-lg font-medium leading-relaxed">
@@ -5054,7 +5054,7 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
                     </p>
                 </div>
             </div>
-            <button onClick={fetchStats} className="text-blue-400 hover:text-blue-300 underline font-medium">
+            <button onClick={fetchStats} className="text-blue-600 hover:text-blue-300 underline font-medium">
                 View Statistics
             </button>
         </div>
@@ -5063,14 +5063,14 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
     const renderStats = () => (
         <div className="space-y-6 animate-in slide-in-from-right duration-300">
             <div className="flex items-center gap-4 mb-6">
-                <button onClick={fetchTodayStatus} className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
+                <button onClick={fetchTodayStatus} className="p-2 rounded-lg bg-slate-50 hover:bg-slate-700 text-slate-700 transition-colors">
                     <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h3 className="text-2xl font-bold text-white">Attendance Analytics</h3>
+                <h3 className="text-2xl font-bold text-slate-900">Attendance Analytics</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-1 bg-gradient-to-br from-blue-600 to-indigo-600 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden">
+                <div className="md:col-span-1 bg-gradient-to-br from-blue-600 to-indigo-600 p-6 rounded-2xl shadow-xl text-slate-900 relative overflow-hidden">
                     <div className="relative z-10">
                         <div className="text-blue-200 text-sm font-bold uppercase tracking-wider mb-1">Overall Attendance</div>
                         <div className="text-5xl font-bold">{stats?.overall || 0}%</div>
@@ -5081,12 +5081,12 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
 
                 <div className="md:col-span-2 grid gap-3">
                     {stats?.subject_wise?.map((sub, i) => (
-                        <div key={i} className="bg-slate-800/50 p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                        <div key={i} className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
                             <div>
-                                <div className="font-bold text-slate-200">{sub.subject}</div>
+                                <div className="font-bold text-slate-800">{sub.subject}</div>
                                 <div className="text-xs text-slate-500">{sub.present}/{sub.total} Classes Attended</div>
                             </div>
-                            <div className={`text-xl font-bold ${sub.percentage >= 75 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            <div className={`text-xl font-bold ${sub.percentage >= 75 ? 'text-emerald-600' : 'text-red-400'}`}>
                                 {sub.percentage}%
                             </div>
                         </div>
@@ -5108,9 +5108,9 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
     );
 
     return (
-        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 min-h-[400px]">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 min-h-[400px]">
             {isLoading && view === 'loading' ? (
-                <div className="h-full flex flex-col items-center justify-center p-20 text-blue-400">
+                <div className="h-full flex flex-col items-center justify-center p-20 text-blue-600">
                     <Loader2 className="w-10 h-10 animate-spin mb-4" />
                     <span className="text-sm font-medium">Syncing with Orbit...</span>
                 </div>
@@ -5147,30 +5147,30 @@ function AcademicInsights({ user, showMessage }) {
         fetchInsights();
     }, []);
 
-    if (loading) return <div className="text-center py-20 text-slate-400 animate-pulse">Consulting AI Counselor...</div>;
+    if (loading) return <div className="text-center py-20 text-slate-500 animate-pulse">Consulting AI Counselor...</div>;
     if (!data) return <div className="text-center py-20 text-slate-500">No insights available.</div>;
 
     return (
         <div className="space-y-6 animate-fade-in-up">
             {/* Header */}
             <div className="flex items-center gap-3 mb-2">
-                <div className="p-3 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/20">
-                    <Sparkles className="w-6 h-6 text-white" />
+                <div className="p-3 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-xl shadow-slate-200/50 shadow-fuchsia-500/20">
+                    <Sparkles className="w-6 h-6 text-slate-900" />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold text-white tracking-tight">AI Academic Insights</h2>
-                    <p className="text-slate-400 text-sm">Personalized analysis powered by Groq AI</p>
+                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight">AI Academic Insights</h2>
+                    <p className="text-slate-500 text-sm">Personalized analysis powered by Groq AI</p>
                 </div>
             </div>
 
             {/* Counselor Message Card */}
-            <div className="bg-slate-800/60 backdrop-blur-xl border border-violet-500/30 rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/50 transition-all">
+            <div className="bg-slate-50/60 backdrop-blur-xl border border-violet-500/30 rounded-2xl p-6 relative overflow-hidden group hover:border-violet-500/50 transition-all">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
                 <h3 className="text-lg font-semibold text-violet-300 mb-3 flex items-center gap-2">
                     <BrainCircuit className="w-5 h-5" />
                     Counselor's Note
                 </h3>
-                <p className="text-slate-200 leading-relaxed text-lg italic opacity-90">
+                <p className="text-slate-800 leading-relaxed text-lg italic opacity-90">
                     "{data.counselor_message}"
                 </p>
             </div>
@@ -5196,7 +5196,7 @@ function AcademicInsights({ user, showMessage }) {
 
                 {/* Priorities - Yellow Theme */}
                 <div className="bg-slate-900/50 border border-amber-500/20 rounded-xl p-5 hover:bg-slate-900/80 transition-all">
-                    <h4 className="text-amber-400 font-bold mb-4 flex items-center gap-2 border-b border-amber-500/10 pb-2">
+                    <h4 className="text-amber-600 font-bold mb-4 flex items-center gap-2 border-b border-amber-500/10 pb-2">
                         <Target className="w-5 h-5" /> Focus Priorities
                     </h4>
                     {data.priorities && data.priorities.length > 0 ? (
@@ -5215,12 +5215,12 @@ function AcademicInsights({ user, showMessage }) {
 
             {/* Suggestions - Green Theme */}
             <div className="bg-slate-900/50 border border-emerald-500/20 rounded-xl p-6 hover:bg-slate-900/80 transition-all">
-                <h4 className="text-emerald-400 font-bold mb-4 flex items-center gap-2 border-b border-emerald-500/10 pb-2">
+                <h4 className="text-emerald-600 font-bold mb-4 flex items-center gap-2 border-b border-emerald-500/10 pb-2">
                     <Lightbulb className="w-5 h-5" /> Improvement Plan
                 </h4>
                 <div className="grid gap-3">
                     {data.suggestions.map((tip, i) => (
-                        <div key={i} className="flex gap-3 text-slate-300 text-sm bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
+                        <div key={i} className="flex gap-3 text-slate-700 text-sm bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
                             <span className="text-emerald-500 font-bold font-mono">{i + 1}.</span>
                             <span>{tip}</span>
                         </div>
@@ -5295,8 +5295,8 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
-                <h5 className="text-lg font-bold text-blue-400 mb-4 ml-2">Student Hub</h5>
+            <div className="w-full md:w-56 bg-white/80 backdrop-blur-xl p-4 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
+                <h5 className="text-lg font-bold text-blue-600 mb-4 ml-2">Student Hub</h5>
                 <nav className="space-y-1 relative hidden md:block" ref={navRef}>
                     <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-blue-600/20 border border-blue-500/30 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
                     {navigation.map(item => (
@@ -5306,7 +5306,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
                             onClick={() => setView(item.key)}
                             className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
                                 ? 'text-blue-300'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                         >
                             <item.icon className="w-5 h-5 mr-3" />
@@ -5317,23 +5317,23 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
                 {/* Mobile Navigation Dropdown */}
                 <div className="md:hidden">
                     <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600 pointer-events-none" />
                         <select
                             value={view}
                             onChange={(e) => setView(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-blue-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-blue-500/50 shadow-lg font-semibold"
+                            className="w-full bg-slate-50/80 border border-blue-500/30 rounded-xl py-3 pl-10 pr-4 text-slate-900 appearance-none outline-none focus:ring-2 focus:ring-blue-500/50 shadow-xl shadow-slate-200/50 font-semibold"
                         >
                             {navigation.map(item => (
-                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                <option key={item.key} value={item.key} className="bg-slate-900 text-slate-900 py-2">
                                     {item.label}
                                 </option>
                             ))}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
                     </div>
                 </div>
             </div>
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-slate-200 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
                 {renderView()}
             </div>
@@ -5448,15 +5448,15 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
         <div className="flex h-[600px] gap-4 relative isolate overflow-hidden">
             {/* Sidebar: Faculty List - Mobile Drawer */}
             <div className={`
-                absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
-                md:static md:w-1/3 md:bg-slate-900/60 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col md:shadow-none md:translate-x-0
+                absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-slate-200 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
+                md:static md:w-1/3 md:bg-white/80 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col md:shadow-none md:translate-x-0
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-0 md:p-0'}
             `}>
-                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                    <h5 className="font-bold text-lg text-white flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-blue-400" /> Contacts
+                <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white/5">
+                    <h5 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                        <Mail className="w-5 h-5 text-blue-600" /> Contacts
                     </h5>
-                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                    <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-500 hover:text-slate-900 transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                 </div>
@@ -5465,15 +5465,15 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
                         <div
                             key={p.id}
                             onClick={() => selectProfessor(p)}
-                            className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${selectedProf?.id === p.id ? 'bg-blue-900/20 border-l-4 border-l-blue-500' : ''}`}
+                            className={`p-4 border-b border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors ${selectedProf?.id === p.id ? 'bg-blue-900/20 border-l-4 border-l-blue-500' : ''}`}
                         >
                             <div className="flex justify-between items-start mb-1">
-                                <div className="font-semibold text-slate-200">Prof. {p.name}</div>
+                                <div className="font-semibold text-slate-800">Prof. {p.name}</div>
                                 {p.unread_count > 0 && (
-                                    <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full">{p.unread_count} new</span>
+                                    <span className="bg-blue-500 text-slate-900 text-[10px] px-2 py-0.5 rounded-full">{p.unread_count} new</span>
                                 )}
                             </div>
-                            <div className="text-xs text-blue-400 mb-1">{p.allocations && p.allocations.length > 0 ? p.allocations.join(", ") : "General Faculty"}</div>
+                            <div className="text-xs text-blue-600 mb-1">{p.allocations && p.allocations.length > 0 ? p.allocations.join(", ") : "General Faculty"}</div>
                             {p.last_message && (
                                 <>
                                     <div className="text-xs text-slate-500 truncate">{p.last_message}</div>
@@ -5494,22 +5494,22 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
             )}
 
             {/* Main Chat Area */}
-            <div className={`flex-1 flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden relative transition-all duration-300 ${sidebarOpen ? 'md:w-2/3' : 'w-full'}`}>
+            <div className={`flex-1 flex flex-col bg-white/80 backdrop-blur-xl border border-slate-200 rounded-xl overflow-hidden relative transition-all duration-300 ${sidebarOpen ? 'md:w-2/3' : 'w-full'}`}>
                 {selectedProf ? (
                     <>
                         {/* Header */}
-                        <div className="p-4 border-b border-white/10 bg-slate-800/50 flex items-center shadow-sm z-10">
-                            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-white/5 transition-colors text-white">
+                        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex items-center shadow-sm z-10">
+                            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-slate-100 transition-colors text-slate-900">
                                 <Menu className="w-6 h-6" />
                             </button>
                             <div>
-                                <h4 className="font-bold text-white">Prof. {selectedProf.name}</h4>
-                                <p className="text-xs text-slate-400">Subject: {selectedProf.allocations && selectedProf.allocations.length > 0 ? selectedProf.allocations.join(", ") : "N/A"}</p>
+                                <h4 className="font-bold text-slate-900">Prof. {selectedProf.name}</h4>
+                                <p className="text-xs text-slate-500">Subject: {selectedProf.allocations && selectedProf.allocations.length > 0 ? selectedProf.allocations.join(", ") : "N/A"}</p>
                             </div>
                         </div>
 
                         {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
                             {activeThread.length === 0 ? (
                                 <div className="text-center text-slate-500 py-10 opacity-70">
                                     <p>Start a new conversation with Prof. {selectedProf.name}.</p>
@@ -5521,12 +5521,12 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
                                     return (
                                         <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                             <div className={`max-w-[70%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
-                                                ? 'bg-blue-600 text-white rounded-br-none'
-                                                : 'bg-slate-700 text-slate-200 rounded-bl-none'
+                                                ? 'bg-blue-600 text-slate-900 rounded-br-none'
+                                                : 'bg-slate-700 text-slate-800 rounded-bl-none'
                                                 }`}>
-                                                {!isMe && <div className="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-wider">Prof. {selectedProf.name}</div>}
+                                                {!isMe && <div className="text-[10px] text-slate-500 mb-1 font-bold uppercase tracking-wider">Prof. {selectedProf.name}</div>}
                                                 {msg.body}
-                                                <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
+                                                <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-500'}`}>
                                                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                             </div>
@@ -5538,10 +5538,10 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-4 bg-slate-800/80 border-t border-white/10">
+                        <div className="p-4 bg-slate-50/80 border-t border-slate-200">
                             <div className="flex gap-2">
                                 <textarea
-                                    className="flex-1 bg-slate-900 text-white rounded-xl border border-white/10 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
+                                    className="flex-1 bg-slate-900 text-slate-900 rounded-xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
                                     placeholder={`Message Prof. ${selectedProf.name}...`}
                                     value={replyText}
                                     onChange={e => setReplyText(e.target.value)}
@@ -5550,7 +5550,7 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={isSending || !replyText.trim()}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
+                                    className="bg-blue-600 hover:bg-blue-700 text-slate-900 p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
                                 >
                                     {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
                                 </button>
@@ -5562,7 +5562,7 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
                     </>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-600 relative">
-                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="absolute top-4 left-4 p-2 rounded-lg hover:bg-white/5 transition-colors text-slate-400">
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="absolute top-4 left-4 p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-500">
                             <Menu className="w-6 h-6" />
                         </button>
                         <Mail className="w-16 h-16 opacity-20 mb-4" />
@@ -5633,10 +5633,10 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
 
     return (
         <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-64 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
+            <div className="w-full md:w-64 bg-white/80 backdrop-blur-xl p-4 rounded-xl shadow-xl shadow-slate-200/50 border border-slate-200 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
                 <div className="mb-6 ml-2">
-                    <h5 className="text-lg font-bold text-rose-400">Parent Portal</h5>
-                    <p className="text-xs text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
+                    <h5 className="text-lg font-bold text-rose-600">Parent Portal</h5>
+                    <p className="text-xs text-slate-500">Viewing data for: <span className="text-slate-900 font-medium">{user.name.replace("'s Parent", "")}</span></p>
                 </div>
 
                 <nav className="space-y-1 relative hidden md:block" ref={navRef}>
@@ -5648,7 +5648,7 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
                             onClick={() => setView(item.key)}
                             className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
                                 ? 'text-rose-300'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                         >
                             <item.icon className="w-5 h-5 mr-3" />
@@ -5659,23 +5659,23 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
                 {/* Mobile Navigation Dropdown */}
                 <div className="md:hidden">
                     <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-400 pointer-events-none" />
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-600 pointer-events-none" />
                         <select
                             value={view}
                             onChange={(e) => setView(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-rose-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-rose-500/50 shadow-lg font-semibold"
+                            className="w-full bg-slate-50/80 border border-rose-500/30 rounded-xl py-3 pl-10 pr-4 text-slate-900 appearance-none outline-none focus:ring-2 focus:ring-rose-500/50 shadow-xl shadow-slate-200/50 font-semibold"
                         >
                             {navigation.map(item => (
-                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                <option key={item.key} value={item.key} className="bg-slate-900 text-slate-900 py-2">
                                     {item.label}
                                 </option>
                             ))}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
                     </div>
                 </div>
             </div>
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-white/80 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-slate-200 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
                 {renderView()}
             </div>
@@ -5792,9 +5792,9 @@ function App() {
     };
 
     const buttonClass = "w-full flex items-center justify-center px-4 py-3 font-semibold rounded-full shadow-md transition duration-200";
-    const primaryButtonClass = "bg-blue-600 hover:bg-blue-700 text-white";
-    const successButtonClass = "bg-green-600 hover:bg-green-700 text-white";
-    const dangerButtonClass = "bg-red-600 hover:bg-red-700 text-white";
+    const primaryButtonClass = "bg-blue-600 hover:bg-blue-700 text-slate-900";
+    const successButtonClass = "bg-green-600 hover:bg-green-700 text-slate-900";
+    const dangerButtonClass = "bg-red-600 hover:bg-red-700 text-slate-900";
 
 
     // Scroll to top when page changes to credentials (fixes mobile scroll issue)
@@ -5849,7 +5849,7 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen bg-transparent font-sans p-4 sm:p-8 text-white selection:bg-blue-500/30 selection:text-blue-200 relative overflow-x-hidden">
+        <div className="min-h-screen bg-transparent font-sans p-4 sm:p-8 text-slate-900 selection:bg-blue-500/30 selection:text-blue-200 relative overflow-x-hidden">
             {/* Global Background Elements */}
             <ParticleBackground />
             <div className="fixed inset-0 z-0 pointer-events-none">
@@ -5859,7 +5859,7 @@ function App() {
             </div>
 
             <div className="max-w-6xl mx-auto w-full relative z-10">
-                <div className="header flex justify-between items-center p-6 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 mb-8 sticky top-2 z-50 shadow-2xl">
+                <div className="header flex justify-between items-center p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200 mb-8 sticky top-2 z-50 shadow-2xl">
                     <div className="flex flex-col">
                         <OrbitLogo />
                         {/* <div className="text-xs text-blue-300/80 ml-14 mt-1 font-medium tracking-wide">Smart University ERP Portal</div> */}
@@ -5867,8 +5867,8 @@ function App() {
                     <div className="flex items-center space-x-3">
                         {user ? (
                             <>
-                                <span className="text-sm font-medium text-slate-300 mr-4 hidden sm:inline">{user.name} <span className="text-blue-400 uppercase">({user.role})</span></span>
-                                <button className={`${buttonClass} bg-red-500/10 hover:bg-red-500/90 text-red-400 hover:text-white border border-red-500/50 w-28 py-2.5 backdrop-blur-sm transition-all`} onClick={doLogout}><LogOut className="w-4 h-4 mr-2" /> Logout</button>
+                                <span className="text-sm font-medium text-slate-700 mr-4 hidden sm:inline">{user.name} <span className="text-blue-600 uppercase">({user.role})</span></span>
+                                <button className={`${buttonClass} bg-red-500/10 hover:bg-red-500/90 text-red-400 hover:text-slate-900 border border-red-500/50 w-28 py-2.5 backdrop-blur-sm transition-all`} onClick={doLogout}><LogOut className="w-4 h-4 mr-2" /> Logout</button>
                             </>
                         ) : null}
                     </div>
@@ -5882,16 +5882,16 @@ function App() {
 
                 {/* Footer with About Section - Only show when not logged in */}
                 {!user && (
-                    <footer className="mt-12 mb-8 pt-8 border-t border-white/10">
-                        <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 p-6 sm:p-8">
+                    <footer className="mt-12 mb-8 pt-8 border-t border-slate-200">
+                        <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-slate-200 p-6 sm:p-8">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                 {/* About Section */}
                                 <div>
-                                    <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center">
+                                    <h3 className="text-lg font-bold text-blue-600 mb-3 flex items-center">
                                         <Book className="w-5 h-5 mr-2" />
                                         About NoteOrbit
                                     </h3>
-                                    <p className="text-sm text-slate-300 leading-relaxed">
+                                    <p className="text-sm text-slate-700 leading-relaxed">
                                         A comprehensive academic management system designed to streamline student-faculty interactions,
                                         manage academic resources, and enhance the learning experience.
                                     </p>
@@ -5899,30 +5899,30 @@ function App() {
 
                                 {/* Core Team Section */}
                                 <div>
-                                    <h3 className="text-lg font-bold text-emerald-400 mb-3 flex items-center">
+                                    <h3 className="text-lg font-bold text-emerald-600 mb-3 flex items-center">
                                         <User className="w-5 h-5 mr-2" />
                                         Core Development Team
                                     </h3>
-                                    <div className="space-y-3 text-xs text-slate-300">
+                                    <div className="space-y-3 text-xs text-slate-700">
                                         <div>
                                             <div className="font-semibold text-emerald-300 mb-1">Sumit Kumar Sinha (3CSE37)</div>
-                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS2175 •  Fullstack Developer, Database Designer</div>
+                                            <div className="text-slate-500 pl-2">SRN: 24SUUBECS2175 •  Fullstack Developer, Database Designer</div>
                                         </div>
                                         <div>
                                             <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar (3CSE32)</div>
-                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1906 • Backend Developer</div>
+                                            <div className="text-slate-500 pl-2">SRN: 24SUUBECS1906 • Backend Developer</div>
                                         </div>
                                         <div>
                                             <div className="font-semibold text-emerald-300 mb-1">Santosh Kumar Sah (3CSE32)</div>
-                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1895 • Frontend Developer, Bugs Analyst</div>
+                                            <div className="text-slate-500 pl-2">SRN: 24SUUBECS1895 • Frontend Developer, Bugs Analyst</div>
                                         </div>
                                         <div>
                                             <div className="font-semibold text-emerald-300 mb-1">Raushan Kumar (3CSE29)</div>
-                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1711 • UI/UX Designer</div>
+                                            <div className="text-slate-500 pl-2">SRN: 24SUUBECS1711 • UI/UX Designer</div>
                                         </div>
                                         <div>
                                             <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar Thakur (3CSE32)</div>
-                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1908 • Bugs Analyst, UI/UX Tester</div>
+                                            <div className="text-slate-500 pl-2">SRN: 24SUUBECS1908 • Bugs Analyst, UI/UX Tester</div>
                                         </div>
                                     </div>
                                 </div>
@@ -5933,23 +5933,23 @@ function App() {
                                         <GraduationCap className="w-5 h-5 mr-2" />
                                         Institution & Contact
                                     </h3>
-                                    <div className="space-y-3 text-sm text-slate-300">
+                                    <div className="space-y-3 text-sm text-slate-700">
                                         <div>
                                             <div className="font-semibold text-yellow-300 mb-1">Sapthagiri NPS University</div>
-                                            <div className="text-slate-400 text-xs mb-2">Academic Year 2024-2028</div>
-                                            <div className="flex items-start text-xs text-slate-400">
+                                            <div className="text-slate-500 text-xs mb-2">Academic Year 2024-2028</div>
+                                            <div className="flex items-start text-xs text-slate-500">
                                                 <Home className="w-4 h-4 mr-2 mt-0.5 text-yellow-400 flex-shrink-0" />
                                                 <span>#14/5, Chikkasandra, Hesarghatta Main Road, Bengaluru – 560057</span>
                                             </div>
                                         </div>
-                                        <div className="pt-2 border-t border-white/5">
+                                        <div className="pt-2 border-t border-slate-100">
                                             <div className="flex items-start mb-2">
                                                 <Mail className="w-4 h-4 mr-2 mt-0.5 text-yellow-400 flex-shrink-0" />
-                                                <a href="mailto:info.noteorbit@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors break-all">
+                                                <a href="mailto:info.noteorbit@gmail.com" className="text-blue-600 hover:text-blue-300 transition-colors break-all">
                                                     info.noteorbit@gmail.com
                                                 </a>
                                             </div>
-                                            <div className="flex items-center text-xs text-slate-400">
+                                            <div className="flex items-center text-xs text-slate-500">
                                                 <span className="mr-2">📞</span>
                                                 <span>9771719891, 7033688853</span>
                                             </div>
@@ -5959,12 +5959,12 @@ function App() {
                             </div>
 
                             {/* Copyright & Branding */}
-                            <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <div className="text-xs text-slate-400 text-center sm:text-left">
+                            <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                                <div className="text-xs text-slate-500 text-center sm:text-left">
                                     <p>© 2026 NoteOrbit Academic Management System</p>
-                                    <p className="mt-1">Powered by <span className="text-blue-400 font-semibold">LeafCore Labs</span></p>
+                                    <p className="mt-1">Powered by <span className="text-blue-600 font-semibold">LeafCore Labs</span></p>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                <div className="flex items-center gap-2 text-xs text-slate-500">
                                     <span>Where Imagination is Redefined!</span>
                                 </div>
                             </div>
