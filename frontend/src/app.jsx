@@ -195,15 +195,30 @@ const MessageBar = ({ message, type, onClose }) => {
     );
 };
 
-// --- NEW COMPONENT: Welcome Loader Overlay ---
+// --- NEW COMPONENT: Welcome Loader Overlay (Enhanced) ---
 const WelcomeLoader = () => (
-    <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-500">
-        <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse"></div>
-            <Loader2 className="w-16 h-16 text-blue-400 animate-spin relative z-10" />
+    <div className="fixed inset-0 z-[5000] bg-slate-950/90 backdrop-blur-2xl flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="relative flex items-center justify-center">
+            {/* Ambient Glow */}
+            <div className="absolute w-[200px] h-[200px] bg-blue-500/20 rounded-full blur-[80px] animate-pulse"></div>
+
+            {/* Orbital Rings Grid */}
+            <div className="w-24 h-24 border-4 border-blue-500/10 rounded-full animate-[spin_8s_linear_infinite]"></div>
+            <div className="absolute w-20 h-20 border-t-4 border-l-4 border-blue-400/80 rounded-full animate-[spin_3s_linear_infinite]"></div>
+            <div className="absolute w-16 h-16 border-r-4 border-b-4 border-purple-500/80 rounded-full animate-[spin_3s_linear_infinite_reverse]"></div>
+
+            {/* Central Core */}
+            <div className="absolute bg-white p-2 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)] animate-bounce-slight">
+                <Loader2 className="w-6 h-6 text-slate-900 animate-spin" />
+            </div>
         </div>
-        <h2 className="mt-8 text-2xl font-bold text-white tracking-wide animate-in slide-in-from-bottom-4 duration-700">Authenticating...</h2>
-        <p className="mt-2 text-slate-400 text-sm animate-in slide-in-from-bottom-4 duration-700 delay-150">Please wait while we prepare your dashboard.</p>
+
+        <h2 className="mt-8 text-3xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 animate-pulse">
+            Authenticating...
+        </h2>
+        <p className="mt-2 text-slate-400 text-sm font-medium tracking-wide animate-in slide-in-from-bottom-2 duration-700 delay-150">
+            Accessing Secure Dashboard
+        </p>
     </div>
 );
 
