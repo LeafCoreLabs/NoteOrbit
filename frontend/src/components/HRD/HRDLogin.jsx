@@ -1,11 +1,11 @@
-// HRDLogin.jsx - Premium GSAP Enabled HRD Login
+// HRDLogin.jsx - Exact Replica of Student Login Card for HRD
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, BriefcaseBusiness, Loader2, Warehouse } from 'lucide-react';
-import axios from 'axios';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, Loader2, BriefcaseBusiness } from 'lucide-react';
+import { api } from '../../api'; // Use configured API instance
 import gsap from 'gsap';
 import ParticleBackground from '../../components/ParticleBackground';
 
-// Reusing the exact Input component from App.jsx for consistency
+// Exact Input Component from App.jsx
 const Input = ({ icon: Icon, className = '', type = 'text', ...props }) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === 'password';
@@ -13,11 +13,11 @@ const Input = ({ icon: Icon, className = '', type = 'text', ...props }) => {
 
     return (
         <div className="relative group">
-            {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-indigo-400 transition-colors" />}
+            {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-purple-400 transition-colors" />}
             <input
                 {...props}
                 type={inputType}
-                className={`w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-gray-500 border border-white/10 rounded-xl py-3.5 ${Icon ? 'pl-12' : 'px-4'} ${isPassword ? 'pr-12' : 'pr-4'} focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition duration-300 hover:bg-slate-800/80 ${className}`}
+                className={`w-full bg-slate-800/50 backdrop-blur-xl text-white placeholder-gray-500 border border-white/10 rounded-xl py-3.5 ${Icon ? 'pl-12' : 'px-4'} ${isPassword ? 'pr-12' : 'pr-4'} focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 outline-none transition duration-300 hover:bg-slate-800/80 ${className}`}
             />
             {isPassword && (
                 <button
@@ -39,55 +39,43 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
     const [error, setError] = useState('');
 
     // Animation Refs
-    const containerRef = useRef(null);
-    const formRef = useRef(null);
-    const titleRef = useRef(null);
+    const cardRef = useRef(null);
 
-    // Initial GSAP Animation
+    // Initial GSAP Animation (Card Flip/Persp Effect base)
     useEffect(() => {
-        const tl = gsap.timeline();
-
-        // Match the "Buttery Smooth" feel
-        tl.fromTo(containerRef.current,
-            { opacity: 0, scale: 0.95 },
-            { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" }
-        )
-            .fromTo(titleRef.current,
-                { opacity: 0, y: -20 },
-                { opacity: 1, y: 0, duration: 0.6, ease: "back.out(1.7)" },
-                "-=0.4"
-            )
-            .fromTo(formRef.current.children,
-                { opacity: 0, x: -20 },
-                { opacity: 1, x: 0, stagger: 0.1, duration: 0.5, ease: "power2.out" },
-                "-=0.4"
+        if (cardRef.current) {
+            gsap.fromTo(cardRef.current,
+                { opacity: 0, y: 20, rotationX: 10 },
+                { opacity: 1, y: 0, rotationX: 0, duration: 0.8, ease: "power3.out" }
             );
-
+        }
     }, []);
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
+    const handleLogin = async () => {
+        if (!email || !password) {
+            setError("Please enter email and password.");
+            return;
+        }
+
         setError('');
         setLoading(true);
 
         try {
-            // Using relative path which now works via Vite Proxy
-            const response = await axios.post('/hrd/login', { email, password });
+            // Using correct api instance
+            const response = await api.post('/hrd/login', { email, password });
 
             if (response.data.success) {
                 const token = response.data.token;
                 const user = response.data.user;
 
-                // Store token and user info
                 localStorage.setItem('noteorbit_token', token);
                 localStorage.setItem('noteorbit_user', JSON.stringify(user));
 
-                // Success Animation before transition
-                gsap.to(containerRef.current, {
+                // Success transition
+                gsap.to(cardRef.current, {
                     scale: 1.05,
                     opacity: 0,
-                    duration: 0.4,
-                    ease: "power2.in",
+                    duration: 0.3,
                     onComplete: () => {
                         setToken(token);
                         setUserRole('HRD');
@@ -96,113 +84,103 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
                 });
             } else {
                 setError(response.data.message || 'Login failed');
-                // Shake animation on error
-                gsap.fromTo(containerRef.current,
-                    { x: -10 },
-                    { x: 10, duration: 0.1, repeat: 5, yoyo: true, ease: "none", onComplete: () => gsap.set(containerRef.current, { x: 0 }) }
-                );
+                // Shake on error
+                gsap.fromTo(cardRef.current, { x: -5 }, { x: 5, duration: 0.1, repeat: 5, yoyo: true });
             }
         } catch (err) {
             console.error("Login Error:", err);
             setError(err.response?.data?.message || 'Connection failed. Please check backend.');
-            gsap.fromTo(containerRef.current,
-                { x: -10 },
-                { x: 10, duration: 0.1, repeat: 5, yoyo: true, ease: "none", onComplete: () => gsap.set(containerRef.current, { x: 0 }) }
-            );
+            // Shake on error
+            gsap.fromTo(cardRef.current, { x: -5 }, { x: 5, duration: 0.1, repeat: 5, yoyo: true });
         } finally {
             setLoading(false);
         }
     };
 
+    // Button Classes from App.jsx
+    const buttonClass = "w-full flex items-center justify-center px-4 py-3 font-semibold rounded-full shadow-md transition duration-200";
+    const primaryButtonClass = "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"; // HRD Theme
+
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden py-8 px-4 font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
-            {/* 1. Global Background */}
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden py-8 px-4 font-sans selection:bg-purple-500/30 selection:text-purple-200">
+            {/* Global Background */}
             <ParticleBackground />
 
-            {/* 2. Ambient Glows (Matches other portals) */}
+            {/* Ambient Glows */}
             <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] opacity-20 animate-pulse" />
-                <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] opacity-20" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] opacity-20" />
             </div>
 
-            {/* Back Button */}
-            <button
-                onClick={() => { setPage('user_type'); setUserRole(null); }}
-                className="absolute top-6 left-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors z-50 group"
-            >
-                <div className="p-2 bg-white/5 rounded-full group-hover:bg-white/10 transition-colors">
-                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                </div>
-                <span className="text-sm font-medium">Back to Portal</span>
-            </button>
+            {/* Container with Perspective - Exact match to CredentialsView container */}
+            <div style={{ perspective: "1000px" }} className="w-full max-w-md mx-auto relative z-10">
+                <div ref={cardRef} className="relative w-full transition-all duration-500" style={{ transformStyle: "preserve-3d" }}>
 
-            {/* Main Login Card */}
-            <div ref={containerRef} className="relative w-full max-w-md z-10 mx-auto">
-                <div className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-                    {/* Glass Shine Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                    {/* FRONT FACE (Login) - Copied structure from CredentialsView */}
+                    <div className="relative w-full bg-black/20 md:bg-slate-900/60 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl border border-white/10 overflow-hidden"
+                        style={{ backfaceVisibility: "hidden" }}>
 
-                    {/* Header */}
-                    <div ref={titleRef} className="text-center mb-10 relative z-10">
-                        <div className="w-20 h-20 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/30 transform rotate-3 hover:rotate-6 transition-transform duration-500">
-                            <BriefcaseBusiness className="w-10 h-10 text-white" />
+                        {/* Top Gradient Bar */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50" />
+
+                        <div className="flex justify-center mb-6">
+                            <div className="p-3 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-2xl border border-white/5">
+                                <BriefcaseBusiness className="w-8 h-8 text-purple-400" />
+                            </div>
                         </div>
-                        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">HRD Portal</h2>
-                        <p className="text-slate-400 text-sm">Placement & Career Services</p>
-                    </div>
 
-                    {/* Error Message */}
-                    {error && (
-                        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                            {error}
+                        <h3 className="text-3xl font-bold mb-8 text-white text-center tracking-tight">HRD Portal</h3>
+
+                        {/* Error Display */}
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="space-y-5">
+                            <Input
+                                icon={Mail}
+                                type="email"
+                                placeholder="HRD Email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                            <div>
+                                <Input
+                                    icon={Lock}
+                                    type="password"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                />
+                                <div className="text-right mt-2">
+                                    <button className="text-xs text-purple-400 hover:text-purple-300 disabled:opacity-50" disabled>
+                                        Forgot Password?
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 pt-4">
+                                <button
+                                    className={`${buttonClass} flex-1 bg-slate-800 text-slate-300 hover:bg-slate-700`}
+                                    onClick={() => { setPage('user_type'); setUserRole(null); }}
+                                    disabled={loading}
+                                >
+                                    <ArrowLeft className="w-5 h-5 mr-1" /> Back
+                                </button>
+                                <button
+                                    className={`${buttonClass} flex-1 ${primaryButtonClass}`}
+                                    onClick={handleLogin}
+                                    disabled={loading}
+                                >
+                                    {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Sign In"}
+                                </button>
+                            </div>
                         </div>
-                    )}
 
-                    {/* Login Form */}
-                    <form ref={formRef} onSubmit={handleLogin} className="space-y-6 relative z-10">
-
-                        <Input
-                            icon={Mail}
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Official HRD Email"
-                            required
-                        />
-
-                        <Input
-                            icon={Lock}
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Secure Password"
-                            required
-                        />
-
-                        {/* Login Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span>Authenticating...</span>
-                                </>
-                            ) : (
-                                <span>Sign In to Dashboard</span>
-                            )}
-                        </button>
-                    </form>
-
-                    {/* Footer / Demo Credentials */}
-                    <div className="mt-8 pt-6 border-t border-white/5 text-center">
-                        <p className="text-xs text-slate-500 mb-4">Authorized Personnel Only</p>
-
-                        <div className="inline-block px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
-                            <p className="text-xs text-indigo-300 font-medium">Demo: hrd@noteorbit.edu / hrdsnpsu123</p>
+                        {/* Demo Creds Footer */}
+                        <div className="mt-8 pt-4 border-t border-white/5 text-center">
+                            <p className="text-xs text-slate-500">Demo: hrd@noteorbit.edu / hrdsnpsu123</p>
                         </div>
                     </div>
                 </div>
