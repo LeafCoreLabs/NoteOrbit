@@ -227,18 +227,47 @@ const WelcomeLoader = () => (
 // ----------------------------------------------
 // --- AUTH COMPONENTS ---
 // --- REBUILT WELCOME SCREEN (3D CAROUSEL + SWIPE + HEADER) ---
+// --- REBUILT WELCOME SCREEN (GSAP CAROUSEL) ---
 function UserTypeSelection({ setUserRole, setPage }) {
     const [activeIndex, setActiveIndex] = useState(0);
     const containerRef = useRef(null);
+    const cardRefs = useRef([]); // Refs for individual cards
     const touchStart = useRef(null);
     const touchEnd = useRef(null);
 
     const roles = [
-        { ui: 'Student', icon: GraduationCap, subtitle: 'Access notes, results & more', gradient: 'from-blue-500 to-blue-600', shadow: 'shadow-blue-500/30', border: 'border-blue-500/50' },
-        { ui: 'Faculty', icon: ClipboardList, subtitle: 'Manage classes & attendance', gradient: 'from-emerald-500 to-emerald-600', shadow: 'shadow-emerald-500/30', border: 'border-emerald-500/50' },
-        { ui: 'Parent', icon: Home, subtitle: 'Track your ward\'s progress', gradient: 'from-pink-500 to-pink-600', shadow: 'shadow-pink-500/30', border: 'border-pink-500/50' },
-        { ui: 'Admin', icon: BriefcaseBusiness, subtitle: 'System configuration', gradient: 'from-amber-500 to-amber-600', shadow: 'shadow-amber-500/30', border: 'border-amber-500/50' },
+        { ui: 'Student', icon: GraduationCap, subtitle: 'Access notes, results & more', gradient: 'from-blue-500 to-blue-600', shadow: 'shadow-blue-500/30', border: 'border-blue-500/50', btnText: 'Sign In / Sign Up' },
+        { ui: 'Faculty', icon: ClipboardList, subtitle: 'Manage classes & attendance', gradient: 'from-emerald-500 to-emerald-600', shadow: 'shadow-emerald-500/30', border: 'border-emerald-500/50', btnText: 'Sign In' },
+        { ui: 'Parent', icon: Home, subtitle: 'Track your ward\'s progress', gradient: 'from-pink-500 to-pink-600', shadow: 'shadow-pink-500/30', border: 'border-pink-500/50', btnText: 'Sign In' },
+        { ui: 'Admin', icon: BriefcaseBusiness, subtitle: 'System configuration', gradient: 'from-amber-500 to-amber-600', shadow: 'shadow-amber-500/30', border: 'border-amber-500/50', btnText: 'Sign In' },
     ];
+
+    // GSAP ANIMATION LOGIC
+    useEffect(() => {
+        roles.forEach((_, index) => {
+            const offset = index - activeIndex;
+            const isActive = index === activeIndex;
+
+            // Calculate properties
+            const xTrans = offset * (window.innerWidth < 768 ? 260 : 340);
+            const scale = isActive ? 1.05 : 0.85;
+            const opacity = isActive ? 1 : 0.3;
+            const zIndex = isActive ? 50 : 10 - Math.abs(offset);
+            const rotateY = offset * -15;
+
+            // Animate using GSAP
+            gsap.to(cardRefs.current[index], {
+                x: xTrans,
+                scale: scale,
+                opacity: opacity,
+                zIndex: zIndex,
+                rotateY: rotateY,
+                duration: 0.6,
+                ease: "power3.out", // Smooth easing
+                overwrite: "auto"
+            });
+        });
+    }, [activeIndex]);
 
     // Swipe Handlers
     const onTouchStart = (e) => { touchEnd.current = null; touchStart.current = e.targetTouches[0].clientX; }
@@ -255,8 +284,7 @@ function UserTypeSelection({ setUserRole, setPage }) {
     const nextRole = () => { if (activeIndex < roles.length - 1) setActiveIndex(prev => prev + 1); }
     const prevRole = () => { if (activeIndex > 0) setActiveIndex(prev => prev - 1); }
 
-    const handleContinue = () => {
-        const role = roles[activeIndex];
+    const handleContinue = (role) => {
         gsap.to(containerRef.current, {
             opacity: 0, scale: 0.95, duration: 0.3, onComplete: () => {
                 setUserRole(role.ui);
@@ -307,29 +335,18 @@ function UserTypeSelection({ setUserRole, setPage }) {
 
                 {roles.map((role, index) => {
                     const isActive = index === activeIndex;
-                    const offset = index - activeIndex;
-                    const isVisible = Math.abs(offset) <= 2;
-
-                    if (!isVisible) return null;
-
-                    // Smoother Transforms
-                    let xTrans = offset * (window.innerWidth < 768 ? 260 : 340); // Responsive spacing
-                    let scale = isActive ? 1.05 : 0.85;
-                    let opacity = isActive ? 1 : 0.3;
-                    let zIndex = isActive ? 50 : 10 - Math.abs(offset);
-                    let rotateY = offset * -15;
 
                     return (
                         <div
                             key={role.ui}
+                            ref={el => cardRefs.current[index] = el}
                             onClick={() => setActiveIndex(index)}
-                            className="absolute w-[260px] md:w-[320px] transition-all duration-[600ms] cubic-bezier(0.23, 1, 0.32, 1) cursor-pointer"
+                            className="absolute w-[260px] md:w-[320px] cursor-pointer"
                             style={{
-                                transform: `translateX(${xTrans}px) scale(${scale}) perspective(1000px) rotateY(${rotateY}deg)`,
-                                opacity: opacity,
-                                zIndex: zIndex,
                                 left: '50%',
                                 marginLeft: window.innerWidth < 768 ? -130 : -160,
+                                // Initial transform for SSR/First paint, GSAP takes over immediately
+                                transform: 'perspective(1000px)'
                             }}
                         >
                             <div className={`p-6 md:p-8 rounded-3xl backdrop-blur-2xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-2xl
@@ -348,10 +365,19 @@ function UserTypeSelection({ setUserRole, setPage }) {
                                 <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 md:mb-3 relative z-10">{role.ui}</h3>
                                 <p className="text-xs md:text-sm text-slate-400 font-medium relative z-10 px-2">{role.subtitle}</p>
 
-                                <div className={`mt-6 md:mt-8 px-5 py-2 rounded-full border border-white/10 text-[10px] md:text-xs font-bold uppercase tracking-wider transition-colors z-10
-                                    ${isActive ? 'bg-white text-slate-900' : 'bg-white/5 text-slate-500'}`}>
-                                    {isActive ? 'Enter Portal' : 'Select'}
-                                </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent card click
+                                        if (isActive) handleContinue(role);
+                                        else setActiveIndex(index);
+                                    }}
+                                    className={`mt-6 md:mt-8 px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all z-10 shadow-lg transform active:scale-95
+                                    ${isActive
+                                            ? 'bg-white text-slate-900 hover:bg-slate-100'
+                                            : 'bg-white/5 text-slate-500 cursor-default'}`}
+                                >
+                                    {role.btnText} {isActive && <ArrowRight className="w-4 h-4 inline-block ml-1" />}
+                                </button>
                             </div>
                         </div>
                     );
@@ -368,16 +394,6 @@ function UserTypeSelection({ setUserRole, setPage }) {
                             }`}
                     />
                 ))}
-            </div>
-
-            {/* Continue Button (Floating) - Only visible if active */}
-            <div className="mt-8 z-10">
-                <button
-                    onClick={handleContinue}
-                    className="group relative px-8 py-3 md:py-4 bg-white text-slate-900 rounded-2xl font-bold text-base md:text-lg shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3"
-                >
-                    Proceed <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
             </div>
 
             <div className="mt-auto pt-8 pb-4 text-center z-10">
