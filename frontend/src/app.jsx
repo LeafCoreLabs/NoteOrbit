@@ -633,6 +633,52 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         }
     }, [authMode]);
 
+    const handleSendSignupOtp = async () => {
+        if (!regEmail || !regEmail.trim()) return showMessage("Email is required.", "error");
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(regEmail)) return showMessage("Please enter a valid email address.", "error");
+        setIsLoading(true);
+        try {
+            const res = await sendOtp(regEmail, "signup");
+            showMessage(res.data.message || "OTP sent successfully", "success");
+            setIsOtpSent(true);
+        } catch (e) { showMessage(e.response?.data?.message || "Failed to send OTP", "error"); }
+        finally { setIsLoading(false); }
+    };
+
+    const handleVerifySignupOtp = async () => {
+        if (!otp || otp.length !== 6) return showMessage("Please enter a valid 6-digit OTP.", "error");
+        setIsLoading(true);
+        try {
+            await verifyOtp(regEmail, otp);
+            showMessage("Email verified!", "success");
+            setIsVerified(true);
+            setRegStep(2); // Move to details
+        } catch (e) { showMessage(e.response?.data?.message || "Invalid OTP", "error"); }
+        finally { setIsLoading(false); }
+    };
+
+    // Password validation function
+    const validatePassword = (password) => {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+        return {
+            isValid: password.length >= minLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar,
+            errors: {
+                minLength: password.length >= minLength,
+                hasUpperCase,
+                hasLowerCase,
+                hasNumber,
+                hasSpecialChar
+            }
+        };
+    };
+
     // Enhanced Handle Login with Animations
     const handleLogin = async () => {
         if (!email || !password) {
