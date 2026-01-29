@@ -6005,6 +6005,18 @@ function App() {
                                                 <span>9771719891, 7033688853</span>
                                             </div>
                                         </div>
+
+                                        <div className="pt-2 mt-2 border-t border-white/5">
+                                            <a
+                                                href="https://docs.google.com/forms/d/e/1FAIpQLSc4V44detvlfsLSphLF3-QsGM_zw0MQ4vYt4LVzMmhwBp1s5A/viewform"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center text-sm font-bold text-pink-400 hover:text-pink-300 transition-colors bg-pink-500/10 px-3 py-2 rounded-lg border border-pink-500/20 hover:bg-pink-500/20"
+                                            >
+                                                <MessageSquare className="w-4 h-4 mr-2" />
+                                                Share Feedback
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
