@@ -586,49 +586,39 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
     const isStudent = userRole === 'Student';
     const isParent = userRole === 'Parent';
 
-    const [flipRotation, setFlipRotation] = useState(0);
-    const cardRef = useRef(null);
+    // Refs for Animation
+    const titleRef = useRef(null);
+    const formRef = useRef(null);
 
-    // NEW: Handle Login with Immediate Feedback
-    const handleLogin = async () => {
-        if (!email || !password) return showMessage("Please enter email and password.", "error");
-        setIsLoading(true);
-        try {
-            await onLogin(email, password);
-            // Note: If successful, the parent component handles the transition, so we don't strictly need to set isLoading(false) here immediately,
-            // but if the parent *doesn't* unmount us immediately (e.g. wait animation), keeping it loading is good.
-            // However, onLogin is async. If it throws, we catch it.
-        } catch (e) {
-            setIsLoading(false);
-        }
-    };
+    // GSAP Entrance Animation (Exact Replica of HRD)
     useEffect(() => {
-        if (loaded && degrees?.length > 0) !degree && setDegree(degrees[0]);
-        if (loaded && sections?.length > 0) !section && setSection(sections[0]);
-    }, [loaded, degrees, sections]);
+        // Reset check for re-mounting
+        const ctx = gsap.context(() => {
+            const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-    useEffect(() => {
-        // On the registration details step, sections are context-dependent (degree + semester)
-        if (!isStudent || regStep !== 2) return;
-        if (!degree || !semester) return;
+            // Card entrance with 3D rotation
+            tl.fromTo(cardRef.current,
+                { opacity: 0, y: 30, rotationX: 15, scale: 0.9 },
+                { opacity: 1, y: 0, rotationX: 0, scale: 1, duration: 0.8, force3D: true }
+            )
+                // Title slide in
+                .fromTo(titleRef.current,
+                    { opacity: 0, y: 20 },
+                    { opacity: 1, y: 0, duration: 0.5 },
+                    "-=0.4"
+                )
+                // Stagger form inputs (children of form container)
+                .fromTo(formRef.current?.children || [],
+                    { opacity: 0, x: -20 },
+                    { opacity: 1, x: 0, stagger: 0.1, duration: 0.5 },
+                    "-=0.3"
+                );
+        });
 
-        const { fetchSections } = catalogs;
+        return () => ctx.revert();
+    }, [authMode]); // Re-run on authMode toggle (Login <-> Register)
 
-        (async () => {
-            const secs = await fetchSections(degree, semester);
-            if (!secs?.length) {
-                setSection("");
-                return;
-            }
-            // Only set if not already set or not in list
-            if (!section || !secs.includes(section)) {
-                setSection(secs[0]);
-            }
-        })();
-        // Removed 'section' and 'catalogs' to avoid loops. 'degree' and 'semester' changing is the trigger.
-    }, [isStudent, regStep, degree, semester, catalogs.fetchSections]);
-
-    // Flip Animation Effect
+    // Flip Animation Effect (existing but refined)
     useEffect(() => {
         if (cardRef.current) {
             gsap.to(cardRef.current, {
@@ -642,73 +632,31 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         }
     }, [authMode]);
 
-    const handleSendSignupOtp = async () => {
-        if (!regEmail || !regEmail.trim()) return showMessage("Email is required.", "error");
-        // Basic email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(regEmail)) return showMessage("Please enter a valid email address.", "error");
-        setIsLoading(true);
-        try {
-            const res = await sendOtp(regEmail, "signup");
-            showMessage(res.data.message || "OTP sent successfully", "success");
-            setIsOtpSent(true);
-        } catch (e) { showMessage(e.response?.data?.message || "Failed to send OTP", "error"); }
-        finally { setIsLoading(false); }
-    };
-
-    const handleVerifySignupOtp = async () => {
-        if (!otp || otp.length !== 6) return showMessage("Please enter a valid 6-digit OTP.", "error");
-        setIsLoading(true);
-        try {
-            await verifyOtp(regEmail, otp);
-            showMessage("Email verified!", "success");
-            setIsVerified(true);
-            setRegStep(2); // Move to details
-        } catch (e) { showMessage(e.response?.data?.message || "Invalid OTP", "error"); }
-        finally { setIsLoading(false); }
-    };
-
-    // Password validation function
-    const validatePassword = (password) => {
-        const minLength = 8;
-        const hasUpperCase = /[A-Z]/.test(password);
-        const hasLowerCase = /[a-z]/.test(password);
-        const hasNumber = /[0-9]/.test(password);
-        const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-
-        return {
-            isValid: password.length >= minLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar,
-            errors: {
-                minLength: password.length >= minLength,
-                hasUpperCase,
-                hasLowerCase,
-                hasNumber,
-                hasSpecialChar
-            }
-        };
-    };
-
-    const handleRegisterSubmit = async () => {
-        // Validate all required fields
-        if (!srn.trim()) return showMessage("SRN is required.", "error");
-        if (!name.trim()) return showMessage("Full Name is required.", "error");
-        if (!regPassword) return showMessage("Password is required.", "error");
-        if (!regConfirmPassword) return showMessage("Please confirm your password.", "error");
-        if (!degree) return showMessage("Please select a degree.", "error");
-        if (!semester) return showMessage("Please select a semester.", "error");
-        if (!section) return showMessage("Please select a section.", "error");
-
-        // Validate password format
-        const passwordValidation = validatePassword(regPassword);
-        if (!passwordValidation.isValid) {
-            return showMessage("Password must contain: at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.", "error");
+    // Enhanced Handle Login with Animations
+    const handleLogin = async () => {
+        if (!email || !password) {
+            // Shake animation on empty input
+            gsap.fromTo(cardRef.current,
+                { x: -10 },
+                { x: 10, duration: 0.08, repeat: 6, yoyo: true, ease: "none", clearProps: "x" }
+            );
+            return showMessage("Please enter email and password.", "error");
         }
-
-        // Validate password match
-        if (regPassword !== regConfirmPassword) return showMessage("Passwords do not match.", "error");
-
-        // Prepare payload with OTP for backend re-verification
-        onRegister({ srn, name, email: regEmail, password: regPassword, degree, semester: parseInt(semester), section, otp, role: userRole.toLowerCase() });
+        setIsLoading(true);
+        try {
+            await onLogin(email, password);
+            // Success Animation (if handled here, but usually parent unmounts)
+            gsap.to(cardRef.current, {
+                scale: 1.05, opacity: 0, rotationY: 10, duration: 0.4, ease: "power2.in",
+            });
+        } catch (e) {
+            setIsLoading(false);
+            // Shake animation on error
+            gsap.fromTo(cardRef.current,
+                { x: -10 },
+                { x: 10, duration: 0.08, repeat: 6, yoyo: true, ease: "none", clearProps: "x" }
+            );
+        }
     };
 
     return (
@@ -807,7 +755,7 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                     {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} showMessage={showMessage} primaryButtonClass={primaryButtonClass} userRole={userRole} />}
 
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
-                    <h3 className="text-3xl font-bold mb-8 text-white text-center tracking-tight">{userRole} Portal</h3>
+                    <h3 ref={titleRef} className="text-3xl font-bold mb-8 text-white text-center tracking-tight">{userRole} Portal</h3>
 
                     {isStudent && (
                         <div className="flex justify-center mb-8">
@@ -818,7 +766,7 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
                         </div>
                     )}
 
-                    <div className="space-y-5">
+                    <div ref={formRef} className="space-y-5">
                         <Input icon={isParent ? User : Mail} placeholder={isParent ? "Ward's SRN" : "Email Address"} value={email} onChange={e => setEmail(e.target.value)} />
                         <div>
                             <Input icon={Lock} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
