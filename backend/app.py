@@ -59,6 +59,8 @@ PASSWORD_SALT = os.getenv("PASSWORD_SALT", "noteorbit_salt_v1")
 DEFAULT_ADMIN_EMAIL = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@noteorbit.edu")
 DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
 DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
+HRD_EMAIL = os.getenv("HRD_EMAIL", "hrd@noteorbit.edu")
+HRD_PASSWORD = os.getenv("HRD_PASSWORD", "hrdsnpsu123")
 FLASK_RUN_PORT = int(os.getenv("FLASK_RUN_PORT", 5000))
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
@@ -638,8 +640,145 @@ class Message(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+# ==================== HRD (PLACEMENT CELL) MODELS ====================
 
-# -------------------- AUTH / RBAC HELPERS --------------------
+class HRDUser(db.Model):
+    __tablename__ = "hrd_users"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(200), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(20), nullable=True)
+    department = db.Column(db.String(100), default="Placement Cell")
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Company(db.Model):
+    __tablename__ = "companies"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    sector = db.Column(db.String(100), nullable=True)
+    website = db.Column(db.String(300), nullable=True)
+    hr_name = db.Column(db.String(200), nullable=True)
+    hr_email = db.Column(db.String(200), nullable=True)
+    hr_phone = db.Column(db.String(20), nullable=True)
+    visit_history = db.Column(db.JSON, default=[])
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class PlacementDrive(db.Model):
+    __tablename__ = "placement_drives"
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey("companies.id", ondelete="CASCADE"), nullable=False)
+    title = db.Column(db.String(300), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    role = db.Column(db.String(200), nullable=False)
+    ctc_min = db.Column(db.Float, nullable=True) 
+    ctc_max = db.Column(db.Float, nullable=True)
+    location = db.Column(db.String(200), nullable=True)
+    drive_type = db.Column(db.String(50), default="on_campus")
+    eligibility_criteria = db.Column(db.JSON, default={})
+    application_start = db.Column(db.DateTime, nullable=True)
+    application_end = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(50), default="open")
+    created_by = db.Column(db.Integer, db.ForeignKey("hrd_users.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class StudentPlacementProfile(db.Model):
+    __tablename__ = "student_placement_profiles"
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), unique=True, nullable=False)
+    resume_url = db.Column(db.String(500), nullable=True)
+    skills = db.Column(db.JSON, default=[])
+    certifications = db.Column(db.JSON, default=[])
+    projects = db.Column(db.JSON, default=[])
+    github_url = db.Column(db.String(300), nullable=True)
+    linkedin_url = db.Column(db.String(300), nullable=True)
+    portfolio_url = db.Column(db.String(300), nullable=True)
+    preferred_location = db.Column(db.String(200), nullable=True)
+    preferred_role = db.Column(db.String(200), nullable=True)
+    min_expected_ctc = db.Column(db.Float, nullable=True)
+    profile_updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class DriveApplication(db.Model):
+    __tablename__ = "drive_applications"
+    id = db.Column(db.Integer, primary_key=True)
+    drive_id = db.Column(db.Integer, db.ForeignKey("placement_drives.id", ondelete="CASCADE"), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    applied_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default="applied")
+    withdrawal_reason = db.Column(db.Text, nullable=True)
+    tags = db.Column(db.JSON, default=[])
+    __table_args__ = (
+        db.UniqueConstraint("drive_id", "student_id", name="uq_drive_application"),
+    )
+
+class InterviewRound(db.Model):
+    __tablename__ = "interview_rounds"
+    id = db.Column(db.Integer, primary_key=True)
+    drive_id = db.Column(db.Integer, db.ForeignKey("placement_drives.id", ondelete="CASCADE"), nullable=False)
+    round_name = db.Column(db.String(100), nullable=False)
+    round_order = db.Column(db.Integer, default=1)
+    scheduled_date = db.Column(db.DateTime, nullable=True)
+
+class InterviewResult(db.Model):
+    __tablename__ = "interview_results"
+    id = db.Column(db.Integer, primary_key=True)
+    round_id = db.Column(db.Integer, db.ForeignKey("interview_rounds.id", ondelete="CASCADE"), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    result = db.Column(db.String(50), nullable=False)
+    feedback = db.Column(db.Text, nullable=True)
+    recorded_by = db.Column(db.Integer, db.ForeignKey("hrd_users.id"), nullable=False)
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class PlacementOffer(db.Model):
+    __tablename__ = "placement_offers"
+    id = db.Column(db.Integer, primary_key=True)
+    drive_id = db.Column(db.Integer, db.ForeignKey("placement_drives.id", ondelete="CASCADE"), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    role = db.Column(db.String(200), nullable=False)
+    ctc = db.Column(db.Float, nullable=False)
+    location = db.Column(db.String(200), nullable=True)
+    offer_letter_url = db.Column(db.String(500), nullable=True)
+    joining_date = db.Column(db.Date, nullable=True)
+    bond_details = db.Column(db.Text, nullable=True)
+    offer_date = db.Column(db.Date, default=datetime.utcnow)
+    expiry_date = db.Column(db.Date, nullable=True)
+    status = db.Column(db.String(50), default="pending")
+    student_response_date = db.Column(db.DateTime, nullable=True)
+    rejection_reason = db.Column(db.Text, nullable=True)
+
+class HRDAnnouncement(db.Model):
+    __tablename__ = "hrd_announcements"
+    id = db.Column(db.Integer, primary_key=True)
+    created_by = db.Column(db.Integer, db.ForeignKey("hrd_users.id"), nullable=False)
+    title = db.Column(db.String(300), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    target_audience = db.Column(db.String(100), default="all")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class AIAnalysisCache(db.Model):
+    __tablename__ = "ai_analysis_cache"
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    resume_url = db.Column(db.String(500), nullable=False)
+    skills_extracted = db.Column(db.JSON, default=[])
+    quality_score = db.Column(db.Integer, default=0)
+    ats_score = db.Column(db.Integer, default=0)
+    analyzed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class PlacementActivityLog(db.Model):
+    __tablename__ = "placement_activity_logs"
+    id = db.Column(db.Integer, primary_key=True)
+    actor_id = db.Column(db.Integer, nullable=False)
+    actor_role = db.Column(db.String(20), nullable=False)
+    action = db.Column(db.String(100), nullable=False)
+    entity_type = db.Column(db.String(50), nullable=False)
+    entity_id = db.Column(db.Integer, nullable=False)
+    details = db.Column(db.JSON, default={})
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 
 def roles_allowed(roles):
     def decorator(fn):
@@ -702,7 +841,170 @@ def admin_only(fn):
     return wrapper
 
 
-# -------------------- AUTH & ADMIN ROUTES --------------------
+# ==================== GROQ AI INTEGRATION FOR HRD ====================
+
+def groq_ai_call(messages, temperature=0.7):
+    """Make a request to Groq AI API using llama-3.3-70b-versatile model."""
+    if not GROQ_API_KEY:
+        return {"error": "GROQ_API_KEY not configured"}
+    
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": 2048
+            },
+            timeout=30
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"Groq AI Error: {e}")
+        return {"error": str(e)}
+
+def extract_skills_from_resume(resume_text):
+    """Use Groq AI to extract skills from resume text."""
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a resume parser. Extract skills, certifications, and projects from the resume. Return ONLY a valid JSON object with keys: skills (array of strings), certifications (array of strings), projects (array of strings). Do not include any markdown formatting or extra text."
+        },
+        {
+            "role": "user",
+            "content": f"Parse this resume:\n\n{resume_text[:3000]}"
+        }
+    ]
+    
+    result = groq_ai_call(messages, temperature=0.3)
+    
+    if "error" in result:
+        return {"skills": [], "certifications": [], "projects": [], "error": result["error"]}
+    
+    try:
+        content = result.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("\n", 1)[1].rsplit("\n", 1)[0]
+        parsed = json.loads(content)
+        return {
+            "skills": parsed.get("skills", []),
+            "certifications": parsed.get("certifications", []),
+            "projects": parsed.get("projects", [])
+        }
+    except Exception as e:
+        print(f"Parse error: {e}")
+        return {"skills": [], "certifications": [], "projects": [], "error": str(e)}
+
+def analyze_resume_quality(resume_text):
+    """Use Groq AI to score resume quality (0-100)."""
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a resume quality analyzer. Rate the resume on a scale of 0-100 for both Quality and ATS compatibility. Return ONLY a valid JSON object with keys: quality_score (int 0-100), ats_score (int 0-100), feedback (string). Quality considers structure, grammar, achievements. ATS considers keyword density, formatting."
+        },
+        {
+            "role": "user",
+            "content": f"Analyze this resume:\n\n{resume_text[:3000]}"
+        }
+    ]
+    
+    result = groq_ai_call(messages, temperature=0.3)
+    
+    if "error" in result:
+        return {"quality_score": 0, "ats_score": 0, "feedback": "Analysis failed", "error": result["error"]}
+    
+    try:
+        content = result.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("\n", 1)[1].rsplit("\n", 1)[0]
+        parsed = json.loads(content)
+        return {
+            "quality_score": int(parsed.get("quality_score", 0)),
+            "ats_score": int(parsed.get("ats_score", 0)),
+            "feedback": parsed.get("feedback", "")
+        }
+    except Exception as e:
+        return {"quality_score": 0, "ats_score": 0, "feedback": "Parse error", "error": str(e)}
+
+def calculate_role_fit(student_skills, job_requirements):
+    """Calculate role-fit percentage and provide explainable insights."""
+    student_set = set([s.lower().strip() for s in student_skills])
+    job_set = set([r.lower().strip() for r in job_requirements])
+    
+    matched = list(student_set.intersection(job_set))
+    missing = list(job_set - student_set)
+    
+    if len(job_set) == 0:
+        match_pct = 0
+    else:
+        match_pct = int((len(matched) / len(job_set)) * 100)
+    
+    explanation = f"Match: {match_pct}%. Has: {', '.join(matched[:5]) if matched else 'None'}. Missing: {', '.join(missing[:5]) if missing else 'None'}"
+    
+    return {
+        "match_percentage": match_pct,
+        "matched": matched,
+        "missing": missing,
+        "explanation": explanation
+    }
+
+def analyze_batch_skills(student_skills_list):
+    """Batch-level skill analysis."""
+    skill_count = {}
+    for skills in student_skills_list:
+        for skill in skills:
+            skill_lower = skill.lower()
+            skill_count[skill_lower] = skill_count.get(skill_lower, 0) + 1
+    
+    sorted_skills = sorted(skill_count.items(), key=lambda x: x[1], reverse=True)
+    top_skills = [{"skill": k, "count": v} for k, v in sorted_skills[:10]]
+    
+    return {
+        "top_skills": top_skills,
+        "total_unique_skills": len(skill_count),
+        "distribution": skill_count
+    }
+
+# ==================== HRD HELPER DECORATORS ====================
+
+def hrd_required(fn):
+    """Decorator to ensure HRD role authentication"""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            verify_jwt_in_request()
+            claims = get_jwt()
+        except Exception as e:
+            return jsonify({"success": False, "message": "Authentication required"}), 401
+        
+        if claims.get("role") != "hrd":
+            return jsonify({"success": False, "message": "HRD access required"}), 403
+        
+        return fn(*args, **kwargs)
+    return wrapper
+
+def log_hrd_activity(actor_id, actor_role, action, entity_type, entity_id, details={}):
+    """Helper to log HRD activities"""
+    log = PlacementActivityLog(
+        actor_id=actor_id,
+        actor_role=actor_role,
+        action=action,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        details=details
+    )
+    db.session.add(log)
+    db.session.commit()
+
+
 
 
 # -------------------- AUTHENTICATION & SECURITY ENDPOINTS (OTP) --------------------
@@ -2788,6 +3090,22 @@ def init_db():
 
     # Create Messages table if it doesn't exist (handled by create_all normally, but just to be sure if adding to existing DB)
     # db.create_all() handles it
+    
+    # HRD (Placement Cell) Default Admin Creation
+    hrd_email = HRD_EMAIL
+    hrd_password = HRD_PASSWORD
+    if not HRDUser.query.filter_by(email=hrd_email).first():
+        hrd_admin = HRDUser(
+            email=hrd_email,
+            password_hash=hash_password(hrd_password),
+            name="HRD Admin",
+            phone=None,
+            department="Placement Cell",
+            is_active=True
+        )
+        db.session.add(hrd_admin)
+        db.session.commit()
+        print(f"Created default HRD admin: {hrd_email}")
 
     os.makedirs(RECEIPT_TMP_DIR, exist_ok=True)
 
@@ -3473,6 +3791,793 @@ def get_stats():
         "subject_wise": final_subs,
         "history": [] # TODO: Add history list if needed
     })
+
+# Register Blueprint
+# ==================== HRD (PLACEMENT CELL) REST API ROUTES ====================
+
+# ----- HRD AUTHENTICATION -----
+@app.route("/hrd/login", methods=["POST"])
+def hrd_login():
+    """HRD login endpoint"""
+    data = request.json or {}
+    email = data.get("email")
+    password = data.get("password")
+    
+    if not email or not password:
+        return jsonify({"success": False, "message": "Email and password required"}), 400
+    
+    hrd_user = HRDUser.query.filter_by(email=email).first()
+    if not hrd_user or hrd_user.password_hash != hash_password(password):
+        return jsonify({"success": False, "message": "Invalid credentials"}), 401
+    
+    if not hrd_user.is_active:
+        return jsonify({"success": False, "message": "Account inactive"}), 403
+    
+    token = create_access_token(identity=hrd_user.id, additional_claims={"role": "hrd"})
+    
+    return jsonify({
+        "success": True,
+        "token": token,
+        "user": {
+            "id": hrd_user.id,
+            "name": hrd_user.name,
+            "email": hrd_user.email,
+            "department": hrd_user.department,
+            "role": "hrd"
+        }
+    })
+
+# ----- COMPANY MANAGEMENT -----
+@app.route("/hrd/companies", methods=["POST"])
+@hrd_required
+def create_company():
+    """Create a new company"""
+    data = request.json or {}
+    
+    try:
+        company = Company(
+            name=data.get("name"),
+            sector=data.get("sector"),
+            website=data.get("website"),
+            hr_name=data.get("hr_name"),
+            hr_email=data.get("hr_email"),
+            hr_phone=data.get("hr_phone"),
+            visit_history=data.get("visit_history", [])
+        )
+        db.session.add(company)
+        db.session.commit()
+        
+        hrd_id = get_jwt_identity()
+        log_hrd_activity(hrd_id, "hrd", "created_company", "company", company.id, {"name": company.name})
+        
+        return jsonify({"success": True, "company_id": company.id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/hrd/companies", methods=["GET"])
+@hrd_required
+def get_companies():
+    """Get all companies"""
+    companies = Company.query.filter_by(is_active=True).all()
+    return jsonify({
+        "success": True,
+        "companies": [{
+            "id": c.id,
+            "name": c.name,
+            "sector": c.sector,
+            "website": c.website,
+            "hr_name": c.hr_name,
+            "hr_email": c.hr_email,
+            "hr_phone": c.hr_phone,
+            "visit_history": c.visit_history,
+            "created_at": c.created_at.isoformat()
+        } for c in companies]
+    })
+
+@app.route("/hrd/companies/<int:company_id>", methods=["GET"])
+@hrd_required
+def get_company(company_id):
+    """Get company details"""
+    company = Company.query.get(company_id)
+    if not company:
+        return jsonify({"success": False, "message": "Company not found"}), 404
+    
+    return jsonify({
+        "success": True,
+        "company": {
+            "id": company.id,
+            "name": company.name,
+            "sector": company.sector,
+            "website": company.website,
+            "hr_name": company.hr_name,
+            "hr_email": company.hr_email,
+            "hr_phone": company.hr_phone,
+            "visit_history": company.visit_history,
+            "created_at": company.created_at.isoformat()
+        }
+    })
+
+@app.route("/hrd/companies/<int:company_id>", methods=["PUT"])
+@hrd_required
+def update_company(company_id):
+    """Update company details"""
+    company = Company.query.get(company_id)
+    if not company:
+        return jsonify({"success": False, "message": "Company not found"}), 404
+    
+    data = request.json or {}
+    
+    try:
+        company.name = data.get("name", company.name)
+        company.sector = data.get("sector", company.sector)
+        company.website = data.get("website", company.website)
+        company.hr_name = data.get("hr_name", company.hr_name)
+        company.hr_email = data.get("hr_email", company.hr_email)
+        company.hr_phone = data.get("hr_phone", company.hr_phone)
+        company.visit_history = data.get("visit_history", company.visit_history)
+        
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/hrd/companies/<int:company_id>", methods=["DELETE"])
+@hrd_required
+def deactivate_company(company_id):
+    """Deactivate company"""
+    company = Company.query.get(company_id)
+    if not company:
+        return jsonify({"success": False, "message": "Company not found"}), 404
+    
+    company.is_active = False
+    db.session.commit()
+    return jsonify({"success": True})
+
+# ----- PLACEMENT DRIVE MANAGEMENT -----
+@app.route("/hrd/drives", methods=["POST"])
+@hrd_required
+def create_drive():
+    """Create placement drive"""
+    data = request.json or {}
+    hrd_id = get_jwt_identity()
+    
+    try:
+        drive = PlacementDrive(
+            company_id=data.get("company_id"),
+            title=data.get("title"),
+            description=data.get("description"),
+            role=data.get("role"),
+            ctc_min=data.get("ctc_min"),
+            ctc_max=data.get("ctc_max"),
+            location=data.get("location"),
+            drive_type=data.get("drive_type", "on_campus"),
+            eligibility_criteria=data.get("eligibility_criteria", {}),
+            application_start=datetime.fromisoformat(data.get("application_start")) if data.get("application_start") else None,
+            application_end=datetime.fromisoformat(data.get("application_end")) if data.get("application_end") else None,
+            created_by=hrd_id
+        )
+        db.session.add(drive)
+        db.session.commit()
+        
+        log_hrd_activity(hrd_id, "hrd", "created_drive", "drive", drive.id, {"title": drive.title})
+        
+        return jsonify({"success": True, "drive_id": drive.id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/hrd/drives", methods=["GET"])
+@hrd_required
+def get_drives():
+    """Get all placement drives"""
+    drives = PlacementDrive.query.all()
+    
+    result = []
+    for d in drives:
+        company = Company.query.get(d.company_id)
+        applications_count = DriveApplication.query.filter_by(drive_id=d.id).count()
+        
+        result.append({
+            "id": d.id,
+            "company_name": company.name if company else "Unknown",
+            "title": d.title,
+            "role": d.role,
+            "ctc_min": d.ctc_min,
+            "ctc_max": d.ctc_max,
+            "status": d.status,
+            "applications_count": applications_count,
+            "application_end": d.application_end.isoformat() if d.application_end else None,
+            "created_at": d.created_at.isoformat()
+        })
+    
+    return jsonify({"success": True, "drives": result})
+
+@app.route("/hrd/drives/<int:drive_id>", methods=["GET"])
+@hrd_required
+def get_drive_details(drive_id):
+    """Get drive details with applicants"""
+    drive = PlacementDrive.query.get(drive_id)
+    if not drive:
+        return jsonify({"success": False, "message": "Drive not found"}), 404
+    
+    company = Company.query.get(drive.company_id)
+    applications = DriveApplication.query.filter_by(drive_id=drive_id).all()
+    
+    applicants = []
+    for app in applications:
+        student = User.query.get(app.student_id)
+        profile = StudentPlacementProfile.query.filter_by(student_id=app.student_id).first()
+        
+        applicants.append({
+            "application_id": app.id,
+            "student_id": app.student_id,
+            "student_name": student.name if student else "Unknown",
+            "student_email": student.email if student else "",
+            "degree": student.degree if student else "",
+            "semester": student.semester if student else "",
+            "status": app.status,
+            "applied_at": app.applied_at.isoformat(),
+            "tags": app.tags,
+            "skills": profile.skills if profile else [],
+            "resume_url": profile.resume_url if profile else None
+        })
+    
+    return jsonify({
+        "success": True,
+        "drive": {
+            "id": drive.id,
+            "company_name": company.name if company else "Unknown",
+            "title": drive.title,
+            "description": drive.description,
+            "role": drive.role,
+            "ctc_min": drive.ctc_min,
+            "ctc_max": drive.ctc_max,
+            "location": drive.location,
+            "drive_type": drive.drive_type,
+            "eligibility_criteria": drive.eligibility_criteria,
+            "application_start": drive.application_start.isoformat() if drive.application_start else None,
+            "application_end": drive.application_end.isoformat() if drive.application_end else None,
+            "status": drive.status,
+            "created_at": drive.created_at.isoformat()
+        },
+        "applicants": applicants
+    })
+
+@app.route("/hrd/drives/<int:drive_id>/eligible-students", methods=["GET"])
+@hrd_required
+def get_eligible_students(drive_id):
+    """Get eligible students for a drive based on criteria"""
+    drive = PlacementDrive.query.get(drive_id)
+    if not drive:
+        return jsonify({"success": False, "message": "Drive not found"}), 404
+    
+    criteria = drive.eligibility_criteria
+    cgpa_min = criteria.get("cgpa_min", 0)
+    branches = criteria.get("branches", [])
+    max_backlogs = criteria.get("max_backlogs", 10)
+    year = criteria.get("year", 4)
+    
+    # Query students based on criteria
+    query = User.query.filter_by(role="student", status="APPROVED")
+    
+    if branches:
+        query = query.filter(User.degree.in_(branches))
+    
+    if year:
+        query = query.filter_by(semester=year * 2)  # Assuming 2 semesters per year
+    
+    students = query.all()
+    
+    eligible = []
+    for student in students:
+        profile = StudentPlacementProfile.query.filter_by(student_id=student.id).first()
+        
+        eligible.append({
+            "student_id": student.id,
+            "name": student.name,
+            "email": student.email,
+            "srn": student.srn,
+            "degree": student.degree,
+            "semester": student.semester,
+            "skills": profile.skills if profile else [],
+            "resume_url": profile.resume_url if profile else None
+        })
+    
+    return jsonify({"success": True, "eligible_students": eligible, "count": len(eligible)})
+
+@app.route("/hrd/drives/<int:drive_id>", methods=["PUT"])
+@hrd_required
+def update_drive(drive_id):
+    """Update drive details"""
+    drive = PlacementDrive.query.get(drive_id)
+    if not drive:
+        return jsonify({"success": False, "message": "Drive not found"}), 404
+    
+    data = request.json or {}
+    
+    try:
+        drive.title = data.get("title", drive.title)
+        drive.description = data.get("description", drive.description)
+        drive.role = data.get("role", drive.role)
+        drive.ctc_min = data.get("ctc_min", drive.ctc_min)
+        drive.ctc_max = data.get("ctc_max", drive.ctc_max)
+        drive.location = data.get("location", drive.location)
+        drive.status = data.get("status", drive.status)
+        
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/hrd/applications/<int:app_id>/tag", methods=["PUT"])
+@hrd_required
+def tag_application(app_id):
+    """Add tags to application"""
+    application = DriveApplication.query.get(app_id)
+    if not application:
+        return jsonify({"success": False, "message": "Application not found"}), 404
+    
+    data = request.json or {}
+    tags = data.get("tags", [])
+    
+    application.tags = tags
+    db.session.commit()
+    
+    return jsonify({"success": True})
+
+# ----- OFFER MANAGEMENT -----
+@app.route("/hrd/offers", methods=["POST"])
+@hrd_required
+def create_offer():
+    """Create placement offer"""
+    data = request.json or {}
+    hrd_id = get_jwt_identity()
+    
+    try:
+        offer = PlacementOffer(
+            drive_id=data.get("drive_id"),
+            student_id=data.get("student_id"),
+            role=data.get("role"),
+            ctc=data.get("ctc"),
+            location=data.get("location"),
+            offer_letter_url=data.get("offer_letter_url"),
+            joining_date=datetime.strptime(data.get("joining_date"), "%Y-%m-%d").date() if data.get("joining_date") else None,
+            bond_details=data.get("bond_details"),
+            expiry_date=datetime.strptime(data.get("expiry_date"), "%Y-%m-%d").date() if data.get("expiry_date") else None
+        )
+        db.session.add(offer)
+        
+        # Update application status
+        application = DriveApplication.query.filter_by(
+            drive_id=data.get("drive_id"),
+            student_id=data.get("student_id")
+        ).first()
+        if application:
+            application.status = "offer_received"
+        
+        db.session.commit()
+        
+        log_hrd_activity(hrd_id, "hrd", "created_offer", "offer", offer.id, {"student_id": offer.student_id, "ctc": offer.ctc})
+        
+        # Send email notification to student
+        student = User.query.get(offer.student_id)
+        if student:
+            send_professional_email(
+                student.email,
+                "Placement Offer Received",
+                "Congratulations on your Placement Offer!",
+                {"Role": offer.role, "CTC": f"{offer.ctc} LPA", "Location": offer.location},
+                f"You have received a placement offer for the role of {offer.role}."
+            )
+        
+        return jsonify({"success": True, "offer_id": offer.id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/hrd/offers", methods=["GET"])
+@hrd_required
+def get_offers():
+    """Get all placement offers"""
+    offers = PlacementOffer.query.all()
+    
+    result = []
+    for offer in offers:
+        student = User.query.get(offer.student_id)
+        drive = PlacementDrive.query.get(offer.drive_id)
+        company = Company.query.get(drive.company_id) if drive else None
+        
+        result.append({
+            "id": offer.id,
+            "student_name": student.name if student else "Unknown",
+            "student_email": student.email if student else "",
+            "company_name": company.name if company else "Unknown",
+            "role": offer.role,
+            "ctc": offer.ctc,
+            "status": offer.status,
+            "offer_date": offer.offer_date.isoformat(),
+            "expiry_date": offer.expiry_date.isoformat() if offer.expiry_date else None
+        })
+    
+    return jsonify({"success": True, "offers": result})
+
+# ----- AI ANALYSIS -----
+@app.route("/hrd/ai/analyze-resume", methods=["POST"])
+@hrd_required
+def analyze_resume_endpoint():
+    """Analyze student resume using Groq AI"""
+    data = request.json or {}
+    resume_text = data.get("resume_text", "")
+    student_id = data.get("student_id")
+    
+    if not resume_text:
+        return jsonify({"success": False, "message": "Resume text required"}), 400
+    
+    # Extract skills
+    skills_result = extract_skills_from_resume(resume_text)
+    
+    # Analyze quality
+    quality_result = analyze_resume_quality(resume_text)
+    
+    # Cache results if student_id provided
+    if student_id:
+        cache = AIAnalysisCache.query.filter_by(student_id=student_id).first()
+        if cache:
+            cache.skills_extracted = skills_result.get("skills", [])
+            cache.quality_score = quality_result.get("quality_score", 0)
+            cache.ats_score = quality_result.get("ats_score", 0)
+            cache.analyzed_at = datetime.utcnow()
+        else:
+            cache = AIAnalysisCache(
+                student_id=student_id,
+                resume_url=data.get("resume_url", ""),
+                skills_extracted=skills_result.get("skills", []),
+                quality_score=quality_result.get("quality_score", 0),
+                ats_score=quality_result.get("ats_score", 0)
+            )
+            db.session.add(cache)
+        db.session.commit()
+    
+    return jsonify({
+        "success": True,
+        "skills": skills_result.get("skills", []),
+        "certifications": skills_result.get("certifications", []),
+        "projects": skills_result.get("projects", []),
+        "quality_score": quality_result.get("quality_score", 0),
+        "ats_score": quality_result.get("ats_score", 0),
+        "feedback": quality_result.get("feedback", "")
+    })
+
+@app.route("/hrd/ai/role-fit", methods=["POST"])
+@hrd_required
+def calculate_role_fit_endpoint():
+    """Calculate role-fit for student"""
+    data = request.json or {}
+    student_skills = data.get("student_skills", [])
+    job_requirements = data.get("job_requirements", [])
+    
+    result = calculate_role_fit(student_skills, job_requirements)
+    return jsonify({"success": True, **result})
+
+@app.route("/hrd/ai/batch-analysis", methods=["POST"])
+@hrd_required
+def batch_analysis():
+    """Analyze skills across all students"""
+    data = request.json or {}
+    drive_id = data.get("drive_id")
+    
+    if drive_id:
+        applications = DriveApplication.query.filter_by(drive_id=drive_id).all()
+        student_ids = [app.student_id for app in applications]
+    else:
+        students = User.query.filter_by(role="student").all()
+        student_ids = [s.id for s in students]
+    
+    all_skills = []
+    for student_id in student_ids:
+        profile = StudentPlacementProfile.query.filter_by(student_id=student_id).first()
+        if profile and profile.skills:
+            all_skills.append(profile.skills)
+    
+    analysis = analyze_batch_skills(all_skills)
+    
+    return jsonify({"success": True, **analysis})
+
+# ----- ANALYTICS -----
+@app.route("/hrd/analytics/overview", methods=["GET"])
+@hrd_required
+def analytics_overview():
+    """Overall placement statistics"""
+    total_students = User.query.filter_by(role="student", status="APPROVED").count()
+    total_offers = PlacementOffer.query.count()
+    accepted_offers = PlacementOffer.query.filter_by(status="accepted").count()
+    pending_offers = PlacementOffer.query.filter_by(status="pending").count()
+    
+    active_drives = PlacementDrive.query.filter_by(status="open").count()
+    
+    # Calculate placement percentage
+    placement_percentage = (accepted_offers / total_students * 100) if total_students > 0 else 0
+    
+    # Average CTC
+    offers = PlacementOffer.query.filter_by(status="accepted").all()
+    avg_ctc = sum([o.ctc for o in offers]) / len(offers) if offers else 0
+    max_ctc = max([o.ctc for o in offers]) if offers else 0
+    
+    return jsonify({
+        "success": True,
+        "total_students": total_students,
+        "total_offers": total_offers,
+        "accepted_offers": accepted_offers,
+        "pending_offers": pending_offers,
+        "active_drives": active_drives,
+        "placement_percentage": round(placement_percentage, 2),
+        "avg_ctc": round(avg_ctc, 2),
+        "max_ctc": max_ctc
+    })
+
+@app.route("/hrd/analytics/branch-wise", methods=["GET"])
+@hrd_required
+def analytics_branch_wise():
+    """Branch-wise placement statistics"""
+    degrees = db.session.query(User.degree).filter_by(role="student").distinct().all()
+    
+    result = []
+    for (degree,) in degrees:
+        total = User.query.filter_by(role="student", degree=degree).count()
+        
+        # Get placed students
+        placed_student_ids = [o.student_id for o in PlacementOffer.query.filter_by(status="accepted").all()]
+        placed_in_branch = User.query.filter(User.id.in_(placed_student_ids), User.degree == degree).count()
+        
+        placement_pct = (placed_in_branch / total * 100) if total > 0 else 0
+        
+        result.append({
+            "branch": degree,
+            "total": total,
+            "placed": placed_in_branch,
+            "percentage": round(placement_pct, 2)
+        })
+    
+    return jsonify({"success": True, "branch_wise": result})
+
+# ----- STUDENT PLACEMENT ROUTES -----
+@app.route("/student/placement/profile", methods=["GET"])
+@jwt_required()
+def get_student_placement_profile():
+    """Get student placement profile"""
+    student_id = get_jwt_identity()
+    
+    profile = StudentPlacementProfile.query.filter_by(student_id=student_id).first()
+    
+    if not profile:
+        return jsonify({"success": True, "profile": None})
+    
+    return jsonify({
+        "success": True,
+        "profile": {
+            "resume_url": profile.resume_url,
+            "skills": profile.skills,
+            "certifications": profile.certifications,
+            "projects": profile.projects,
+            "github_url": profile.github_url,
+            "linkedin_url": profile.linkedin_url,
+            "portfolio_url": profile.portfolio_url,
+            "preferred_location": profile.preferred_location,
+            "preferred_role": profile.preferred_role,
+            "min_expected_ctc": profile.min_expected_ctc,
+            "profile_updated_at": profile.profile_updated_at.isoformat()
+        }
+    })
+
+@app.route("/student/placement/profile", methods=["PUT"])
+@jwt_required()
+def update_student_placement_profile():
+    """Update student placement profile"""
+    student_id = get_jwt_identity()
+    data = request.json or {}
+    
+    profile = StudentPlacementProfile.query.filter_by(student_id=student_id).first()
+    
+    try:
+        if not profile:
+            profile = StudentPlacementProfile(student_id=student_id)
+            db.session.add(profile)
+        
+        profile.skills = data.get("skills", profile.skills if profile else [])
+        profile.certifications = data.get("certifications", profile.certifications if profile else [])
+        profile.projects = data.get("projects", profile.projects if profile else [])
+        profile.github_url = data.get("github_url", profile.github_url if profile else None)
+        profile.linkedin_url = data.get("linkedin_url", profile.linkedin_url if profile else None)
+        profile.portfolio_url = data.get("portfolio_url", profile.portfolio_url if profile else None)
+        profile.preferred_location = data.get("preferred_location", profile.preferred_location if profile else None)
+        profile.preferred_role = data.get("preferred_role", profile.preferred_role if profile else None)
+        profile.min_expected_ctc = data.get("min_expected_ctc", profile.min_expected_ctc if profile else None)
+        profile.profile_updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/student/placement/drives", methods=["GET"])
+@jwt_required()
+def get_available_drives():
+    """Get available placement drives for student"""
+    student_id = get_jwt_identity()
+    student = User.query.get(student_id)
+    
+    if not student:
+        return jsonify({"success": False, "message": "Student not found"}), 404
+    
+    # Get all open drives
+    drives = PlacementDrive.query.filter_by(status="open").all()
+    
+    result = []
+    for drive in drives:
+        company = Company.query.get(drive.company_id)
+        
+        # Check if already applied
+        application = DriveApplication.query.filter_by(drive_id=drive.id, student_id=student_id).first()
+        
+        # Check eligibility
+        criteria = drive.eligibility_criteria
+        eligible = True
+        
+        if criteria.get("branches") and student.degree not in criteria.get("branches"):
+            eligible = False
+        
+        result.append({
+            "id": drive.id,
+            "company_name": company.name if company else "Unknown",
+            "title": drive.title,
+            "description": drive.description,
+            "role": drive.role,
+            "ctc_min": drive.ctc_min,
+            "ctc_max": drive.ctc_max,
+            "location": drive.location,
+            "application_end": drive.application_end.isoformat() if drive.application_end else None,
+            "eligible": eligible,
+            "applied": application is not None,
+            "application_status": application.status if application else None
+        })
+    
+    return jsonify({"success": True, "drives": result})
+
+@app.route("/student/placement/drives/<int:drive_id>/apply", methods=["POST"])
+@jwt_required()
+def apply_to_drive(drive_id):
+    """Apply to placement drive"""
+    student_id = get_jwt_identity()
+    
+    drive = PlacementDrive.query.get(drive_id)
+    if not drive:
+        return jsonify({"success": False, "message": "Drive not found"}), 404
+    
+    if drive.status != "open":
+        return jsonify({"success": False, "message": "Drive is not open for applications"}), 400
+    
+    # Check if already applied
+    existing = DriveApplication.query.filter_by(drive_id=drive_id, student_id=student_id).first()
+    if existing:
+        return jsonify({"success": False, "message": "Already applied to this drive"}), 400
+    
+    try:
+        application = DriveApplication(
+            drive_id=drive_id,
+            student_id=student_id
+        )
+        db.session.add(application)
+        db.session.commit()
+        
+        log_hrd_activity(student_id, "student", "applied_to_drive", "application", application.id, {"drive_id": drive_id})
+        
+        return jsonify({"success": True, "application_id": application.id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/student/placement/offers", methods=["GET"])
+@jwt_required()
+def get_student_offers():
+    """Get student's placement offers"""
+    student_id = get_jwt_identity()
+    
+    offers = PlacementOffer.query.filter_by(student_id=student_id).all()
+    
+    result = []
+    for offer in offers:
+        drive = PlacementDrive.query.get(offer.drive_id)
+        company = Company.query.get(drive.company_id) if drive else None
+        
+        result.append({
+            "id": offer.id,
+            "company_name": company.name if company else "Unknown",
+            "role": offer.role,
+            "ctc": offer.ctc,
+            "location": offer.location,
+            "offer_letter_url": offer.offer_letter_url,
+            "joining_date": offer.joining_date.isoformat() if offer.joining_date else None,
+            "bond_details": offer.bond_details,
+            "offer_date": offer.offer_date.isoformat(),
+            "expiry_date": offer.expiry_date.isoformat() if offer.expiry_date else None,
+            "status": offer.status
+        })
+    
+    return jsonify({"success": True, "offers": result})
+
+@app.route("/student/placement/offers/<int:offer_id>/accept", methods=["POST"])
+@jwt_required()
+def accept_offer(offer_id):
+    """Accept placement offer"""
+    student_id = get_jwt_identity()
+    
+    offer = PlacementOffer.query.get(offer_id)
+    if not offer or offer.student_id != student_id:
+        return jsonify({"success": False, "message": "Offer not found"}), 404
+    
+    if offer.status != "pending":
+        return jsonify({"success": False, "message": "Offer already responded to"}), 400
+    
+    try:
+        offer.status = "accepted"
+        offer.student_response_date = datetime.utcnow()
+        
+        # Update application status
+        application = DriveApplication.query.filter_by(
+            drive_id=offer.drive_id,
+            student_id=student_id
+        ).first()
+        if application:
+            application.status = "offer_accepted"
+        
+        db.session.commit()
+        
+        log_hrd_activity(student_id, "student", "accepted_offer", "offer", offer_id, {"ctc": offer.ctc})
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/student/placement/offers/<int:offer_id>/reject", methods=["POST"])
+@jwt_required()
+def reject_offer(offer_id):
+    """Reject placement offer"""
+    student_id = get_jwt_identity()
+    data = request.json or {}
+    
+    offer = PlacementOffer.query.get(offer_id)
+    if not offer or offer.student_id != student_id:
+        return jsonify({"success": False, "message": "Offer not found"}), 404
+    
+    if offer.status != "pending":
+        return jsonify({"success": False, "message": "Offer already responded to"}), 400
+    
+    try:
+        offer.status = "rejected"
+        offer.student_response_date = datetime.utcnow()
+        offer.rejection_reason = data.get("reason", "")
+        
+        # Update application status
+        application = DriveApplication.query.filter_by(
+            drive_id=offer.drive_id,
+            student_id=student_id
+        ).first()
+        if application:
+            application.status = "offer_rejected"
+        
+        db.session.commit()
+        
+        log_hrd_activity(student_id, "student", "rejected_offer", "offer", offer_id, {"reason": offer.rejection_reason})
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
 
 # Register Blueprint
 app.register_blueprint(attendance_bp, url_prefix='/attendance')

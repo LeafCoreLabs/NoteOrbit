@@ -13,6 +13,9 @@ import {
 // --- COMPONENTS IMPORT ---
 import { api, setAuthToken, sendOtp, verifyOtp, resetPassword, registerWithOtp } from "./api";
 import ParticleBackground from './components/ParticleBackground';
+import HRDLogin from './components/HRD/HRDLogin';
+import HRDDashboard from './components/HRD/HRDDashboard';
+import PlacementAssist from './components/Student/PlacementAssist';
 
 // Compatibility shims for existing code
 // note: api.js handles tokens via interceptors automatically
@@ -240,6 +243,7 @@ function UserTypeSelection({ setUserRole, setPage }) {
         { ui: 'Faculty', icon: ClipboardList, subtitle: 'Manage classes & attendance', gradient: 'from-emerald-500 to-emerald-600', shadow: 'shadow-emerald-500/30', border: 'border-emerald-500/50', btnText: 'Sign In' },
         { ui: 'Parent', icon: Home, subtitle: 'Track your ward\'s progress', gradient: 'from-pink-500 to-pink-600', shadow: 'shadow-pink-500/30', border: 'border-pink-500/50', btnText: 'Sign In' },
         { ui: 'Admin', icon: BriefcaseBusiness, subtitle: 'System configuration', gradient: 'from-amber-500 to-amber-600', shadow: 'shadow-amber-500/30', border: 'border-amber-500/50', btnText: 'Sign In' },
+        { ui: 'HRD', icon: BriefcaseBusiness, subtitle: 'Placement & Career Services', gradient: 'from-indigo-500 to-purple-600', shadow: 'shadow-indigo-500/30', border: 'border-indigo-500/50', btnText: 'Sign In' },
     ];
 
     // GSAP ANIMATION LOGIC
@@ -5401,6 +5405,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
     const navigation = [
         { key: 'notes', label: 'Notes & Notices', icon: Book },
         { key: 'books', label: 'Internal Library', icon: Search },
+        { key: 'placement', label: 'Placement Assist', icon: Briefcase },
         { key: 'fees', label: 'Fees & Payments', icon: DollarSign },
         { key: 'marks', label: 'Marks & Grades', icon: Award },
         { key: 'feedback', label: 'Feedback', icon: MessageSquare },
@@ -5443,6 +5448,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
         switch (view) {
             case 'notes': return <StudentNotesNotices user={user} showMessage={showMessage} catalogs={catalogs} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'books': return <UnifiedLibrarySearch showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />; // UPDATED COMPONENT
+            case 'placement': return <PlacementAssist token={localStorage.getItem('noteorbit_token')} user={user} />;
             case 'fees': return <StudentFees user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'marks': return <StudentMarks user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'feedback': return <StudentFeedback showMessage={showMessage} />; // NEW COMPONENT
@@ -6003,6 +6009,15 @@ function App() {
         }
 
         if (page === 'dashboard' && !user) { setPage('user_type'); return <div className="text-center p-10 text-gray-500">Redirecting...</div>; }
+
+        // HRD Portal Routing
+        const hrdToken = localStorage.getItem('noteorbit_token');
+        if ((userRole && userRole.ui === 'HRD') || userRole === 'HRD') {
+            if (page === 'hrd-dashboard' && hrdToken) {
+                return <HRDDashboard token={hrdToken} setPage={setPage} setToken={() => { }} />;
+            }
+            return <HRDLogin setToken={() => { }} setPage={setPage} setUserRole={setUserRole} />;
+        }
 
         switch (page) {
             case 'user_type':
