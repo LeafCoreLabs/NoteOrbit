@@ -7,7 +7,7 @@ import {
     Book, Bell, Settings, Briefcase, User, Mail, Lock, GraduationCap, ClipboardList,
     BriefcaseBusiness, DollarSign, Award, MessageSquare, Upload, RefreshCw,
     Trash2, Save, Home, Search, Download, Check, Atom, Star, Sparkles, Plus, Filter, Eye, EyeOff, Edit,
-    BrainCircuit, AlertTriangle, Target, Lightbulb, Send as SendIcon, Paperclip, Menu, History, Bot
+    BrainCircuit, AlertTriangle, Target, Lightbulb, Send as SendIcon, Paperclip, Menu, History, Bot, BarChart3
 } from 'lucide-react';
 
 // --- COMPONENTS IMPORT ---

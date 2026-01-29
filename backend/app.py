@@ -3208,6 +3208,9 @@ def upload_routine():
                             ]
                         }
                     )
+                    if vision_resp.status_code != 200:
+                        raise Exception(f"Groq Vision API Error ({vision_resp.status_code}): {vision_resp.text}")
+                        
                     raw_text = vision_resp.json()['choices'][0]['message']['content']
                 except Exception as e:
                     return jsonify({"success": False, "message": f"Vision AI Failed: {str(e)}"}), 500
@@ -3234,6 +3237,9 @@ def upload_routine():
                 "response_format": {"type": "json_object"}
             }
         )
+        if resp.status_code != 200:
+            raise Exception(f"Groq Parsing API Error ({resp.status_code}): {resp.text}")
+
         content = resp.json()['choices'][0]['message']['content']
         parsed_routine = json.loads(content)
     except Exception as e:
