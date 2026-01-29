@@ -846,7 +846,7 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
                         {Array.isArray(subjects) && subjects.map(s => <option key={s} value={s} className="text-slate-900">{s}</option>)}
                     </Select>
                     <Select className="flex-1 max-w-xs" value={selectedDocType} onChange={e => setSelectedDocType(e.target.value)} disabled={isFetching || notes.length === 0}>
-                        <option value="" className="text-slate-900">Select Document Type</option>
+                        <option value="" className="text-slate-900">Choose Resource Type</option>
                         {availableDocTypes.map(t => <option key={t} value={t} className="text-slate-900">{t}</option>)}
                     </Select>
                     <button className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-white text-sm sm:w-48 py-2.5`} onClick={handleRefresh} disabled={isFetching || !selectedSubject}>
@@ -886,7 +886,7 @@ function StudentNotesNotices({ user, showMessage, catalogs, primaryButtonClass, 
                                     <div className="text-xs text-slate-400">{n.subject} | {new Date(n.timestamp).toLocaleDateString()}</div>
                                 </div>
                                 <div className="mt-3">
-                                    {n.file_url && <a className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">Download</a>}
+                                    {n.file_url && <a className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center ${primaryButtonClass}`} href={n.file_url} target="_blank" rel="noopener noreferrer">View</a>}
                                 </div>
                             </div>
                         ))}
@@ -1336,14 +1336,14 @@ function UnifiedLibrarySearch({ showMessage, primaryButtonClass, buttonClass }) 
                                 <div className="ml-4 flex-shrink-0">
                                     {book.source === 'Internal' && book.file_url ? (
                                         <a href={book.file_url} target="_blank" rel="noopener noreferrer" className={`py-1.5 px-4 text-sm font-semibold rounded-full inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white`}>
-                                            <Download className="w-4 h-4 mr-1" /> Download
+                                            <Eye className="w-4 h-4 mr-1" /> View
                                         </a>
                                     ) : book.cover_url ? (
                                         <a href={`https://openlibrary.org/search?q=${book.isbn || book.title}`} target="_blank" rel="noopener noreferrer">
                                             <img src={book.cover_url} onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/50x70/E0E0E0/505050?text=No+Cover'; }} className="w-12 h-16 object-cover rounded shadow-md" alt="Cover" />
                                         </a>
                                     ) : (
-                                        <span className="text-xs text-slate-500 bg-slate-800 p-2 rounded-full">No Download</span>
+                                        <span className="text-xs text-slate-500 bg-slate-800 p-2 rounded-full">No View</span>
                                     )}
                                 </div>
                             </div>
