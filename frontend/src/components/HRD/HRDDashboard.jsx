@@ -1,11 +1,12 @@
-// HRDDashboard.jsx - Main HRD Admin Dashboard with Navigation
-import React, { useState, useEffect } from 'react';
+// HRDDashboard.jsx - Mobile-Optimized HRD Dashboard (StudentPanel Layout)
+import React, { useState, useEffect, useRef } from 'react';
 import {
     LayoutDashboard, Building2, Briefcase, FileText, BrainCircuit,
-    BarChart3, Settings, LogOut, Menu, X, TrendingUp, Users,
+    BarChart3, LogOut, Menu, X, TrendingUp, Users, ChevronDown,
     DollarSign, Award
 } from 'lucide-react';
 import axios from 'axios';
+import gsap from 'gsap';
 
 // Import HRD sub-components
 import CompanyManagement from './CompanyManagement';
@@ -16,9 +17,13 @@ import Analytics from './Analytics';
 
 const HRDDashboard = ({ token, setPage, setToken }) => {
     const [activeTab, setActiveTab] = useState('dashboard');
-    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // GSAP Refs for animations
+    const navRef = useRef(null);
+    const indicatorRef = useRef(null);
+    const contentRef = useRef(null);
 
     useEffect(() => {
         fetchDashboardStats();
@@ -41,17 +46,40 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
         localStorage.removeItem('noteorbit_token');
         localStorage.removeItem('noteorbit_user');
         setToken(null);
-        setPage('welcome');
+        setPage('user_type');
     };
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'companies', label: 'Companies', icon: Building2 },
-        { id: 'drives', label: 'Placement Drives', icon: Briefcase },
+        { id: 'drives', label: 'Drives', icon: Briefcase },
         { id: 'offers', label: 'Offers', icon: FileText },
         { id: 'ai-analysis', label: 'AI Analysis', icon: BrainCircuit },
         { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     ];
+
+    // GSAP Navigation Animation - Match StudentPanel
+    useEffect(() => {
+        if (navRef.current && indicatorRef.current) {
+            const activeBtn = navRef.current.querySelector(`button[data-key="${activeTab}"]`);
+            if (activeBtn) {
+                gsap.to(indicatorRef.current, {
+                    y: activeBtn.offsetTop,
+                    height: activeBtn.offsetHeight,
+                    opacity: 1,
+                    duration: 0.5,
+                    ease: "elastic.out(1, 0.6)"
+                });
+            }
+        }
+        // Content animation
+        if (contentRef.current) {
+            gsap.fromTo(contentRef.current,
+                { opacity: 0, x: 20 },
+                { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
+            );
+        }
+    }, [activeTab]);
 
     const StatCard = ({ title, value, icon: Icon, gradient, trend }) => (
         <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300">
@@ -87,7 +115,6 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
                             </div>
                         ) : (
                             <>
-                                {/* Stats Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     <StatCard
                                         title="Total Students"
@@ -116,7 +143,6 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
                                     />
                                 </div>
 
-                                {/* Quick Actions */}
                                 <div>
                                     <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -148,14 +174,6 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
                                         </button>
                                     </div>
                                 </div>
-
-                                {/* Recent Activity Placeholder */}
-                                <div>
-                                    <h2 className="text-xl font-bold text-white mb-4">Recent Activity</h2>
-                                    <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                                        <p className="text-slate-400 text-center py-8">No recent activity</p>
-                                    </div>
-                                </div>
                             </>
                         )}
                     </div>
@@ -163,99 +181,83 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
 
             case 'companies':
                 return <CompanyManagement token={token} />;
-
             case 'drives':
                 return <DriveManagement token={token} />;
-
             case 'offers':
                 return <OfferManagement token={token} />;
-
             case 'ai-analysis':
                 return <AIAnalysis token={token} />;
-
             case 'analytics':
                 return <Analytics token={token} />;
-
             default:
                 return <div>Coming soon...</div>;
         }
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/10 to-purple-950/10 flex">
-            {/* Sidebar */}
-            <div className={`${sidebarOpen ? 'w-64' : 'w-0'} lg:w-64 transition-all duration-300 bg-slate-900/80 backdrop-blur-xl border-r border-white/10 flex flex-col`}>
-                <div className="p-6">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                            <Briefcase className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-white font-bold">HRD Portal</h2>
-                            <p className="text-xs text-slate-400">Placement Cell</p>
-                        </div>
-                    </div>
+        <div className="flex flex-col md:flex-row gap-6 min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/10 to-purple-950/10 p-4 sm:p-8">
+            {/* Sidebar - Mobile Optimized like StudentPanel */}
+            <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
+                <h5 className="text-lg font-bold text-purple-400 mb-4 ml-2">HRD Hub</h5>
 
-                    <nav className="space-y-2">
-                        {menuItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = activeTab === item.id;
-                            return (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveTab(item.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                            ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
-                                            : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                                        }`}
-                                >
-                                    <Icon className="w-5 h-5" />
-                                    <span className="font-medium">{item.label}</span>
-                                </button>
-                            );
-                        })}
-                    </nav>
+                {/* Desktop Navigation */}
+                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
+                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-purple-600/20 border border-purple-500/30 rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
+                    {menuItems.map(item => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.id;
+                        return (
+                            <button
+                                key={item.id}
+                                data-key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${isActive
+                                    ? 'text-purple-300'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                            >
+                                <Icon className="w-5 h-5 mr-3" />
+                                {item.label}
+                            </button>
+                        );
+                    })}
+                </nav>
+
+                {/* Mobile Navigation Dropdown - Exact StudentPanel Style */}
+                <div className="md:hidden">
+                    <div className="relative">
+                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400 pointer-events-none" />
+                        <select
+                            value={activeTab}
+                            onChange={(e) => setActiveTab(e.target.value)}
+                            className="w-full bg-slate-800/80 border border-purple-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-purple-500/50 shadow-lg font-semibold"
+                        >
+                            {menuItems.map(item => (
+                                <option key={item.id} value={item.id} className="bg-slate-900 text-white py-2">
+                                    {item.label}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
                 </div>
 
-                <div className="mt-auto p-6 border-t border-white/10">
+                {/* Logout Button */}
+                <div className="mt-6 pt-4 border-t border-white/10">
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all font-semibold"
                     >
                         <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Logout</span>
+                        Logout
                     </button>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
-                <header className="bg-slate-900/60 backdrop-blur-xl border-b border-white/10 p-6 flex items-center justify-between">
-                    <button
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="lg:hidden text-white hover:bg-white/5 p-2 rounded-lg transition-colors"
-                    >
-                        {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                    </button>
-
-                    <div className="flex items-center gap-4 ml-auto">
-                        <div className="text-right">
-                            <p className="text-white font-semibold">HRD Admin</p>
-                            <p className="text-xs text-slate-400">Placement Officer</p>
-                        </div>
-                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold">H</span>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Content Area */}
-                <main className="flex-1 overflow-y-auto p-6">
-                    <div className="max-w-7xl mx-auto">
-                        {renderContent()}
-                    </div>
-                </main>
+            {/* Content Area */}
+            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+                {renderContent()}
             </div>
         </div>
     );
