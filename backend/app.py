@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 import random
 from urllib.parse import urljoin
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import (
@@ -600,6 +600,30 @@ class Attendance(db.Model):
     __table_args__ = (
         db.UniqueConstraint("student_id", "subject", "date", name="_student_subject_date_uc"),
     )
+
+# --- NEW PERSONAL ATTENDANCE MODELS ---
+class StudentRoutine(db.Model):
+    __tablename__ = 'student_routine'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    day_of_week = db.Column(db.String(10), nullable=False) # 'Monday', ...
+    subjects = db.Column(db.Text, nullable=False) # JSON list
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'day_of_week', name='uq_std_routine_day'),
+    )
+
+class StudentAttendanceLog(db.Model):
+    __tablename__ = 'student_attendance_log'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    subject = db.Column(db.String(200), nullable=True) # NULL if "No Class"
+    status = db.Column(db.String(20), nullable=False) # Present, Absent, No Class, Holiday
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'date', 'subject', name='uq_std_log_date_sub'),
+    )
+# --- END PERSONAL ATTENDANCE MODELS ---
 
 
 class Message(db.Model):
@@ -3101,6 +3125,271 @@ def parent_reply():
 
 
 # -------------------- START --------------------
+
+
+# -------------------- ATTENDANCE FEATURE --------------------
+attendance_bp = Blueprint('attendance', __name__)
+
+def create_daily_message_with_ai(msg_type, user_name):
+    """
+    Generates a fun message using Groq AI.
+    msg_type: 'sunday' | 'no_class'
+    """
+    if not GROQ_API_KEY:
+        return "Enjoy your day! (AI Key missing)"
+
+    prompt = ""
+    if msg_type == 'sunday':
+        prompt = f"Write a short, relaxing, and funny message for a student named {user_name} because it's Sunday. Max 2 sentences. Include a relaxing emoji."
+    elif msg_type == 'no_class':
+        prompt = f"Write a short, hype message for a student named {user_name} who has no classes today. Include a 'Did you know?' fun fact. Max 3 sentences."
+
+    try:
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [{"role": "user", "content": prompt}]
+            },
+            timeout=5
+        )
+        if resp.status_code == 200:
+            return resp.json()['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"AI Gen Error: {e}")
+    
+    return "Have a great day!"
+
+@attendance_bp.route('/routine/upload', methods=['POST'])
+@jwt_required()
+def upload_routine():
+    """
+    AI-Powered Routine Parser.
+    Accepts text or file. Returns parsed subjects for confirmation.
+    """
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Simple Text Input for now (Fastest for MVP)
+    data = request.json
+    raw_text = data.get('routine_text', '')
+    
+    if not raw_text:
+        return jsonify({"success": False, "message": "No routine text provided"}), 400
+
+    # 1. AI Parsing
+    parsed_routine = {}
+    try:
+        # Prompt AI to extract JSON
+        sys_prompt = "You are a data extraction assistant. Extract class routine from the user's text. Return ONLY valid JSON where keys are Days (Monday-Saturday) and values are lists of Subject lines (e.g. 'Math 10AM'). If a day is missing, omit it. No markdown."
+        
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": "llama3-70b-8192", # Stronger model for logic
+                "messages": [
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": raw_text}
+                ],
+                "response_format": {"type": "json_object"}
+            }
+        )
+        content = resp.json()['choices'][0]['message']['content']
+        parsed_routine = json.loads(content)
+    except Exception as e:
+        return jsonify({"success": False, "message": f"AI Parsing Failed: {str(e)}"}), 500
+
+    # 2. Save/Update Routine
+    try:
+        # Clear old routine
+        StudentRoutine.query.filter_by(user_id=user.id).delete()
+        
+        for day, subs in parsed_routine.items():
+            if isinstance(subs, list) and subs:
+                new_r = StudentRoutine(
+                    user_id=user.id,
+                    day_of_week=day,
+                    subjects=json.dumps(subs)
+                )
+                db.session.add(new_r)
+        
+        db.session.commit()
+        return jsonify({"success": True, "message": "Routine updated", "routine": parsed_routine})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@attendance_bp.route('/routine', methods=['GET'])
+@jwt_required()
+def get_routine():
+    user_id = get_jwt_identity()
+    routines = StudentRoutine.query.filter_by(user_id=user_id).all()
+    out = {}
+    for r in routines:
+        out[r.day_of_week] = json.loads(r.subjects)
+    return jsonify({"success": True, "routine": out})
+
+@attendance_bp.route('/routine', methods=['DELETE'])
+@jwt_required()
+def delete_routine():
+    user_id = get_jwt_identity()
+    StudentRoutine.query.filter_by(user_id=user_id).delete()
+    db.session.commit()
+    return jsonify({"success": True, "message": "Routine deleted"})
+
+@attendance_bp.route('/today', methods=['GET'])
+@jwt_required()
+def get_today_status():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    today = datetime.utcnow().date()
+    day_name = today.strftime("%A")
+
+    # 1. Check if Sunday
+    if day_name == "Sunday":
+        msg = create_daily_message_with_ai('sunday', user.name)
+        return jsonify({
+            "status": "holiday",
+            "message": msg,
+            "can_mark": False
+        })
+
+    # 2. Check if already marked (ANY entry for today)
+    logs = StudentAttendanceLog.query.filter_by(user_id=user_id, date=today).all()
+    
+    if logs:
+        # Check if it was "No Class"
+        if len(logs) == 1 and logs[0].status == 'No Class':
+             return jsonify({"status": "marked_no_class", "can_mark": False})
+        
+        # Details
+        log_data = [{"subject": l.subject, "status": l.status} for l in logs]
+        return jsonify({"status": "marked", "logs": log_data, "can_mark": False})
+
+    # 3. Not marked yet - Get Routine
+    routine = StudentRoutine.query.filter_by(user_id=user.id, day_of_week=day_name).first()
+    
+    if not routine:
+        return jsonify({
+            "status": "pending",
+            "subjects": [],
+            "message": "No routine found for today. Add one first?",
+            "can_mark": False
+        })
+
+    subjects = json.loads(routine.subjects)
+    return jsonify({
+        "status": "pending",
+        "subjects": subjects,
+        "can_mark": True
+    })
+
+@attendance_bp.route('/mark', methods=['POST'])
+@jwt_required()
+def mark_attendance():
+    """
+    Body: 
+    { "type": "classes", "data": {"Math": "Present", "CS": "Absent"} }
+    OR
+    { "type": "no_class" }
+    """
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    today = datetime.utcnow().date()
+    
+    # Prevent double marking
+    if StudentAttendanceLog.query.filter_by(user_id=user_id, date=today).first():
+        return jsonify({"success": False, "message": "Already marked for today"}), 400
+
+    data = request.json
+    mark_type = data.get('type')
+
+    try:
+        if mark_type == 'no_class':
+            # Log single entry
+            log = StudentAttendanceLog(
+                user_id=user.id,
+                date=today,
+                subject=None,
+                status='No Class'
+            )
+            db.session.add(log)
+            msg = create_daily_message_with_ai('no_class', user.name)
+            db.session.commit()
+            return jsonify({"success": True, "message": "Enjoy your day!", "fun_message": msg})
+
+        elif mark_type == 'classes':
+            attendance_map = data.get('data', {})
+            for sub, status in attendance_map.items():
+                log = StudentAttendanceLog(
+                    user_id=user.id,
+                    date=today,
+                    subject=sub,
+                    status=status
+                )
+                db.session.add(log)
+            db.session.commit()
+            return jsonify({"success": True, "message": "Attendance Saved"})
+        
+        else:
+            return jsonify({"success": False, "message": "Invalid type"}), 400
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@attendance_bp.route('/stats', methods=['GET'])
+@jwt_required()
+def get_stats():
+    user_id = get_jwt_identity()
+    
+    # Fetch all logs except 'No Class' or 'Holiday'
+    logs = StudentAttendanceLog.query.filter(
+        StudentAttendanceLog.user_id == user_id,
+        StudentAttendanceLog.status.in_(['Present', 'Absent'])
+    ).all()
+
+    total_classes = len(logs)
+    if total_classes == 0:
+        return jsonify({"success": True, "overall": 0, "subject_wise": {}})
+
+    present_count = sum(1 for l in logs if l.status == 'Present')
+    overall = (present_count / total_classes) * 100
+
+    # Subject-wise
+    sub_stats = {}
+    for l in logs:
+        if l.subject not in sub_stats:
+            sub_stats[l.subject] = {"present": 0, "total": 0}
+        sub_stats[l.subject]["total"] += 1
+        if l.status == 'Present':
+            sub_stats[l.subject]["present"] += 1
+    
+    # Calculate %
+    final_subs = []
+    for sub, dat in sub_stats.items():
+        pct = (dat["present"] / dat["total"]) * 100
+        final_subs.append({
+            "subject": sub,
+            "present": dat["present"],
+            "total": dat["total"],
+            "percentage": round(pct, 1)
+        })
+
+    return jsonify({
+        "success": True,
+        "overall": round(overall, 1),
+        "subject_wise": final_subs,
+        "history": [] # TODO: Add history list if needed
+    })
+
+# Register Blueprint
+app.register_blueprint(attendance_bp, url_prefix='/attendance')
 
 if __name__ == "__main__":
     with app.app_context():

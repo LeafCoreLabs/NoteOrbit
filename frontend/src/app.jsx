@@ -4790,6 +4790,277 @@ function StudentAttendanceCalendar({ showMessage, buttonClass, primaryButtonClas
     );
 }
 
+// --- NEW: AI Student Attendance System ---
+function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass }) {
+    const [view, setView] = useState("loading"); // loading, upload, checkin, marked, holiday, stats
+    const [todayData, setTodayData] = useState(null);
+    const [stats, setStats] = useState(null);
+    const [routineText, setRoutineText] = useState("");
+    const [attendanceMap, setAttendanceMap] = useState({}); // { SubjectName: "Present" | "Absent" }
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Initial Fetch
+    const fetchTodayStatus = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await auth().get("/attendance/today");
+            const data = res.data;
+            setTodayData(data);
+
+            if (data.status === "holiday") setView("holiday");
+            else if (data.status === "marked" || data.status === "marked_no_class") setView("marked");
+            else if (data.status === "pending") {
+                if (data.message && data.message.includes("Add one first")) {
+                    setView("upload");
+                } else {
+                    setView("checkin");
+                    // Initialize checkboxes
+                    const initialMap = {};
+                    (data.subjects || []).forEach(sub => initialMap[sub] = "Present");
+                    setAttendanceMap(initialMap);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            showMessage("Failed to load attendance status.", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [showMessage]);
+
+    useEffect(() => { fetchTodayStatus(); }, [fetchTodayStatus]);
+
+    // Handlers
+    const handleRoutineUpload = async () => {
+        if (!routineText.trim()) return showMessage("Please paste your routine.", "error");
+        setIsLoading(true);
+        try {
+            await auth().post("/attendance/routine/upload", { routine_text: routineText });
+            showMessage("Routine parsed and saved!", "success");
+            fetchTodayStatus(); // Refresh to go to checkin
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Parsing failed. Try again.", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleMarkAttendance = async (type) => {
+        setIsLoading(true);
+        try {
+            const payload = { type }; // 'classes' or 'no_class'
+            if (type === 'classes') {
+                payload.data = attendanceMap;
+            }
+            const res = await auth().post("/attendance/mark", payload);
+            showMessage(res.data.message || "Attendance saved.", "success");
+            fetchTodayStatus(); // Refresh to show success/marked view
+        } catch (e) {
+            showMessage(e.response?.data?.message || "Failed to mark.", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchStats = async () => {
+        setIsLoading(true);
+        try {
+            const res = await auth().get("/attendance/stats");
+            setStats(res.data);
+            setView("stats");
+        } catch (e) {
+            showMessage("Failed to load stats.", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Sub-components
+    const renderUpload = () => (
+        <div className="space-y-4 max-w-xl mx-auto text-center animate-in fade-in zoom-in duration-300">
+            <div className="p-4 bg-blue-500/10 rounded-full w-fit mx-auto mb-4">
+                <Upload className="w-8 h-8 text-blue-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white">Setup Your Routine</h3>
+            <p className="text-slate-400">
+                Paste your weekly class schedule below. Our AI will extract the subjects and times for you!
+            </p>
+            <textarea
+                value={routineText}
+                onChange={e => setRoutineText(e.target.value)}
+                placeholder="Ex: Monday: Math 10am, Physics 12pm... Tuesday: Chemistry..."
+                className="w-full h-32 bg-slate-800/50 border border-white/10 rounded-xl p-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none"
+            />
+            <button
+                onClick={handleRoutineUpload}
+                disabled={isLoading}
+                className={`${buttonClass} ${primaryButtonClass} w-full`}
+            >
+                {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : "Process Routine with AI"}
+            </button>
+        </div>
+    );
+
+    const renderCheckin = () => (
+        <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-between items-end">
+                <div>
+                    <h3 className="text-2xl font-bold text-white">Daily Check-in</h3>
+                    <p className="text-slate-400 text-sm">{new Date().toDateString()}</p>
+                </div>
+                <button onClick={fetchStats} className="text-sm text-blue-400 hover:text-blue-300 underline">View Stats</button>
+            </div>
+
+            <div className="bg-slate-800/40 p-6 rounded-2xl border border-white/5 space-y-4">
+                {todayData?.subjects.map((sub, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-white/5">
+                        <span className="font-semibold text-slate-200">{sub}</span>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setAttendanceMap(prev => ({ ...prev, [sub]: "Present" }))}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${attendanceMap[sub] === 'Present' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
+                            >
+                                P
+                            </button>
+                            <button
+                                onClick={() => setAttendanceMap(prev => ({ ...prev, [sub]: "Absent" }))}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${attendanceMap[sub] === 'Absent' ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'}`}
+                            >
+                                A
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <button
+                    onClick={() => handleMarkAttendance('no_class')}
+                    disabled={isLoading}
+                    className={`${buttonClass} bg-slate-700 hover:bg-slate-600 text-slate-300`}
+                >
+                    No Classes Today
+                </button>
+                <button
+                    onClick={() => handleMarkAttendance('classes')}
+                    disabled={isLoading}
+                    className={`${buttonClass} ${primaryButtonClass}`}
+                >
+                    {isLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : "Submit Attendance"}
+                </button>
+            </div>
+        </div>
+    );
+
+    const renderMarked = () => (
+        <div className="text-center py-10 space-y-6 animate-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto ring-4 ring-emerald-500/10">
+                <CheckCircle className="w-10 h-10 text-emerald-400" />
+            </div>
+            <div>
+                <h3 className="text-2xl font-bold text-white mb-2">You're All Set!</h3>
+                <p className="text-slate-400 max-w-sm mx-auto">
+                    {todayData?.status === 'marked_no_class' ? "Enjoy your day off! " : "Attendance for today has been recorded."}
+                </p>
+                {todayData?.fun_message && (
+                    <div className="mt-6 p-4 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl">
+                        <p className="text-indigo-300 italic">" {todayData.fun_message} "</p>
+                    </div>
+                )}
+            </div>
+            <button onClick={fetchStats} className="text-blue-400 hover:text-blue-300 underline font-medium">
+                View My Statistics
+            </button>
+        </div>
+    );
+
+    const renderHoliday = () => (
+        <div className="text-center py-10 space-y-6 animate-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto ring-4 ring-amber-500/10">
+                <Sparkles className="w-10 h-10 text-amber-400" />
+            </div>
+            <div>
+                <h3 className="text-2xl font-bold text-white mb-2">Happy Sunday!</h3>
+                <div className="mt-4 p-6 bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl max-w-md mx-auto relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10"><Sparkles className="w-20 h-20" /></div>
+                    <p className="text-amber-200 text-lg font-medium leading-relaxed">
+                        {todayData?.message || "Take a break and recharge for the week ahead!"}
+                    </p>
+                </div>
+            </div>
+            <button onClick={fetchStats} className="text-blue-400 hover:text-blue-300 underline font-medium">
+                View Statistics
+            </button>
+        </div>
+    );
+
+    const renderStats = () => (
+        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+            <div className="flex items-center gap-4 mb-6">
+                <button onClick={fetchTodayStatus} className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
+                    <ArrowLeft className="w-5 h-5" />
+                </button>
+                <h3 className="text-2xl font-bold text-white">Attendance Analytics</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-1 bg-gradient-to-br from-blue-600 to-indigo-600 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden">
+                    <div className="relative z-10">
+                        <div className="text-blue-200 text-sm font-bold uppercase tracking-wider mb-1">Overall Attendance</div>
+                        <div className="text-5xl font-bold">{stats?.overall || 0}%</div>
+                        <div className="text-xs text-blue-200 mt-2 opacity-80">Accumulated Average</div>
+                    </div>
+                    <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/20 rounded-full blur-2xl" />
+                </div>
+
+                <div className="md:col-span-2 grid gap-3">
+                    {stats?.subject_wise?.map((sub, i) => (
+                        <div key={i} className="bg-slate-800/50 p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                            <div>
+                                <div className="font-bold text-slate-200">{sub.subject}</div>
+                                <div className="text-xs text-slate-500">{sub.present}/{sub.total} Classes Attended</div>
+                            </div>
+                            <div className={`text-xl font-bold ${sub.percentage >= 75 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {sub.percentage}%
+                            </div>
+                        </div>
+                    ))}
+                    {(!stats?.subject_wise || stats.subject_wise.length === 0) && (
+                        <div className="text-center text-slate-500 py-4">No data available yet.</div>
+                    )}
+                </div>
+            </div>
+            <div className="flex justify-end">
+                <button
+                    onClick={() => { setRoutineText(""); setView("upload"); }}
+                    className="text-xs text-slate-500 hover:text-red-400 flex items-center gap-1"
+                >
+                    <Trash2 className="w-3 h-3" /> Reset Routine
+                </button>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-white/10 min-h-[400px]">
+            {isLoading && view === 'loading' ? (
+                <div className="h-full flex flex-col items-center justify-center p-20 text-blue-400">
+                    <Loader2 className="w-10 h-10 animate-spin mb-4" />
+                    <span className="text-sm font-medium">Syncing with Orbit...</span>
+                </div>
+            ) : (
+                <>
+                    {view === 'upload' && renderUpload()}
+                    {view === 'checkin' && renderCheckin()}
+                    {view === 'marked' && renderMarked()}
+                    {view === 'holiday' && renderHoliday()}
+                    {view === 'stats' && renderStats()}
+                </>
+            )}
+        </div>
+    );
+}
+
 // Academic Insights Component (Groq Powered)
 function AcademicInsights({ user, showMessage }) {
     const [data, setData] = useState(null);
@@ -4945,7 +5216,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
             case 'fees': return <StudentFees user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'marks': return <StudentMarks user={user} showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'feedback': return <StudentFeedback showMessage={showMessage} />; // NEW COMPONENT
-            case 'attendance': return <StudentAttendanceCalendar showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
+            case 'attendance': return <StudentAttendanceFeature showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'complaints': return <HostelComplaints showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
             case 'insights': return <AcademicInsights user={user} showMessage={showMessage} />;
             case 'chat': return <AIChat showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
