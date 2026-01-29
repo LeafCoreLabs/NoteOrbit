@@ -4804,7 +4804,7 @@ function StudentAttendanceFeature({ showMessage, buttonClass, primaryButtonClass
     const fetchTodayStatus = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await auth().get("/attendance/today");
+            const res = await auth().get(`/attendance/today?t=${new Date().getTime()}`);
             const data = res.data;
             setTodayData(data);
 
