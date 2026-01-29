@@ -224,10 +224,14 @@ const WelcomeLoader = () => (
 
 // ----------------------------------------------
 // --- AUTH COMPONENTS ---
-// --- REBUILT WELCOME SCREEN (3D CAROUSEL) ---
+// ----------------------------------------------
+// --- AUTH COMPONENTS ---
+// --- REBUILT WELCOME SCREEN (3D CAROUSEL + SWIPE + HEADER) ---
 function UserTypeSelection({ setUserRole, setPage }) {
     const [activeIndex, setActiveIndex] = useState(0);
     const containerRef = useRef(null);
+    const touchStart = useRef(null);
+    const touchEnd = useRef(null);
 
     const roles = [
         { ui: 'Student', icon: GraduationCap, subtitle: 'Access notes, results & more', gradient: 'from-blue-500 to-blue-600', shadow: 'shadow-blue-500/30', border: 'border-blue-500/50' },
@@ -235,6 +239,21 @@ function UserTypeSelection({ setUserRole, setPage }) {
         { ui: 'Parent', icon: Home, subtitle: 'Track your ward\'s progress', gradient: 'from-pink-500 to-pink-600', shadow: 'shadow-pink-500/30', border: 'border-pink-500/50' },
         { ui: 'Admin', icon: BriefcaseBusiness, subtitle: 'System configuration', gradient: 'from-amber-500 to-amber-600', shadow: 'shadow-amber-500/30', border: 'border-amber-500/50' },
     ];
+
+    // Swipe Handlers
+    const onTouchStart = (e) => { touchEnd.current = null; touchStart.current = e.targetTouches[0].clientX; }
+    const onTouchMove = (e) => { touchEnd.current = e.targetTouches[0].clientX; }
+    const onTouchEnd = () => {
+        if (!touchStart.current || !touchEnd.current) return;
+        const distance = touchStart.current - touchEnd.current;
+        const isLeftSwipe = distance > 50;
+        const isRightSwipe = distance < -50;
+        if (isLeftSwipe && activeIndex < roles.length - 1) setActiveIndex(prev => prev + 1);
+        if (isRightSwipe && activeIndex > 0) setActiveIndex(prev => prev - 1);
+    }
+
+    const nextRole = () => { if (activeIndex < roles.length - 1) setActiveIndex(prev => prev + 1); }
+    const prevRole = () => { if (activeIndex > 0) setActiveIndex(prev => prev - 1); }
 
     const handleContinue = () => {
         const role = roles[activeIndex];
@@ -248,75 +267,90 @@ function UserTypeSelection({ setUserRole, setPage }) {
     };
 
     return (
-        <div ref={containerRef} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-10">
+        <div ref={containerRef} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-6 md:py-10"
+            onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
 
-            {/* Header Content */}
-            <div className="text-center space-y-4 mb-8 z-10 animate-in fade-in slide-in-from-top-4 duration-700">
-                <div className="inline-flex items-center justify-center p-4 bg-white/5 border border-white/10 rounded-full mb-4 ring-1 ring-white/5 shadow-2xl backdrop-blur-3xl">
-                    <Sparkles className="w-8 h-8 text-blue-400" />
+            {/* Restored Hero Header */}
+            <div className="text-center space-y-4 mb-2 md:mb-8 z-10 animate-in fade-in slide-in-from-top-4 duration-700 px-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2">
+                    <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2_beta
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-                    Select User Portal
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight">
+                    Academic <br className="hidden md:block" />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Intelligence.</span>
                 </h1>
-                <p className="text-slate-400 text-lg">Identify yourself to proceed</p>
+                <p className="text-sm md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed">
+                    Where Imagination is Redefined! Select your portal to begin.
+                </p>
             </div>
 
-            {/* 3D Carousel Area */}
-            <div className="relative w-full max-w-5xl h-[450px] flex items-center justify-center perspective-1000 z-10">
+            {/* 3D Carousel Area with Navigation */}
+            <div className="relative w-full max-w-6xl h-[400px] md:h-[450px] flex items-center justify-center perspective-1000 z-10">
+
+                {/* Left Nav Button */}
+                <button
+                    onClick={prevRole}
+                    className={`absolute left-2 md:left-10 z-50 p-3 rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/10 active:scale-95 ${activeIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
+                    disabled={activeIndex === 0}
+                >
+                    <ArrowLeft className="w-6 h-6" />
+                </button>
+
+                {/* Right Nav Button */}
+                <button
+                    onClick={nextRole}
+                    className={`absolute right-2 md:right-10 z-50 p-3 rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/10 active:scale-95 ${activeIndex === roles.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100 hover:scale-110'}`}
+                    disabled={activeIndex === roles.length - 1}
+                >
+                    <ArrowRight className="w-6 h-6" />
+                </button>
+
                 {roles.map((role, index) => {
-                    // Logic to mimic the 3D 'PageView' effect
                     const isActive = index === activeIndex;
                     const offset = index - activeIndex;
-                    const isVisible = Math.abs(offset) <= 2; // Only render nearby cards
+                    const isVisible = Math.abs(offset) <= 2;
 
                     if (!isVisible) return null;
 
-                    // Calculate transform styles based on offset
-                    let xTrans = offset * 320; // Distance between cards
-                    let scale = isActive ? 1.1 : 0.85;
-                    let opacity = isActive ? 1 : 0.4;
+                    // Smoother Transforms
+                    let xTrans = offset * (window.innerWidth < 768 ? 260 : 340); // Responsive spacing
+                    let scale = isActive ? 1.05 : 0.85;
+                    let opacity = isActive ? 1 : 0.3;
                     let zIndex = isActive ? 50 : 10 - Math.abs(offset);
-                    let rotateY = offset * -15; // Slight rotation for 3D feel
-
-                    // If mobile, prevent overlap issues by switching to a simpler stack or verify user interactions
-                    // For now, we use a centered layout that works responsive by scaling down on small screens via CSS/Tailwind
+                    let rotateY = offset * -15;
 
                     return (
                         <div
                             key={role.ui}
                             onClick={() => setActiveIndex(index)}
-                            className={`absolute w-[280px] md:w-[320px] transition-all duration-500 ease-out cursor-pointer group`}
+                            className="absolute w-[260px] md:w-[320px] transition-all duration-[600ms] cubic-bezier(0.23, 1, 0.32, 1) cursor-pointer"
                             style={{
                                 transform: `translateX(${xTrans}px) scale(${scale}) perspective(1000px) rotateY(${rotateY}deg)`,
                                 opacity: opacity,
                                 zIndex: zIndex,
                                 left: '50%',
-                                marginLeft: -160, // Center based on width
+                                marginLeft: window.innerWidth < 768 ? -130 : -160,
                             }}
                         >
-                            <div className={`p-8 rounded-3xl backdrop-blur-xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[400px] justify-center
+                            <div className={`p-6 md:p-8 rounded-3xl backdrop-blur-2xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[360px] md:h-[400px] justify-center shadow-2xl
                                 ${isActive
-                                    ? `bg-slate-900/80 ${role.border} ring-2 ring-white/10 ${role.shadow}`
-                                    : 'bg-slate-900/40 border-white/5 hover:bg-slate-800/60'}`}
+                                    ? `bg-slate-900/80 ${role.border} ring-1 ring-white/10 ${role.shadow}`
+                                    : 'bg-slate-900/40 border-white/5'}`}
                             >
-                                {/* Background Gradient Blob */}
                                 {isActive && <div className={`absolute inset-0 bg-gradient-to-br ${role.gradient} opacity-10 blur-xl rounded-full transform scale-150 animate-pulse`} />}
 
-                                {/* Icon */}
-                                <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-8 relative z-10 
+                                <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mb-6 md:mb-8 relative z-10 
                                     bg-gradient-to-br ${role.gradient} shadow-lg`}
                                 >
-                                    <role.icon className="w-10 h-10 text-white" />
+                                    <role.icon className="w-8 h-8 md:w-10 md:h-10 text-white" />
                                 </div>
 
-                                {/* Text */}
-                                <h3 className="text-3xl font-bold text-white mb-3 relative z-10">{role.ui}</h3>
-                                <p className="text-sm text-slate-400 font-medium relative z-10 px-4">{role.subtitle}</p>
+                                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 md:mb-3 relative z-10">{role.ui}</h3>
+                                <p className="text-xs md:text-sm text-slate-400 font-medium relative z-10 px-2">{role.subtitle}</p>
 
-                                {/* Mock Button (Visual only, indicates clickable) */}
-                                <div className={`mt-8 px-6 py-2 rounded-full border border-white/10 text-xs font-bold uppercase tracking-wider transition-colors z-10
+                                <div className={`mt-6 md:mt-8 px-5 py-2 rounded-full border border-white/10 text-[10px] md:text-xs font-bold uppercase tracking-wider transition-colors z-10
                                     ${isActive ? 'bg-white text-slate-900' : 'bg-white/5 text-slate-500'}`}>
-                                    {isActive ? 'Selected' : 'Select'}
+                                    {isActive ? 'Enter Portal' : 'Select'}
                                 </div>
                             </div>
                         </div>
@@ -325,29 +359,28 @@ function UserTypeSelection({ setUserRole, setPage }) {
             </div>
 
             {/* Navigation Dots */}
-            <div className="flex gap-3 mt-8 z-10">
+            <div className="flex gap-2 md:gap-3 mt-4 md:mt-8 z-10">
                 {roles.map((role, idx) => (
                     <button
                         key={idx}
                         onClick={() => setActiveIndex(idx)}
-                        className={`h-2 rounded-full transition-all duration-300 ${idx === activeIndex ? `w-8 bg-gradient-to-r ${role.gradient}` : 'w-2 bg-slate-700 hover:bg-slate-600'
+                        className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${idx === activeIndex ? `w-6 md:w-8 bg-gradient-to-r ${role.gradient}` : 'w-1.5 md:w-2 bg-slate-700 hover:bg-slate-600'
                             }`}
                     />
                 ))}
             </div>
 
-            {/* Continue Button (Floating) */}
-            <div className="mt-10 z-10">
+            {/* Continue Button (Floating) - Only visible if active */}
+            <div className="mt-8 z-10">
                 <button
                     onClick={handleContinue}
-                    className="group relative px-8 py-4 bg-white text-slate-900 rounded-2xl font-bold text-lg shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3"
+                    className="group relative px-8 py-3 md:py-4 bg-white text-slate-900 rounded-2xl font-bold text-base md:text-lg shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3"
                 >
-                    Enter Portal <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    Proceed <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
             </div>
 
-            {/* Footer */}
-            <div className="mt-auto pt-10 pb-4 text-center z-10">
+            <div className="mt-auto pt-8 pb-4 text-center z-10">
                 <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">v2.2.1 Beta • LeafCore Labs</p>
             </div>
         </div>
