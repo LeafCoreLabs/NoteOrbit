@@ -224,103 +224,131 @@ const WelcomeLoader = () => (
 
 // ----------------------------------------------
 // --- AUTH COMPONENTS ---
-// --- REBUILT WELCOME SCREEN (HERO + SPLIT) ---
-function UserTypeSelection({ setUserRole, setPage, primaryButtonClass, buttonClass }) {
-    const [selectedRole, setSelectedRole] = useState(null);
+// --- REBUILT WELCOME SCREEN (3D CAROUSEL) ---
+function UserTypeSelection({ setUserRole, setPage }) {
+    const [activeIndex, setActiveIndex] = useState(0);
     const containerRef = useRef(null);
 
-    // REMOVED CARD ANIMATION TO ENSURE VISIBILITY
-    // GSAP Stagger Animation for Role Cards
-    // GSAP Stagger Animation for Role Cards
-    React.useLayoutEffect(() => {
-        const ctx = gsap.context(() => {
-            gsap.fromTo(".role-card",
-                { y: 50, opacity: 0, scale: 0.9 },
-                { y: 0, opacity: 1, scale: 1, duration: 0.8, stagger: 0.2, ease: "elastic.out(1, 0.75)" }
-            );
-            gsap.from(".hero-text-item", { x: -30, opacity: 0, duration: 0.8, stagger: 0.1, ease: "power2.out" });
-        }, containerRef);
-        return () => ctx.revert();
-    }, []);
-
     const roles = [
-        { ui: 'Admin', icon: BriefcaseBusiness, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-500/20' },
-        { ui: 'Faculty', icon: ClipboardList, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-500/20' },
-        { ui: 'Parent', icon: Home, color: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-500/20' },
-        { ui: 'Student', icon: GraduationCap, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-500/20' },
+        { ui: 'Student', icon: GraduationCap, subtitle: 'Access notes, results & more', gradient: 'from-blue-500 to-blue-600', shadow: 'shadow-blue-500/30', border: 'border-blue-500/50' },
+        { ui: 'Faculty', icon: ClipboardList, subtitle: 'Manage classes & attendance', gradient: 'from-emerald-500 to-emerald-600', shadow: 'shadow-emerald-500/30', border: 'border-emerald-500/50' },
+        { ui: 'Parent', icon: Home, subtitle: 'Track your ward\'s progress', gradient: 'from-pink-500 to-pink-600', shadow: 'shadow-pink-500/30', border: 'border-pink-500/50' },
+        { ui: 'Admin', icon: BriefcaseBusiness, subtitle: 'System configuration', gradient: 'from-amber-500 to-amber-600', shadow: 'shadow-amber-500/30', border: 'border-amber-500/50' },
     ];
 
     const handleContinue = () => {
-        if (selectedRole) {
-            gsap.to(".welcome-container", {
-                opacity: 0, y: -20, duration: 0.3, onComplete: () => {
-                    setUserRole(selectedRole);
-                    setPage('credentials');
-                    // Scroll to top on mobile when transitioning to credentials page
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            });
-        }
+        const role = roles[activeIndex];
+        gsap.to(containerRef.current, {
+            opacity: 0, scale: 0.95, duration: 0.3, onComplete: () => {
+                setUserRole(role.ui);
+                setPage('credentials');
+                window.scrollTo({ top: 0, behavior: 'auto' });
+            }
+        });
     };
 
     return (
-        <div ref={containerRef} className="welcome-container w-full min-h-[70vh] flex flex-col lg:flex-row items-center justify-between gap-12 px-4 relative z-10">
-            {/* Left: Hero Text */}
-            <div className="flex-1 text-center lg:text-left space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest hero-text-item backdrop-blur-md">
-                    <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2_beta
+        <div ref={containerRef} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-10">
+
+            {/* Header Content */}
+            <div className="text-center space-y-4 mb-8 z-10 animate-in fade-in slide-in-from-top-4 duration-700">
+                <div className="inline-flex items-center justify-center p-4 bg-white/5 border border-white/10 rounded-full mb-4 ring-1 ring-white/5 shadow-2xl backdrop-blur-3xl">
+                    <Sparkles className="w-8 h-8 text-blue-400" />
                 </div>
-                <h1 className="text-5xl lg:text-7xl font-bold text-white tracking-tight hero-text-item leading-tight">
-                    Academic <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Intelligence.</span>
+                <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+                    Select User Portal
                 </h1>
-                <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 hero-text-item leading-relaxed">
-                    Where Imagination is Redefined! | © 2026 LeafCore Labs
-                </p>
+                <p className="text-slate-400 text-lg">Identify yourself to proceed</p>
             </div>
 
-            {/* Right: Role Selection Cards */}
-            <div className="w-full max-w-md space-y-6">
-                <div className="bg-black/20 md:bg-slate-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-32 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition duration-1000" />
+            {/* 3D Carousel Area */}
+            <div className="relative w-full max-w-5xl h-[450px] flex items-center justify-center perspective-1000 z-10">
+                {roles.map((role, index) => {
+                    // Logic to mimic the 3D 'PageView' effect
+                    const isActive = index === activeIndex;
+                    const offset = index - activeIndex;
+                    const isVisible = Math.abs(offset) <= 2; // Only render nearby cards
 
-                    <h3 className="text-xl font-bold text-white mb-6 relative z-10 flex items-center gap-2">
-                        <User className="w-5 h-5 text-blue-400" /> Select User
-                    </h3>
+                    if (!isVisible) return null;
 
-                    <div className="space-y-3 relative z-10">
-                        {roles.map(role => (
-                            <button
-                                key={role.ui}
-                                onClick={() => setSelectedRole(role.ui)}
-                                className={`role-card w-full p-4 rounded-xl border transition-all duration-300 flex items-center group/card opacity-0 ${selectedRole === role.ui
-                                    ? `bg-blue-600/20 border-blue-500 shadow-[0_0_30px_rgba(37,99,235,0.3)] ring-1 ring-blue-400`
-                                    : `bg-slate-800/50 border-white/5 hover:border-white/20 hover:bg-slate-800`
-                                    }`}
+                    // Calculate transform styles based on offset
+                    let xTrans = offset * 320; // Distance between cards
+                    let scale = isActive ? 1.1 : 0.85;
+                    let opacity = isActive ? 1 : 0.4;
+                    let zIndex = isActive ? 50 : 10 - Math.abs(offset);
+                    let rotateY = offset * -15; // Slight rotation for 3D feel
+
+                    // If mobile, prevent overlap issues by switching to a simpler stack or verify user interactions
+                    // For now, we use a centered layout that works responsive by scaling down on small screens via CSS/Tailwind
+
+                    return (
+                        <div
+                            key={role.ui}
+                            onClick={() => setActiveIndex(index)}
+                            className={`absolute w-[280px] md:w-[320px] transition-all duration-500 ease-out cursor-pointer group`}
+                            style={{
+                                transform: `translateX(${xTrans}px) scale(${scale}) perspective(1000px) rotateY(${rotateY}deg)`,
+                                opacity: opacity,
+                                zIndex: zIndex,
+                                left: '50%',
+                                marginLeft: -160, // Center based on width
+                            }}
+                        >
+                            <div className={`p-8 rounded-3xl backdrop-blur-xl border transition-all duration-300 relative overflow-hidden flex flex-col items-center text-center h-[400px] justify-center
+                                ${isActive
+                                    ? `bg-slate-900/80 ${role.border} ring-2 ring-white/10 ${role.shadow}`
+                                    : 'bg-slate-900/40 border-white/5 hover:bg-slate-800/60'}`}
                             >
-                                <div className={`p-3 rounded-lg ${role.bg} ${role.color} mr-4 group-hover/card:scale-110 transition-transform duration-300`}>
-                                    <role.icon className="w-6 h-6" />
-                                </div>
-                                <div className="text-left">
-                                    <div className={`font-bold text-lg ${selectedRole === role.ui ? 'text-white' : 'text-slate-200'}`}>{role.ui}</div>
-                                    <div className="text-xs text-slate-500">{role.description}</div>
-                                </div>
-                                {selectedRole === role.ui && <CheckCircle className="ml-auto w-5 h-5 text-blue-400 animate-in zoom-in" />}
-                            </button>
-                        ))}
-                    </div>
+                                {/* Background Gradient Blob */}
+                                {isActive && <div className={`absolute inset-0 bg-gradient-to-br ${role.gradient} opacity-10 blur-xl rounded-full transform scale-150 animate-pulse`} />}
 
+                                {/* Icon */}
+                                <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-8 relative z-10 
+                                    bg-gradient-to-br ${role.gradient} shadow-lg`}
+                                >
+                                    <role.icon className="w-10 h-10 text-white" />
+                                </div>
+
+                                {/* Text */}
+                                <h3 className="text-3xl font-bold text-white mb-3 relative z-10">{role.ui}</h3>
+                                <p className="text-sm text-slate-400 font-medium relative z-10 px-4">{role.subtitle}</p>
+
+                                {/* Mock Button (Visual only, indicates clickable) */}
+                                <div className={`mt-8 px-6 py-2 rounded-full border border-white/10 text-xs font-bold uppercase tracking-wider transition-colors z-10
+                                    ${isActive ? 'bg-white text-slate-900' : 'bg-white/5 text-slate-500'}`}>
+                                    {isActive ? 'Selected' : 'Select'}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Navigation Dots */}
+            <div className="flex gap-3 mt-8 z-10">
+                {roles.map((role, idx) => (
                     <button
-                        onClick={handleContinue}
-                        disabled={!selectedRole}
-                        className={`mt-8 w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] ${selectedRole
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/25 border border-white/10'
-                            : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-transparent'
+                        key={idx}
+                        onClick={() => setActiveIndex(idx)}
+                        className={`h-2 rounded-full transition-all duration-300 ${idx === activeIndex ? `w-8 bg-gradient-to-r ${role.gradient}` : 'w-2 bg-slate-700 hover:bg-slate-600'
                             }`}
-                    >
-                        Initialize Login
-                    </button>
-                </div>
+                    />
+                ))}
+            </div>
+
+            {/* Continue Button (Floating) */}
+            <div className="mt-10 z-10">
+                <button
+                    onClick={handleContinue}
+                    className="group relative px-8 py-4 bg-white text-slate-900 rounded-2xl font-bold text-lg shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_rgba(255,255,255,0.5)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-3"
+                >
+                    Enter Portal <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-auto pt-10 pb-4 text-center z-10">
+                <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">v2.2.1 Beta • LeafCore Labs</p>
             </div>
         </div>
     );
