@@ -5,7 +5,7 @@ import axios from "axios";
 // Vercel ENV: VITE_API_URL = http://13.201.125.88
 // Local fallback: http://127.0.0.1:5000
 const BACKEND_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
+  import.meta.env.VITE_API_URL || "https://authorities-joy-justice-path.trycloudflare.com";
 
 export const api = axios.create({
   baseURL: BACKEND_BASE_URL,

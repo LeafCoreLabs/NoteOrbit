@@ -19,7 +19,7 @@ const Analytics = ({ token }) => {
         try {
             const [overview, branches] = await Promise.all([
                 api.get('/hrd/analytics/overview'),
-                api.get('/hrd/analytics/branch-stats')
+                api.get('/hrd/analytics/branch-wise')
             ]);
 
             setStats(overview.data);
