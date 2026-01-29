@@ -4195,6 +4195,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     const [newSubject, setNewSubject] = useState("");
     const [view, setView] = useState('approvals');
     const [isFetchingPending, setIsFetchingPending] = useState(false);
+    const [processingId, setProcessingId] = useState(null); // NEW: Track processing student
 
     // Edit Modal State
     const [editStudent, setEditStudent] = useState(null);
@@ -4255,6 +4256,8 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     };
 
     const take = async (id, action) => {
+        if (processingId) return; // Prevent concurrent actions
+        setProcessingId(id);
         try {
             // Using auth()
             const res = await auth().post("/admin/approve-student", { student_id: id, action: action });
@@ -4264,6 +4267,8 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
             if (e.response && e.response.status !== 401) {
                 showMessage(e.response?.data?.message || "Action failed.", "error");
             }
+        } finally {
+            setProcessingId(null);
         }
     };
 
@@ -4383,10 +4388,22 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                             {pending.map(s => (
                                 <div key={s.id} className="p-4 bg-yellow-900/20 border-l-4 border-yellow-500 rounded-xl shadow backdrop-blur-sm">
                                     <div className="font-bold text-lg text-white">{s.name}</div>
-                                    <div className="text-sm text-slate-300">{s.email} • {s.degree} • Sem {s.semester}</div>
+                                    <div className="text-sm text-slate-300">{s.srn} • {s.email} • {s.degree} • Sem {s.semester}</div>
                                     <div className="flex gap-3 mt-3">
-                                        <button className={`${buttonClass} bg-green-600 text-white`} onClick={() => take(s.id, "approve")}>Approve</button>
-                                        <button className={`${buttonClass} bg-red-600 text-white`} onClick={() => take(s.id, "reject")}>Reject</button>
+                                        <button
+                                            disabled={processingId === s.id}
+                                            className={`${buttonClass} bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] flex justify-center`}
+                                            onClick={() => take(s.id, "approve")}
+                                        >
+                                            {processingId === s.id ? <Loader2 className="w-5 h-5 animate-spin" /> : "Approve"}
+                                        </button>
+                                        <button
+                                            disabled={processingId === s.id}
+                                            className={`${buttonClass} bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] flex justify-center`}
+                                            onClick={() => take(s.id, "reject")}
+                                        >
+                                            {processingId === s.id ? <Loader2 className="w-5 h-5 animate-spin" /> : "Reject"}
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -5736,6 +5753,16 @@ function App() {
 
     const showMessage = (text, type = 'error') => setMessage({ text, type });
     const clearMessage = () => setMessage({ text: null, type: null });
+
+    // Auto-dismiss alert after 3 seconds
+    useEffect(() => {
+        if (message.text) {
+            const timer = setTimeout(() => {
+                clearMessage();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [message]);
 
     const getBackendRole = (uiRole) => {
         if (uiRole === 'Faculty') return 'professor';
