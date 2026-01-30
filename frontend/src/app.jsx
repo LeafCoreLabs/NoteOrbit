@@ -633,6 +633,14 @@ function CredentialsView({ onLogin, onRegister, showMessage, userRole, setPage, 
         }
     }, [authMode]);
 
+    // FETCH SECTIONS WHEN DEGREE/SEMESTER CHANGES
+    useEffect(() => {
+        if (degree && semester && catalogs.fetchSections) {
+            catalogs.fetchSections(degree, semester);
+            setSection(""); // Reset section selection
+        }
+    }, [degree, semester, catalogs.fetchSections]);
+
     const handleSendSignupOtp = async () => {
         if (!regEmail || !regEmail.trim()) return showMessage("Email is required.", "error");
         // Basic email validation
