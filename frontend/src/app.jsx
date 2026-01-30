@@ -6197,7 +6197,7 @@ function App() {
                                         </div>
                                         <div>
                                             <div className="font-semibold text-emerald-300 mb-1">Raushan Kumar (3CSE29)</div>
-                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1711 • UI/UX Designer</div>
+                                            <div className="text-slate-400 pl-2">SRN: 24SUUBECS1711 • UI/UX Designer, Developer</div>
                                         </div>
                                         <div>
                                             <div className="font-semibold text-emerald-300 mb-1">Satyam Kumar Thakur (3CSE32)</div>
