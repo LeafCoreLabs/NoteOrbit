@@ -5,7 +5,7 @@ import PlacementProfile from './PlacementProfile';
 import AvailableDrives from './AvailableDrives';
 import MyApplications from './MyApplications';
 import MyOffers from './MyOffers';
-import HRDPerformance from '../hrd/HRDPerformance';
+import HRDPerformance from '../HRD/HRDPerformance';
 
 const PlacementAssist = ({ token, user }) => {
     const [activeTab, setActiveTab] = useState('drives');
