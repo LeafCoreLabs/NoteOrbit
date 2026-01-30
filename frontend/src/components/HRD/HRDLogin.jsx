@@ -109,7 +109,7 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
 
             if (response.data.success) {
                 const token = response.data.token;
-                const user = response.data.user;
+                const user = response.data.user; // { role: 'chro' | 'trainer' | 'hrd_trainer', ... }
 
                 localStorage.setItem('noteorbit_token', token);
                 localStorage.setItem('noteorbit_user', JSON.stringify(user));
@@ -121,7 +121,15 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
                 // Wait for animation before switching page
                 setTimeout(() => {
                     setToken(token);
-                    setUserRole('HRD');
+                    // Determine Role for App.jsx routing
+                    const backendRole = user.role || 'hrd';
+                    let appRole = 'HRD'; // Default to CHRO view
+
+                    if (backendRole === 'trainer' || backendRole === 'hrd_trainer') {
+                        appRole = 'Trainer';
+                    }
+
+                    setUserRole(appRole);
                     setPage('hrd-dashboard');
                 }, 2500);
 
