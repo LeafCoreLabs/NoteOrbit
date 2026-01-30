@@ -3870,30 +3870,39 @@ def hrd_login():
     data = request.json or {}
     email = data.get("email")
     password = data.get("password")
+    selected_role = data.get("role", "chro")  # 'chro' or 'trainer' from frontend
     
-    # Check HRDUser table (CHRO)
-    user = HRDUser.query.filter_by(email=email).first()
-    if user:
-        if user.password_hash == hash_password(password):
-             token = create_access_token(identity=str(user.id), additional_claims={"role": "chro"})
-             return jsonify({
-                 "success": True, 
-                 "token": token, 
-                 "user": {"id": user.id, "name": user.name, "role": "chro", "department": user.department}
-             })
+    # If selected role is CHRO, only check HRDUser table
+    if selected_role == "chro":
+        user = HRDUser.query.filter_by(email=email).first()
+        if user:
+            if user.password_hash == hash_password(password):
+                token = create_access_token(identity=str(user.id), additional_claims={"role": "chro"})
+                return jsonify({
+                    "success": True, 
+                    "token": token, 
+                    "user": {"id": user.id, "name": user.name, "role": "chro", "department": user.department}
+                })
+            else:
+                return jsonify({"success": False, "message": "Invalid password"}), 401
+        return jsonify({"success": False, "message": "CHRO account not found"}), 404
     
-    # Check Trainer (User table, role='trainer' or 'hrd_trainer')
-    t_user = User.query.filter_by(email=email).first()
-    if t_user and t_user.role in ["trainer", "hrd_trainer"]:
-        if t_user.password_hash == hash_password(password):
-            token = create_access_token(identity=str(t_user.id), additional_claims={"role": t_user.role})
-            return jsonify({
-                "success": True, 
-                "token": token, 
-                "user": {"id": t_user.id, "name": t_user.name, "role": t_user.role}
-            })
+    # If selected role is Trainer, only check User table with trainer roles
+    if selected_role == "trainer":
+        t_user = User.query.filter_by(email=email).first()
+        if t_user and t_user.role in ["trainer", "hrd_trainer"]:
+            if t_user.password_hash == hash_password(password):
+                token = create_access_token(identity=str(t_user.id), additional_claims={"role": t_user.role})
+                return jsonify({
+                    "success": True, 
+                    "token": token, 
+                    "user": {"id": t_user.id, "name": t_user.name, "role": t_user.role}
+                })
+            else:
+                return jsonify({"success": False, "message": "Invalid password"}), 401
+        return jsonify({"success": False, "message": "Trainer account not found"}), 404
 
-    return jsonify({"success": False, "message": "Invalid HRD credentials"}), 401
+    return jsonify({"success": False, "message": "Invalid role selected"}), 400
 
 
 # --- CHRO ENDPOINTS ---

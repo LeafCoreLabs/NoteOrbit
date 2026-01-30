@@ -5941,7 +5941,19 @@ function App() {
 
     useEffect(() => {
         if (!isLoading) {
-            if (user) { setPage("dashboard"); } else { setPage("user_type"); }
+            if (user) {
+                // Check if this is an HRD user (chro/trainer)
+                const userRoleFromStorage = user.role;
+                if (userRoleFromStorage === 'chro' || userRoleFromStorage === 'trainer' || userRoleFromStorage === 'hrd_trainer' || userRoleFromStorage === 'hrd') {
+                    // Set userRole for HRD routing
+                    setUserRole('HRD');
+                    setPage('hrd-dashboard');
+                } else {
+                    setPage("dashboard");
+                }
+            } else {
+                setPage("user_type");
+            }
         }
     }, [user, isLoading]);
 
