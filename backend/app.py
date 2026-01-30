@@ -4325,6 +4325,101 @@ def student_placement_profile():
         return jsonify({"success": True, "message": "Profile updated"})
 
 
+# --- STUDENT: ELIGIBLE DRIVES & APPLICATION ---
+
+@app.route("/student/placement/drives", methods=["GET"])
+@jwt_required()
+def get_eligible_drives():
+    """Returns placement drives the student is eligible for based on degree, semester, section, CGPA"""
+    uid = get_jwt_identity()
+    student = User.query.get(uid)
+    if not student or student.role != "student":
+        return jsonify({"success": False, "message": "Student not found"}), 404
+    
+    # Get student's placement profile for CGPA
+    prof = StudentPlacementProfile.query.filter_by(student_id=uid).first()
+    student_cgpa = 0.0
+    if prof and prof.skills:
+        # Extract GPA from skills (temporary storage from CSV upload)
+        for s in prof.skills:
+            if s.startswith("GPA:"):
+                try: student_cgpa = float(s.split(":")[1].strip())
+                except: pass
+    
+    # Fetch all open drives
+    all_drives = PlacementDrive.query.filter_by(status="open").all()
+    eligible = []
+    
+    for d in all_drives:
+        criteria = d.eligibility_criteria or {}
+        
+        # Check Degree
+        if criteria.get("degree") and criteria["degree"] != "All":
+            if student.degree != criteria["degree"]:
+                continue
+        
+        # Check Semester
+        target_sems = criteria.get("semesters", [])
+        if target_sems and student.semester not in target_sems:
+            continue
+            
+        # Check Section
+        target_secs = criteria.get("sections", [])
+        if target_secs and student.section not in target_secs:
+            continue
+            
+        # Check CGPA
+        min_cgpa = criteria.get("min_cgpa", 0)
+        if student_cgpa < min_cgpa:
+            continue
+        
+        # Check if already applied
+        already_applied = DriveApplication.query.filter_by(drive_id=d.id, student_id=uid).first()
+        
+        c = Company.query.get(d.company_id)
+        eligible.append({
+            "id": d.id,
+            "title": d.title,
+            "company": c.name if c else "Unknown",
+            "role": d.role,
+            "ctc": f"{d.ctc_min}-{d.ctc_max} LPA" if d.ctc_min and d.ctc_max else "Not Disclosed",
+            "location": d.location,
+            "description": d.description,
+            "already_applied": already_applied is not None
+        })
+    
+    return jsonify({"success": True, "drives": eligible})
+
+
+@app.route("/student/placement/apply", methods=["POST"])
+@jwt_required()
+def apply_to_drive():
+    """Student applies to a placement drive"""
+    uid = get_jwt_identity()
+    data = request.json or {}
+    drive_id = data.get("drive_id")
+    
+    if not drive_id:
+        return jsonify({"success": False, "message": "Drive ID required"}), 400
+    
+    # Check if already applied
+    existing = DriveApplication.query.filter_by(drive_id=drive_id, student_id=uid).first()
+    if existing:
+        return jsonify({"success": False, "message": "Already applied to this drive"}), 400
+    
+    # Create application
+    app_rec = DriveApplication(
+        drive_id=drive_id,
+        student_id=uid,
+        status="applied",
+        applied_at=datetime.utcnow()
+    )
+    db.session.add(app_rec)
+    db.session.commit()
+    
+    return jsonify({"success": True, "message": "Application submitted successfully"})
+
+
 @app.route("/student/placement/history", methods=["GET"])
 @jwt_required()
 def student_placement_history():

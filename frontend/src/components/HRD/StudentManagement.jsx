@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Search, Loader2 } from 'lucide-react';
 import { api } from '../../api';
+import NeuralStudentProfile from './NeuralStudentProfile';
 
 const StudentManagement = ({ token, allocation }) => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedStudentId, setSelectedStudentId] = useState(null);
 
     useEffect(() => {
         fetchStudents();
@@ -71,6 +73,7 @@ const StudentManagement = ({ token, allocation }) => {
                                     <th className="p-4">USN</th>
                                     <th className="p-4 text-center">Semester</th>
                                     {!allocation && <th className="p-4 text-center">Section</th>}
+                                    <th className="p-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -85,6 +88,14 @@ const StudentManagement = ({ token, allocation }) => {
                                         <td className="p-4 text-slate-300 font-mono text-xs">{s.usn}</td>
                                         <td className="p-4 text-center">{s.semester}</td>
                                         {!allocation && <td className="p-4 text-center">{s.section}</td>}
+                                        <td className="p-4 text-right">
+                                            <button
+                                                onClick={() => setSelectedStudentId(s.id)}
+                                                className="px-3 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-lg text-xs font-medium border border-indigo-500/20 transition-colors"
+                                            >
+                                                Neural Profile
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -93,6 +104,14 @@ const StudentManagement = ({ token, allocation }) => {
                     </div>
                 )}
             </div>
+
+            {selectedStudentId && (
+                <NeuralStudentProfile
+                    token={token}
+                    studentId={selectedStudentId}
+                    onClose={() => setSelectedStudentId(null)}
+                />
+            )}
         </div>
     );
 };

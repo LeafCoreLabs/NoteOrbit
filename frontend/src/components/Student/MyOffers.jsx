@@ -1,86 +1,70 @@
-// MyOffers.jsx - Student Offer Letters
+// MyOffers.jsx - View and manage placement offers
 import React, { useState, useEffect } from 'react';
-import { Award, Download, CheckCircle, Building2, Loader2, Calendar } from 'lucide-react';
+import { Gift, DollarSign, Building2, Calendar, Loader2 } from 'lucide-react';
 import { api } from '../../api';
 
 const MyOffers = ({ token }) => {
     const [offers, setOffers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchOffers();
-    }, []);
+    useEffect(() => { fetchOffers(); }, []);
 
     const fetchOffers = async () => {
         try {
-            const response = await api.get('/student/placement/offers', {
+            const res = await api.get('/student/placement/offers', {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            if (response.data.success) {
-                setOffers(response.data.offers || []);
+            if (res.data.success) {
+                setOffers(res.data.offers || []);
             }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
+        } catch (e) { console.error(e); }
+        finally { setLoading(false); }
     };
 
     if (loading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-cyan-400" /></div>;
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div>
-                <h2 className="text-2xl font-bold text-white">My Offers</h2>
-                <p className="text-slate-400">Congratulations! View your job offers here.</p>
-            </div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Gift className="w-5 h-5 text-emerald-400" /> My Offers
+            </h2>
 
             {offers.length === 0 ? (
                 <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-12 text-center">
-                    <Award className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                    <Gift className="w-16 h-16 text-slate-700 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-white">No Offers Yet</h3>
-                    <p className="text-slate-400">Keep applying. Your hard work will pay off!</p>
+                    <p className="text-slate-400">Clear interview rounds to receive offers.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {offers.map(offer => (
-                        <div key={offer.id} className="relative bg-gradient-to-br from-slate-900 to-slate-800 border border-emerald-500/30 rounded-2xl p-6 overflow-hidden shadow-xl shadow-emerald-900/10">
-                            {/* Confetti/Bg Effect */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-10 translate-x-10" />
-
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 bg-white/5 rounded-xl flex items-center justify-center p-2 border border-white/10">
-                                        <Building2 className="w-8 h-8 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-white mb-1">{offer.company_name}</h3>
-                                        <p className="text-emerald-400 font-semibold flex items-center gap-1">
-                                            <CheckCircle className="w-4 h-4" /> Selected
-                                        </p>
-                                    </div>
+                        <div key={offer.id} className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 backdrop-blur-xl border border-emerald-500/20 rounded-2xl p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                                    <Building2 className="w-6 h-6 text-emerald-400" />
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-sm text-slate-400">Offer Date</p>
-                                    <p className="text-white font-mono">{new Date(offer.created_at).toLocaleDateString()}</p>
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">{offer.company_name}</h3>
+                                    <p className="text-emerald-400 text-sm">{offer.role}</p>
                                 </div>
                             </div>
 
-                            <div className="space-y-4 mb-6">
-                                <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5 flex justify-between items-center">
-                                    <span className="text-slate-400">Role</span>
-                                    <span className="font-bold text-white">{offer.role}</span>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="flex items-center gap-2 text-slate-300">
+                                    <DollarSign className="w-4 h-4 text-emerald-400" />
+                                    <span>{offer.ctc} LPA</span>
                                 </div>
-                                <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex justify-between items-center">
-                                    <span className="text-emerald-300">Package (CTC)</span>
-                                    <span className="font-bold text-emerald-400 text-lg">{offer.ctc} LPA</span>
+                                <div className="flex items-center gap-2 text-slate-300">
+                                    <Calendar className="w-4 h-4 text-emerald-400" />
+                                    <span>{new Date(offer.created_at).toLocaleDateString()}</span>
                                 </div>
                             </div>
 
-                            <button className="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
-                                <Download className="w-5 h-5" />
-                                Download Offer Letter
-                            </button>
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-medium">
+                                    🎉 Congratulations!
+                                </span>
+                            </div>
                         </div>
                     ))}
                 </div>

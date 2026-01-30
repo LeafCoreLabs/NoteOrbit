@@ -1,167 +1,133 @@
-// TrainerDashboard.jsx - Faculty/Trainer Interface for HRD
-import React, { useState, useEffect, useRef } from 'react';
-import {
-    LayoutDashboard, Users, BookOpen, ClipboardCheck,
-    BarChart2, LogOut, Menu, ChevronDown, CalendarCheck, X
-} from 'lucide-react';
+// TrainerDashboard.jsx - Trainer Portal with Workload & Tools
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Users, ClipboardList, Upload, FileText, LogOut, Loader2 } from 'lucide-react';
 import { api } from '../../api';
-import gsap from 'gsap';
-
-import TrainerClasses from './TrainerClasses';
-import TrainerAttendance from './TrainerAttendance';
-import TrainerMarks from './TrainerMarks';
 import StudentManagement from './StudentManagement';
+import BulkAttendance from './BulkAttendance';
+import BulkDataUpload from './BulkDataUpload';
+import InterviewResultLogger from './InterviewResultLogger';
 
 const TrainerDashboard = ({ token, setPage, setToken }) => {
-    const [activeTab, setActiveTab] = useState('dashboard');
-    const [selectedAllocation, setSelectedAllocation] = useState(null); // The currently active class context
+    const [activeView, setActiveView] = useState('classes');
+    const [classes, setClasses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedClass, setSelectedClass] = useState(null);
 
-    // GSAP Refs
-    const navRef = useRef(null);
-    const indicatorRef = useRef(null);
-    const contentRef = useRef(null);
+    useEffect(() => { fetchClasses(); }, []);
+
+    const fetchClasses = async () => {
+        try {
+            const res = await api.get('/hrd/trainer/classes', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setClasses(res.data.classes || []);
+            }
+        } catch (e) { console.error(e); }
+        finally { setLoading(false); }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('noteorbit_token');
         localStorage.removeItem('noteorbit_user');
         setToken(null);
-        setPage('user_type');
+        setPage('login');
     };
 
-    const handleClassSelect = (allocation) => {
-        setSelectedAllocation(allocation);
-        setActiveTab('attendance'); // Auto-switch to attendance on select, or could stay
-    };
-
-    const menuItems = [
-        { id: 'dashboard', label: 'My Classes', icon: BookOpen },
-        { id: 'attendance', label: 'Attendance', icon: CalendarCheck },
-        { id: 'marks', label: 'Marks Entry', icon: ClipboardCheck },
-        { id: 'students', label: 'My Students', icon: Users },
-        { id: 'performance', label: 'Performance', icon: BarChart2 },
+    const navItems = [
+        { id: 'classes', label: 'My Classes', icon: BookOpen },
+        { id: 'students', label: 'Student Directory', icon: Users },
+        { id: 'attendance', label: 'Bulk Attendance', icon: ClipboardList },
+        { id: 'upload', label: 'Data Upload', icon: Upload },
+        { id: 'interviews', label: 'Interview Results', icon: FileText },
     ];
 
-    // GSAP Navigation Animation
-    useEffect(() => {
-        if (navRef.current && indicatorRef.current) {
-            setTimeout(() => {
-                const activeBtn = navRef.current.querySelector(`button[data-key="${activeTab}"]`);
-                if (activeBtn) {
-                    gsap.to(indicatorRef.current, {
-                        y: activeBtn.offsetTop,
-                        height: activeBtn.offsetHeight,
-                        opacity: 1,
-                        duration: 0.5,
-                        ease: "elastic.out(1, 0.6)"
-                    });
-                }
-            }, 100);
-        }
-        if (contentRef.current) {
-            gsap.fromTo(contentRef.current,
-                { opacity: 0, x: 20 },
-                { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
-            );
-        }
-    }, [activeTab]);
-
     const renderContent = () => {
-        switch (activeTab) {
-            case 'dashboard':
-                return <TrainerClasses token={token} onSelectClass={handleClassSelect} />;
-            case 'attendance':
-                return <TrainerAttendance token={token} allocation={selectedAllocation} />;
-            case 'marks':
-                return <TrainerMarks token={token} allocation={selectedAllocation} />;
+        switch (activeView) {
+            case 'classes':
+                return (
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-bold text-white">My Allocated Classes</h2>
+                        {loading ? (
+                            <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-indigo-400" /></div>
+                        ) : classes.length === 0 ? (
+                            <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-12 text-center">
+                                <BookOpen className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                                <p className="text-slate-400">No classes allocated yet.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {classes.map(c => (
+                                    <div
+                                        key={c.id}
+                                        className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-indigo-500/30 transition cursor-pointer group"
+                                        onClick={() => { setSelectedClass(c); setActiveView('students'); }}
+                                    >
+                                        <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center mb-4">
+                                            <BookOpen className="w-6 h-6 text-indigo-400" />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-white mb-1">{c.subject_name}</h3>
+                                        <p className="text-slate-400 text-sm">{c.degree} Sem {c.semester} - Section {c.section}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
             case 'students':
-                return <StudentManagement token={token} allocation={selectedAllocation} />;
-
-            default: return <div>Coming soon...</div>;
+                return <StudentManagement token={token} allocation={selectedClass} />;
+            case 'attendance':
+                return <BulkAttendance token={token} classes={classes} />;
+            case 'upload':
+                return <BulkDataUpload token={token} />;
+            case 'interviews':
+                return <InterviewResultLogger token={token} />;
+            default:
+                return null;
         }
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6">
-            {/* Sidebar */}
-            <div className="w-full md:w-64 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
-                <div className="flex items-center gap-3 mb-6 px-2">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                        <Users className="w-6 h-6 text-white" />
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/30 to-slate-950">
+            <div className="flex">
+                {/* Sidebar */}
+                <aside className="w-64 min-h-screen bg-slate-900/80 backdrop-blur-xl border-r border-white/5 p-6">
+                    <div className="mb-8">
+                        <h1 className="text-xl font-bold text-white">Trainer Portal</h1>
+                        <p className="text-xs text-slate-500">HRD Training Management</p>
                     </div>
-                    <div>
-                        <h5 className="text-lg font-bold text-white">Trainer Panel</h5>
-                        <p className="text-xs text-slate-400">Section Manager</p>
-                    </div>
-                </div>
 
-                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
-                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-emerald-600/20 border border-emerald-500/30 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
-                    {menuItems.map(item => {
-                        const Icon = item.icon;
-                        const isActive = activeTab === item.id;
-                        return (
-                            <button
-                                key={item.id}
-                                data-key={item.id}
-                                onClick={() => setActiveTab(item.id)}
-                                className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${isActive
-                                    ? 'text-emerald-300'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                            >
-                                <Icon className="w-5 h-5 mr-3" />
-                                {item.label}
-                            </button>
-                        );
-                    })}
-                </nav>
+                    <nav className="space-y-2">
+                        {navItems.map(item => {
+                            const Icon = item.icon;
+                            const isActive = activeView === item.id;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveView(item.id)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
+                                            ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    <Icon className="w-5 h-5" /> {item.label}
+                                </button>
+                            );
+                        })}
+                    </nav>
 
-                {/* Mobile Nav */}
-                <div className="md:hidden">
-                    <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400 pointer-events-none" />
-                        <select
-                            value={activeTab}
-                            onChange={(e) => setActiveTab(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-emerald-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-lg font-semibold"
-                        >
-                            {menuItems.map(item => (
-                                <option key={item.id} value={item.id} className="bg-slate-900 text-white py-2">
-                                    {item.label}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                    </div>
-                </div>
-
-                {/* Selected Class Indicator */}
-                {selectedAllocation && (
-                    <div className="mt-8 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                        <div className="flex justify-between items-start mb-1">
-                            <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider">Active Class</span>
-                            <button onClick={() => setSelectedAllocation(null)} className="text-slate-500 hover:text-white"><X className="w-3 h-3" /></button>
-                        </div>
-                        <p className="text-white font-bold text-sm line-clamp-1">{selectedAllocation.subject_name}</p>
-                        <p className="text-slate-400 text-xs">Sem {selectedAllocation.semester} - Sec {selectedAllocation.section}</p>
-                    </div>
-                )}
-
-                <div className="mt-6 pt-4 border-t border-white/10">
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all font-semibold"
+                        className="absolute bottom-6 left-6 flex items-center gap-2 text-slate-500 hover:text-red-400 transition text-sm"
                     >
-                        <LogOut className="w-5 h-5" />
-                        Logout
+                        <LogOut className="w-4 h-4" /> Logout
                     </button>
-                </div>
-            </div>
+                </aside>
 
-            {/* Content Area */}
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-                {renderContent()}
+                {/* Main Content */}
+                <main className="flex-1 p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {renderContent()}
+                </main>
             </div>
         </div>
     );
