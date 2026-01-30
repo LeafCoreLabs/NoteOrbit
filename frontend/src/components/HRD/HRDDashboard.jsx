@@ -30,6 +30,20 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
     }, []);
 
     const fetchDashboardStats = async () => {
+        // DEBUG: Verify Token Validity on Mount
+        try {
+            console.log("🔍 [DEBUG] Checking Token Validity...");
+            const debugRes = await axios.get('/hrd/debug-auth', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            console.log("✅ [DEBUG] Auth Result:", debugRes.data);
+            if (!debugRes.data.success) {
+                alert(`⚠️ AUTH WARNING: Backend rejected token.\nReason: ${debugRes.data.error || "Unknown"}`);
+            }
+        } catch (e) {
+            console.error("❌ [DEBUG] Auth Check Failed:", e);
+        }
+
         try {
             const response = await axios.get('/hrd/analytics/overview', {
                 headers: { Authorization: `Bearer ${token}` }
