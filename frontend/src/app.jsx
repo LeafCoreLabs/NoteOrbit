@@ -5980,6 +5980,7 @@ function App() {
             // Note: Login/Register should not get a 401 error,  
             // but the general 4xx/5xx handling is still here.
             showMessage(err.response?.data?.message || err.message || "Login failed");
+            throw err; // Re-throw so CredentialsView stops loading & doesn't vanish
         }
     };
 
