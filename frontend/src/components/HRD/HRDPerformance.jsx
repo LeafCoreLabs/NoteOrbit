@@ -38,38 +38,6 @@ const HRDPerformance = ({ token }) => {
                 <p className="text-slate-400">Track your attendance and marks in HRD subjects.</p>
             </div>
 
-            {/* Attendance Overview */}
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <ClipboardCheck className="w-5 h-5 text-cyan-400" /> Overall Attendance
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-slate-800/50 rounded-xl p-4 text-center">
-                        <p className={`text-3xl font-bold ${attendance.percentage >= 75 ? 'text-emerald-400' : 'text-red-400'}`}>
-                            {attendance.percentage || 0}%
-                        </p>
-                        <p className="text-slate-500 text-sm">Overall</p>
-                    </div>
-                    <div className="bg-slate-800/50 rounded-xl p-4 text-center">
-                        <p className="text-3xl font-bold text-white">{attendance.total_classes || 0}</p>
-                        <p className="text-slate-500 text-sm">Total Classes</p>
-                    </div>
-                    <div className="bg-slate-800/50 rounded-xl p-4 text-center">
-                        <p className="text-3xl font-bold text-emerald-400">{attendance.present || 0}</p>
-                        <p className="text-slate-500 text-sm">Present</p>
-                    </div>
-                    <div className="bg-slate-800/50 rounded-xl p-4 text-center">
-                        <p className="text-3xl font-bold text-red-400">{attendance.absent || 0}</p>
-                        <p className="text-slate-500 text-sm">Absent</p>
-                    </div>
-                </div>
-                {attendance.percentage < 75 && attendance.total_classes > 0 && (
-                    <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl text-orange-400 text-sm">
-                        ⚠️ Your attendance is below 75%. This may affect your placement eligibility.
-                    </div>
-                )}
-            </div>
-
             {/* Subject-wise Marks */}
             <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
