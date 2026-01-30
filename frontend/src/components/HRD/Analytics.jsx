@@ -18,8 +18,8 @@ const Analytics = ({ token }) => {
     const fetchAnalytics = async () => {
         try {
             const [overview, branches] = await Promise.all([
-                api.get('/hrd/analytics/overview'),
-                api.get('/hrd/analytics/branch-wise')
+                api.get('/hrd/analytics/overview', { headers: { Authorization: `Bearer ${token}` } }),
+                api.get('/hrd/analytics/branch-wise', { headers: { Authorization: `Bearer ${token}` } })
             ]);
 
             setStats(overview.data);

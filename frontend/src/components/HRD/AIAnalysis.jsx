@@ -30,7 +30,8 @@ const AIAnalysis = ({ token }) => {
         try {
             const response = await api.post('/hrd/ai/analyze-resume', formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`
                 }
             });
             setResumeAnalysis(response.data);
@@ -45,7 +46,9 @@ const AIAnalysis = ({ token }) => {
     const calculateRoleFit = async () => {
         setLoading(true);
         try {
-            const response = await api.post('/hrd/ai/role-fit', roleFitData);
+            const response = await api.post('/hrd/ai/role-fit', roleFitData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setRoleFitResult(response.data);
         } catch (error) {
             console.error('Failed to calculate role-fit:', error);

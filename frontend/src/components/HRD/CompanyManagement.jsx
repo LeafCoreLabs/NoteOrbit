@@ -26,7 +26,9 @@ const CompanyManagement = ({ token }) => {
 
     const fetchCompanies = async () => {
         try {
-            const response = await api.get('/hrd/companies');
+            const response = await api.get('/hrd/companies', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setCompanies(response.data.companies || []);
         } catch (error) {
             console.error('Failed to fetch companies:', error);
@@ -41,9 +43,13 @@ const CompanyManagement = ({ token }) => {
 
         try {
             if (editingCompany) {
-                await api.put(`/hrd/companies/${editingCompany.id}`, formData);
+                await api.put(`/hrd/companies/${editingCompany.id}`, formData, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
             } else {
-                await api.post('/hrd/companies', formData);
+                await api.post('/hrd/companies', formData, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
             }
             fetchCompanies();
             handleCloseModal();
@@ -59,7 +65,9 @@ const CompanyManagement = ({ token }) => {
         if (!confirm('Are you sure you want to delete this company?')) return;
 
         try {
-            await api.delete(`/hrd/companies/${id}`);
+            await api.delete(`/hrd/companies/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             fetchCompanies();
         } catch (error) {
             console.error('Failed to delete company:', error);

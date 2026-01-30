@@ -29,7 +29,9 @@ const OfferManagement = ({ token }) => {
 
     const fetchOffers = async () => {
         try {
-            const response = await api.get('/hrd/offers');
+            const response = await api.get('/hrd/offers', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setOffers(response.data.offers || []);
         } catch (error) {
             console.error('Failed to fetch offers:', error);
@@ -40,7 +42,9 @@ const OfferManagement = ({ token }) => {
 
     const fetchDrives = async () => {
         try {
-            const response = await api.get('/hrd/drives');
+            const response = await api.get('/hrd/drives', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setDrives(response.data.drives || []);
         } catch (error) {
             console.error('Failed to fetch drives:', error);
@@ -52,7 +56,9 @@ const OfferManagement = ({ token }) => {
         setLoading(true);
 
         try {
-            await api.post('/hrd/offers', formData);
+            await api.post('/hrd/offers', formData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             fetchOffers();
             handleCloseModal();
             alert('Offer created and student notified via email!');
