@@ -3813,7 +3813,7 @@ def hrd_login():
     if not hrd_user.is_active:
         return jsonify({"success": False, "message": "Account inactive"}), 403
     
-    token = create_access_token(identity=hrd_user.id, additional_claims={"role": "hrd"})
+    token = create_access_token(identity=str(hrd_user.id), additional_claims={"role": "hrd"})
     
     return jsonify({
         "success": True,
@@ -4581,27 +4581,6 @@ def reject_offer(offer_id):
 
 # Register Blueprint
 app.register_blueprint(attendance_bp, url_prefix='/attendance')
-
-@app.route("/hrd/debug-auth", methods=["GET"])
-def debug_auth():
-    auth_header = request.headers.get("Authorization", "Missing")
-    
-    try:
-        verify_jwt_in_request()
-        claims = get_jwt()
-        return jsonify({
-            "success": True, 
-            "message": "Token Valid", 
-            "header": auth_header, 
-            "claims": claims
-        })
-    except Exception as e:
-        return jsonify({
-            "success": False, 
-            "message": "Token Invalid", 
-            "header": auth_header, 
-            "error": str(e)
-        }), 200 # Return 200 so we can see the JSON body even on auth fail
 
 if __name__ == "__main__":
     with app.app_context():
