@@ -4669,6 +4669,41 @@ def get_student_neural_profile(student_id):
         }
     })
 
+@app.route("/student/placement/offers", methods=["GET"])
+@jwt_required()
+def get_student_offers():
+    uid = get_jwt_identity()
+    offers = PlacementOffer.query.filter_by(student_id=uid).all()
+    out = []
+    for o in offers:
+        d = PlacementDrive.query.get(o.drive_id)
+        c = Company.query.get(d.company_id) if d else None
+        out.append({"id": o.id, "company_name": c.name if c else "Unknown",
+                    "role": d.role if d else "Unknown", "ctc": o.ctc, "status": o.status,
+                    "created_at": o.created_at.isoformat() if o.created_at else None})
+    return jsonify({"success": True, "offers": out})
+
+@app.route("/student/hrd/performance", methods=["GET"])
+@jwt_required()
+def get_student_hrd_performance():
+    uid = get_jwt_identity()
+    att_records = HRDAttendance.query.filter_by(student_id=uid).all()
+    total = len(att_records)
+    present = len([a for a in att_records if a.status == "Present"])
+    att_pct = round((present / total * 100), 1) if total > 0 else 0
+    
+    marks_recs = HRDMarks.query.filter_by(student_id=uid).all()
+    subjects = []
+    for m in marks_recs:
+        sub = HRDSubject.query.get(m.hrd_subject_id)
+        subjects.append({"subject": sub.name if sub else "Unknown", "marks_obtained": m.marks_obtained,
+                         "max_marks": m.max_marks, "percentage": round((m.marks_obtained / m.max_marks * 100), 1) if m.max_marks > 0 else 0})
+    return jsonify({"success": True, "performance": {
+        "attendance": {"total_classes": total, "present": present, "absent": total - present, "percentage": att_pct},
+        "subjects": subjects
+    }})
+
+
 if __name__ == "__main__":
     with app.app_context():
         init_db()
