@@ -5,7 +5,7 @@ import {
     BarChart3, LogOut, Menu, X, TrendingUp, Users, ChevronDown,
     DollarSign, Award
 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../../api';
 import gsap from 'gsap';
 
 // Import HRD sub-components
@@ -33,7 +33,7 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
         // DEBUG: Verify Token Validity on Mount
         try {
             console.log("🔍 [DEBUG] Checking Token Validity...");
-            const debugRes = await axios.get('/hrd/debug-auth', {
+            const debugRes = await api.get('/hrd/debug-auth', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             console.log("✅ [DEBUG] Auth Result:", debugRes.data);
@@ -45,7 +45,7 @@ const HRDDashboard = ({ token, setPage, setToken }) => {
         }
 
         try {
-            const response = await axios.get('/hrd/analytics/overview', {
+            const response = await api.get('/hrd/analytics/overview', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setStats(response.data);
