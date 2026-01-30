@@ -1,19 +1,41 @@
-// PlacementProfile.jsx - Smart Profile Engine for Students
+// PlacementProfile.jsx - Smart Profile Engine V2 for Students
 import React, { useState, useEffect } from 'react';
-import { User, Upload, Plus, X, Save, Loader2 } from 'lucide-react';
+import { User, Upload, Plus, X, Save, Loader2, Sparkles, FileText, Clock, CheckCircle2 } from 'lucide-react';
 import { api } from '../../api';
 
 const PlacementProfile = ({ token }) => {
     const [profile, setProfile] = useState({
         skills: [],
+        ai_skills: [],
         resume_url: '',
+        resume_versions: [],
         linkedin_url: '',
         portfolio_url: '',
-        preferred_role: ''
+        preferred_roles: [],
+        github_url: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [newSkill, setNewSkill] = useState('');
+    const [newResumeUrl, setNewResumeUrl] = useState('');
+    const [parsing, setParsing] = useState(false);
+
+    const roleOptions = [
+        { id: 'sde', label: 'Software Development Engineer', icon: '💻' },
+        { id: 'frontend', label: 'Frontend Developer', icon: '🎨' },
+        { id: 'backend', label: 'Backend Developer', icon: '⚙️' },
+        { id: 'fullstack', label: 'Full Stack Developer', icon: '🔥' },
+        { id: 'analyst', label: 'Business Analyst', icon: '📊' },
+        { id: 'data', label: 'Data Scientist/Engineer', icon: '📈' },
+        { id: 'ml', label: 'ML/AI Engineer', icon: '🤖' },
+        { id: 'devops', label: 'DevOps/SRE', icon: '🚀' },
+        { id: 'cloud', label: 'Cloud Engineer', icon: '☁️' },
+        { id: 'security', label: 'Security Engineer', icon: '🔒' },
+        { id: 'product', label: 'Product Manager', icon: '📋' },
+        { id: 'qa', label: 'QA/Test Engineer', icon: '🧪' },
+        { id: 'mobile', label: 'Mobile Developer', icon: '📱' },
+        { id: 'consulting', label: 'IT Consultant', icon: '💼' },
+    ];
 
     useEffect(() => { fetchProfile(); }, []);
 
@@ -23,7 +45,7 @@ const PlacementProfile = ({ token }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success && res.data.profile) {
-                setProfile(res.data.profile);
+                setProfile(p => ({ ...p, ...res.data.profile }));
             }
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
@@ -50,47 +72,202 @@ const PlacementProfile = ({ token }) => {
         setProfile(p => ({ ...p, skills: p.skills.filter(s => s !== skill) }));
     };
 
+    const acceptAiSkill = (skill) => {
+        if (!profile.skills.includes(skill)) {
+            setProfile(p => ({
+                ...p,
+                skills: [...p.skills, skill],
+                ai_skills: p.ai_skills.filter(s => s !== skill)
+            }));
+        }
+    };
+
+    const toggleRole = (roleId) => {
+        setProfile(p => {
+            const roles = p.preferred_roles || [];
+            if (roles.includes(roleId)) {
+                return { ...p, preferred_roles: roles.filter(r => r !== roleId) };
+            } else if (roles.length < 3) {
+                return { ...p, preferred_roles: [...roles, roleId] };
+            }
+            return p;
+        });
+    };
+
+    const addResumeVersion = () => {
+        if (!newResumeUrl.trim()) return;
+        const version = {
+            url: newResumeUrl.trim(),
+            uploaded_at: new Date().toISOString(),
+            version: (profile.resume_versions?.length || 0) + 1
+        };
+        setProfile(p => ({
+            ...p,
+            resume_url: newResumeUrl.trim(),
+            resume_versions: [...(p.resume_versions || []), version]
+        }));
+        setNewResumeUrl('');
+    };
+
+    const parseResumeSkills = async () => {
+        setParsing(true);
+        // Simulated AI parsing - in production this would call an AI endpoint
+        setTimeout(() => {
+            const suggestedSkills = ['Python', 'JavaScript', 'React', 'Node.js', 'SQL', 'Git'];
+            const existingSkills = profile.skills || [];
+            const newAiSkills = suggestedSkills.filter(s => !existingSkills.includes(s));
+            setProfile(p => ({ ...p, ai_skills: newAiSkills }));
+            setParsing(false);
+        }, 1500);
+    };
+
     if (loading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-cyan-400" /></div>;
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Resume V2 Section */}
             <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <User className="w-5 h-5 text-cyan-400" /> Smart Profile
+                    <FileText className="w-5 h-5 text-cyan-400" /> Resume V2
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Preferred Role */}
-                    <div>
-                        <label className="text-sm text-slate-400 mb-2 block">Preferred Role</label>
-                        <select
-                            value={profile.preferred_role || ''}
-                            onChange={e => setProfile(p => ({ ...p, preferred_role: e.target.value }))}
-                            className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white"
-                        >
-                            <option value="">Select Role...</option>
-                            <option value="SDE">Software Development Engineer</option>
-                            <option value="Analyst">Business Analyst</option>
-                            <option value="Data">Data Scientist/Engineer</option>
-                            <option value="DevOps">DevOps Engineer</option>
-                            <option value="Product">Product Manager</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
+                <div className="space-y-4">
+                    {/* Current Resume */}
+                    {profile.resume_url && (
+                        <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                            <div className="flex-1">
+                                <p className="text-white font-medium">Current Resume</p>
+                                <a href={profile.resume_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 text-sm hover:underline truncate block">
+                                    {profile.resume_url}
+                                </a>
+                            </div>
+                            <button
+                                onClick={parseResumeSkills}
+                                disabled={parsing}
+                                className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 transition flex items-center gap-2 text-sm"
+                            >
+                                {parsing ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                                AI Parse Skills
+                            </button>
+                        </div>
+                    )}
 
-                    {/* Resume URL */}
-                    <div>
-                        <label className="text-sm text-slate-400 mb-2 block">Resume URL</label>
+                    {/* Add New Version */}
+                    <div className="flex gap-2">
                         <input
-                            type="url"
-                            placeholder="https://drive.google.com/..."
-                            value={profile.resume_url || ''}
-                            onChange={e => setProfile(p => ({ ...p, resume_url: e.target.value }))}
-                            className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-slate-600"
+                            placeholder="Paste new resume URL (Google Drive, Dropbox, etc.)"
+                            value={newResumeUrl}
+                            onChange={e => setNewResumeUrl(e.target.value)}
+                            className="flex-1 bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-slate-600"
                         />
+                        <button
+                            onClick={addResumeVersion}
+                            disabled={!newResumeUrl.trim()}
+                            className="px-4 bg-cyan-500/20 text-cyan-400 rounded-xl hover:bg-cyan-500/30 transition disabled:opacity-50"
+                        >
+                            <Upload className="w-5 h-5" />
+                        </button>
                     </div>
 
-                    {/* LinkedIn */}
+                    {/* Version History */}
+                    {profile.resume_versions?.length > 0 && (
+                        <div className="mt-4">
+                            <p className="text-sm text-slate-400 mb-2 flex items-center gap-1"><Clock className="w-4 h-4" /> Version History</p>
+                            <div className="space-y-2 max-h-32 overflow-y-auto">
+                                {profile.resume_versions.slice().reverse().map((v, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-xs text-slate-500 p-2 bg-slate-800/30 rounded-lg">
+                                        <span className="text-cyan-400">v{v.version}</span>
+                                        <span className="truncate flex-1">{v.url}</span>
+                                        <span>{new Date(v.uploaded_at).toLocaleDateString()}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Skills & AI Parsing */}
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-purple-400" /> Skill Matrix
+                </h2>
+
+                {/* AI Suggested Skills */}
+                {profile.ai_skills?.length > 0 && (
+                    <div className="mb-4 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                        <p className="text-sm text-purple-400 mb-2 flex items-center gap-1">
+                            <Sparkles className="w-4 h-4" /> AI-Detected Skills (click to add)
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {profile.ai_skills.map(skill => (
+                                <button
+                                    key={skill}
+                                    onClick={() => acceptAiSkill(skill)}
+                                    className="px-3 py-1.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-lg text-sm hover:bg-purple-500/30 transition flex items-center gap-1"
+                                >
+                                    <Plus className="w-3 h-3" /> {skill}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Manual Skills */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                    {(profile.skills || []).map(skill => (
+                        <span key={skill} className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg text-sm flex items-center gap-2">
+                            {skill}
+                            <button onClick={() => removeSkill(skill)} className="hover:text-red-400"><X className="w-3 h-3" /></button>
+                        </span>
+                    ))}
+                </div>
+                <div className="flex gap-2">
+                    <input
+                        placeholder="Add skill manually (e.g. Python, React)"
+                        value={newSkill}
+                        onChange={e => setNewSkill(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addSkill()}
+                        className="flex-1 bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-slate-600"
+                    />
+                    <button onClick={addSkill} className="px-4 bg-cyan-500/20 text-cyan-400 rounded-xl hover:bg-cyan-500/30 transition">
+                        <Plus className="w-5 h-5" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Preferred Roles */}
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                    <User className="w-5 h-5 text-cyan-400" /> Preferred Roles
+                </h2>
+                <p className="text-slate-500 text-sm mb-4">Select up to 3 roles you're interested in</p>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {roleOptions.map(role => {
+                        const isSelected = (profile.preferred_roles || []).includes(role.id);
+                        return (
+                            <button
+                                key={role.id}
+                                onClick={() => toggleRole(role.id)}
+                                className={`p-3 rounded-xl border text-left transition ${isSelected
+                                        ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                                        : 'bg-slate-800/30 border-white/10 text-slate-400 hover:border-white/20 hover:text-white'
+                                    }`}
+                            >
+                                <span className="text-lg">{role.icon}</span>
+                                <p className="text-sm font-medium mt-1">{role.label}</p>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Links */}
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                <h2 className="text-xl font-bold text-white mb-6">Profile Links</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="text-sm text-slate-400 mb-2 block">LinkedIn</label>
                         <input
@@ -101,8 +278,16 @@ const PlacementProfile = ({ token }) => {
                             className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-slate-600"
                         />
                     </div>
-
-                    {/* Portfolio */}
+                    <div>
+                        <label className="text-sm text-slate-400 mb-2 block">GitHub</label>
+                        <input
+                            type="url"
+                            placeholder="https://github.com/..."
+                            value={profile.github_url || ''}
+                            onChange={e => setProfile(p => ({ ...p, github_url: e.target.value }))}
+                            className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-slate-600"
+                        />
+                    </div>
                     <div>
                         <label className="text-sm text-slate-400 mb-2 block">Portfolio</label>
                         <input
@@ -114,42 +299,17 @@ const PlacementProfile = ({ token }) => {
                         />
                     </div>
                 </div>
-
-                {/* Skills */}
-                <div className="mt-6">
-                    <label className="text-sm text-slate-400 mb-2 block">Skill Matrix</label>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                        {(profile.skills || []).map(skill => (
-                            <span key={skill} className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg text-sm flex items-center gap-2">
-                                {skill}
-                                <button onClick={() => removeSkill(skill)} className="hover:text-red-400"><X className="w-3 h-3" /></button>
-                            </span>
-                        ))}
-                    </div>
-                    <div className="flex gap-2">
-                        <input
-                            placeholder="Add skill (e.g. Python, React)"
-                            value={newSkill}
-                            onChange={e => setNewSkill(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && addSkill()}
-                            className="flex-1 bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-slate-600"
-                        />
-                        <button onClick={addSkill} className="px-4  bg-cyan-500/20 text-cyan-400 rounded-xl hover:bg-cyan-500/30 transition">
-                            <Plus className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Save */}
-                <button
-                    onClick={saveProfile}
-                    disabled={saving}
-                    className="mt-6 px-6 py-3 bg-gradient-to-r from-cyan-500 to-indigo-500 text-white font-medium rounded-xl flex items-center gap-2 hover:opacity-90 transition disabled:opacity-50"
-                >
-                    {saving ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
-                    Save Profile
-                </button>
             </div>
+
+            {/* Save */}
+            <button
+                onClick={saveProfile}
+                disabled={saving}
+                className="w-full py-4 bg-gradient-to-r from-cyan-500 to-indigo-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-50"
+            >
+                {saving ? <Loader2 className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5" />}
+                Save Profile
+            </button>
         </div>
     );
 };

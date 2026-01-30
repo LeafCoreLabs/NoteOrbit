@@ -1,20 +1,22 @@
-// PlacementAssist.jsx - Student Placement Portal
+// PlacementAssist.jsx - Student Placement Portal V2
 import React, { useState } from 'react';
-import { User, Briefcase, FileText, CheckCircle, BarChart2 } from 'lucide-react';
+import { User, Briefcase, FileText, CheckCircle, ClipboardCheck, BarChart2 } from 'lucide-react';
 import PlacementProfile from './PlacementProfile';
 import AvailableDrives from './AvailableDrives';
 import MyApplications from './MyApplications';
 import MyOffers from './MyOffers';
+import HRDAttendance from './HRDAttendance';
 import HRDPerformance from '../HRD/HRDPerformance';
 
 const PlacementAssist = ({ token, user }) => {
     const [activeTab, setActiveTab] = useState('drives');
 
     const tabs = [
-        { id: 'profile', label: 'My Profile', icon: User },
-        { id: 'drives', label: 'Available Drives', icon: Briefcase },
-        { id: 'applications', label: 'Applications', icon: FileText },
+        { id: 'profile', label: 'Smart Profile', icon: User },
+        { id: 'drives', label: 'Discover Drives', icon: Briefcase },
+        { id: 'applications', label: 'My Applications', icon: FileText },
         { id: 'offers', label: 'My Offers', icon: CheckCircle },
+        { id: 'attendance', label: 'HRD Attendance', icon: ClipboardCheck },
         { id: 'performance', label: 'Training Performance', icon: BarChart2 },
     ];
 
@@ -24,6 +26,7 @@ const PlacementAssist = ({ token, user }) => {
             case 'drives': return <AvailableDrives token={token} />;
             case 'applications': return <MyApplications token={token} />;
             case 'offers': return <MyOffers token={token} />;
+            case 'attendance': return <HRDAttendance token={token} />;
             case 'performance': return <HRDPerformance token={token} />;
             default: return <div>Select a tab</div>;
         }
