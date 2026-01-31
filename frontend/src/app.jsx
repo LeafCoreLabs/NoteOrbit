@@ -2648,10 +2648,10 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                     <h1 className="text-3xl font-bold text-white mb-2">Faculty Portal</h1>
                     <p className="text-slate-400">Welcome, {user?.name || 'Professor'}! Manage your academic duties.</p>
                 </div>
-                {/* Mobile-Only Logout Button (Sync with HRD) */}
+                {/* Aesthetic Logout Button */}
                 <button
                     onClick={onLogout}
-                    className="md:hidden flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
                 >
                     <LogOut className="w-4 h-4" /> Logout
                 </button>
@@ -4830,10 +4830,10 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                     <h1 className="text-3xl font-bold text-white mb-2">Admin Tools</h1>
                     <p className="text-slate-400">Manage students, faculty, courses and institutional settings.</p>
                 </div>
-                {/* Mobile-Only Logout Button (Sync with HRD) */}
+                {/* Aesthetic Logout Button */}
                 <button
                     onClick={onLogout}
-                    className="md:hidden flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
                 >
                     <LogOut className="w-4 h-4" /> Logout
                 </button>
@@ -5533,10 +5533,10 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
                     <h1 className="text-3xl font-bold text-white mb-2">Student Hub</h1>
                     <p className="text-slate-400">Welcome, {user?.name || 'Student'}! Access your academic resources.</p>
                 </div>
-                {/* Mobile-Only Logout Button (Sync with HRD) */}
+                {/* Aesthetic Logout Button */}
                 <button
                     onClick={onLogout}
-                    className="md:hidden flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
                 >
                     <LogOut className="w-4 h-4" /> Logout
                 </button>
@@ -5696,42 +5696,47 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
 
     return (
         <div className="flex h-[600px] gap-4 relative isolate overflow-hidden">
-            {/* Sidebar: Faculty List - Mobile Drawer */}
+            {/* Sidebar (History Style) - Mobile Drawer / Desktop Static */}
             <div className={`
                 absolute inset-y-0 left-0 z-50 h-full w-3/4 max-w-xs bg-slate-900/95 backdrop-blur-2xl border-r border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-out
-                md:static md:w-1/3 md:bg-slate-900/60 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col md:shadow-none md:translate-x-0
+                md:static md:w-1/4 md:bg-slate-900/60 md:shadow-none md:translate-x-0 md:backdrop-blur-xl md:border md:rounded-xl md:flex md:flex-col
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-0 md:p-0'}
             `}>
-                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                    <h5 className="font-bold text-lg text-white flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-blue-400" /> Contacts
+                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-slate-900 to-slate-800/50">
+                    <h5 className="font-bold text-slate-200 flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-blue-400" /> Contacts
                     </h5>
+                    {/* Mobile Close Button */}
                     <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-900/50">
                     {displayList.map(p => (
                         <div
                             key={p.id}
                             onClick={() => selectProfessor(p)}
-                            className={`p-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${selectedProf?.id === p.id ? 'bg-blue-900/20 border-l-4 border-l-blue-500' : ''}`}
+                            className={`p-3 rounded-xl text-sm cursor-pointer flex flex-col group transition-all border border-transparent ${selectedProf?.id === p.id
+                                ? "bg-blue-600/20 text-blue-100 border-blue-500/30 shadow-sm"
+                                : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
                         >
-                            <div className="flex justify-between items-start mb-1">
-                                <div className="font-semibold text-slate-200">Prof. {p.name}</div>
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="font-medium truncate">Prof. {p.name}</span>
                                 {p.unread_count > 0 && (
-                                    <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full">{p.unread_count} new</span>
+                                    <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-lg shadow-blue-500/20">{p.unread_count}</span>
                                 )}
                             </div>
-                            <div className="text-xs text-blue-400 mb-1">{p.allocations && p.allocations.length > 0 ? p.allocations.join(", ") : "General Faculty"}</div>
-                            {p.last_message && (
-                                <>
-                                    <div className="text-xs text-slate-500 truncate">{p.last_message}</div>
-                                    <div className="text-[10px] text-slate-600 mt-1">{new Date(p.last_timestamp).toLocaleDateString()}</div>
-                                </>
-                            )}
+                            <div className="text-[10px] opacity-60 truncate">
+                                {p.allocations && p.allocations.length > 0 ? p.allocations[0] : "General Faculty"}
+                            </div>
                         </div>
                     ))}
+                    {displayList.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-40 text-slate-500 gap-2 font-medium">
+                            <Mail className="w-8 h-8 opacity-20" />
+                            <span className="text-xs">No contacts available</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -5744,39 +5749,51 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
             )}
 
             {/* Main Chat Area */}
-            <div className={`flex-1 flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden relative transition-all duration-300 ${sidebarOpen ? 'md:w-2/3' : 'w-full'}`}>
+            <div className="flex-1 w-full flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 md:border-blue-500/20 rounded-xl overflow-hidden relative shadow-2xl">
                 {selectedProf ? (
                     <>
                         {/* Header */}
-                        <div className="p-4 border-b border-white/10 bg-slate-800/50 flex items-center shadow-sm z-10">
-                            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-white/5 transition-colors text-white">
-                                <Menu className="w-6 h-6" />
-                            </button>
-                            <div>
-                                <h4 className="font-bold text-white">Prof. {selectedProf.name}</h4>
-                                <p className="text-xs text-slate-400">Subject: {selectedProf.allocations && selectedProf.allocations.length > 0 ? selectedProf.allocations.join(", ") : "N/A"}</p>
+                        <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-800/40 backdrop-blur-md z-10">
+                            <div className="flex items-center text-blue-400 font-bold text-lg">
+                                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-3 p-1 rounded-lg hover:bg-white/5 transition-colors">
+                                    <Menu className="w-6 h-6" />
+                                </button>
+                                <div className="flex flex-col leading-none">
+                                    <span className="flex items-center gap-2">
+                                        <User className="w-5 h-5 text-blue-400" />
+                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Prof. {selectedProf.name}</span>
+                                    </span>
+                                    <span className="text-[10px] font-normal text-slate-500 mt-1 hidden md:block">
+                                        {selectedProf.allocations && selectedProf.allocations.length > 0 ? selectedProf.allocations.join(", ") : "Faculty Member"}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="text-xs font-medium px-3 py-1 bg-green-500/10 text-green-400 rounded-full border border-green-500/20">
+                                Secure Channel
                             </div>
                         </div>
 
                         {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30">
+                        <div id="parent-chat-history" className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/30 scroll-smooth">
                             {activeThread.length === 0 ? (
-                                <div className="text-center text-slate-500 py-10 opacity-70">
-                                    <p>Start a new conversation with Prof. {selectedProf.name}.</p>
-                                    <p className="text-sm">Subject will default to: "{selectedProf.allocations && selectedProf.allocations[0] ? selectedProf.allocations[0] : "Parent Inquiry"}"</p>
+                                <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60">
+                                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
+                                        <Mail className="w-8 h-8 text-blue-400" />
+                                    </div>
+                                    <p className="text-sm font-medium">Start a conversation with Prof. {selectedProf.name}</p>
                                 </div>
                             ) : (
                                 activeThread.map((msg, idx) => {
                                     const isMe = msg.sender === 'parent';
                                     return (
                                         <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[70%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm relative ${isMe
-                                                ? 'bg-blue-600 text-white rounded-br-none'
-                                                : 'bg-slate-700 text-slate-200 rounded-bl-none'
+                                            <div className={`max-w-[85%] md:max-w-[75%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-md ${isMe
+                                                ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white border border-blue-500/20 rounded-tr-none"
+                                                : "bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none"
                                                 }`}>
-                                                {!isMe && <div className="text-[10px] text-slate-400 mb-1 font-bold uppercase tracking-wider">Prof. {selectedProf.name}</div>}
-                                                {msg.body}
-                                                <div className={`text-[9px] mt-1 opacity-70 ${isMe ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
+                                                {!isMe && <div className="text-[10px] text-blue-400 mb-1 font-bold uppercase tracking-wider">Prof. {selectedProf.name}</div>}
+                                                <div className="whitespace-pre-wrap">{msg.body}</div>
+                                                <div className={`text-[10px] mt-1 opacity-50 ${isMe ? 'text-blue-100 text-right' : 'text-slate-400'}`}>
                                                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </div>
                                             </div>
@@ -5787,43 +5804,51 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Input Area */}
-                        <div className="p-4 bg-slate-800/80 border-t border-white/10">
-                            <div className="flex gap-2">
-                                <textarea
-                                    className="flex-1 bg-slate-900 text-white rounded-xl border border-white/10 p-3 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none resize-none h-12"
-                                    placeholder={`Message Prof. ${selectedProf.name}...`}
-                                    value={replyText}
-                                    onChange={e => setReplyText(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                                />
-                                <button
-                                    onClick={handleSendMessage}
-                                    disabled={isSending || !replyText.trim()}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl disabled:opacity-50 transition-all active:scale-95"
-                                >
-                                    {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
-                                </button>
-                            </div>
-                            <div className="text-[10px] text-center text-slate-500 mt-2">
-                                Message sent securely via email & portal.
+                        {/* Input Area - Pinned Bottom */}
+                        <div className="p-3 md:p-4 bg-slate-900 border-t border-white/10 z-20">
+                            <div className="flex flex-col space-y-2 max-w-4xl mx-auto">
+                                <div className="flex items-end gap-2 bg-slate-800/50 p-1.5 rounded-2xl border border-white/10 focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500/50 transition-all shadow-sm">
+                                    <div className="relative flex-grow">
+                                        <textarea
+                                            className="w-full py-3 px-4 bg-transparent border-none focus:ring-0 text-slate-200 placeholder:text-slate-500 text-base resize-none min-h-[48px] max-h-32"
+                                            placeholder={`Message Prof. ${selectedProf.name}...`}
+                                            value={replyText}
+                                            onChange={e => setReplyText(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                                            rows={1}
+                                        />
+                                    </div>
+
+                                    <button
+                                        className={`p-3 rounded-xl transition-all duration-200 ${!replyText.trim()
+                                            ? "bg-slate-700/50 text-slate-500 cursor-not-allowed"
+                                            : "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 active:scale-95"
+                                            }`}
+                                        onClick={handleSendMessage}
+                                        disabled={isSending || !replyText.trim()}
+                                    >
+                                        {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <SendIcon className="w-5 h-5" />}
+                                    </button>
+                                </div>
+
+                                <div className="text-[10px] text-center text-slate-600 font-medium">
+                                    Synced via Email & NoteOrbit Portal
+                                </div>
                             </div>
                         </div>
                     </>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-600 relative">
+                    <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-60">
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="absolute top-4 left-4 p-2 rounded-lg hover:bg-white/5 transition-colors text-slate-400">
                             <Menu className="w-6 h-6" />
                         </button>
-                        <Mail className="w-16 h-16 opacity-20 mb-4" />
-                        <p>Select a professor to start messaging.</p>
+                        <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-4">
+                            <Mail className="w-8 h-8 text-blue-400" />
+                        </div>
+                        <p className="text-sm font-medium">Select a faculty member to start messaging</p>
                     </div>
                 )}
             </div>
-
-            <p className="text-xs text-center text-slate-500">
-                Check your email ({user.email}) for notifications.
-            </p>
         </div>
     );
 }
@@ -5863,10 +5888,10 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
                     <h1 className="text-3xl font-bold text-white mb-2">Parent Portal</h1>
                     <p className="text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
                 </div>
-                {/* Mobile-Only Logout Button (Sync with HRD) */}
+                {/* Aesthetic Logout Button */}
                 <button
                     onClick={onLogout}
-                    className="md:hidden flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
                 >
                     <LogOut className="w-4 h-4" /> Logout
                 </button>
@@ -6148,10 +6173,7 @@ function App() {
                     </div>
                     <div className="flex items-center space-x-3">
                         {user ? (
-                            <>
-                                <span className="text-sm font-medium text-slate-300 mr-4 hidden sm:inline">{user.name} <span className="text-blue-400 uppercase">({user.role})</span></span>
-                                <button className={`${buttonClass} bg-red-500/10 hover:bg-red-500/90 text-red-400 hover:text-white border border-red-500/50 w-28 py-2.5 backdrop-blur-sm transition-all`} onClick={doLogout}><LogOut className="w-4 h-4 mr-2" /> Logout</button>
-                            </>
+                            <span className="text-sm font-medium text-slate-300 mr-4 hidden sm:inline">{user.name} <span className="text-blue-400 uppercase">({user.role})</span></span>
                         ) : null}
                     </div>
                 </div>

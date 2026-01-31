@@ -155,7 +155,7 @@ const TrainerDashboard = ({ token, setPage, setToken }) => {
                 </div>
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
                 >
                     <LogOut className="w-4 h-4" /> Logout
                 </button>
