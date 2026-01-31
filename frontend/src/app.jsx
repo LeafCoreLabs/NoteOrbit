@@ -4556,33 +4556,6 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
         }
     }, [view, fetchPending, user]); // Added 'user' to the dependency array
 
-    // GSAP Navigation Animation
-    const navRef = useRef(null);
-    const indicatorRef = useRef(null);
-    const contentRef = useRef(null);
-
-    useEffect(() => {
-        if (navRef.current && indicatorRef.current) {
-            const activeBtn = navRef.current.querySelector(`button[data-key="${view}"]`);
-            if (activeBtn) {
-                gsap.to(indicatorRef.current, {
-                    y: activeBtn.offsetTop,
-                    height: activeBtn.offsetHeight,
-                    opacity: 1,
-                    duration: 0.5,
-                    ease: "elastic.out(1, 0.6)"
-                });
-            }
-        }
-        // Animate Content
-        if (contentRef.current) {
-            gsap.fromTo(contentRef.current,
-                { opacity: 0, scale: 0.99 },
-                { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" }
-            );
-        }
-    }, [view]);
-
 
     const renderView = () => {
         switch (view) {
@@ -4833,64 +4806,79 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-64 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0">
-                <h5 className="text-lg font-bold text-amber-400 mb-4 ml-2">Admin Tools</h5>
-                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
-                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-amber-600/20 border border-amber-500/30 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
-                    {[
-                        { key: 'approvals', label: 'Student Approvals', icon: User },
-                        { key: 'student-list', label: 'Student Directory', icon: GraduationCap },
-                        { key: 'faculty_mgmt', label: 'Faculty Allocations', icon: ClipboardList },
-                        { key: 'hostel-config', label: 'Hostel Config', icon: Home },
-                        { key: 'complaints-admin', label: 'Hostel Complaints', icon: Mail },
-                        { key: 'note-upload', label: 'Upload Study Material', icon: Book },
-                        { key: 'library-upload', label: 'Book Upload', icon: Upload },
-                        { key: 'faculty-onboard', label: 'Add Faculty', icon: UserPlus },
-                        { key: 'catalogs', label: 'Degrees/Subjects', icon: Settings },
-                        { key: 'fees-admin', label: 'Manage Fees', icon: DollarSign },
-                    ].map(item => (
+        <div className="min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header Area */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Admin Tools</h1>
+                <p className="text-slate-400">Manage students, faculty, courses and institutional settings.</p>
+            </div>
+
+            {/* Desktop Navigation Tabs */}
+            <div className="hidden md:flex flex-wrap gap-2 mb-8 p-1 bg-slate-900/40 backdrop-blur-md rounded-xl border border-white/5 w-fit">
+                {[
+                    { key: 'approvals', label: 'Student Approvals', icon: User },
+                    { key: 'student-list', label: 'Student Directory', icon: GraduationCap },
+                    { key: 'faculty_mgmt', label: 'Faculty Allocations', icon: ClipboardList },
+                    { key: 'hostel-config', label: 'Hostel Config', icon: Home },
+                    { key: 'complaints-admin', label: 'Hostel Complaints', icon: Mail },
+                    { key: 'note-upload', label: 'Upload Study Material', icon: Book },
+                    { key: 'library-upload', label: 'Book Upload', icon: Upload },
+                    { key: 'faculty-onboard', label: 'Add Faculty', icon: UserPlus },
+                    { key: 'catalogs', label: 'Degrees/Subjects', icon: Settings },
+                    { key: 'fees-admin', label: 'Manage Fees', icon: DollarSign },
+                ].map(item => {
+                    const Icon = item.icon;
+                    const isActive = view === item.key;
+                    return (
                         <button
                             key={item.key}
-                            data-key={item.key}
                             onClick={() => setView(item.key)}
-                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 whitespace-nowrap ${view === item.key ? "text-amber-300" : "text-slate-400 hover:text-white hover:bg-white/5"}`}
+                            className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${isActive
+                                ? 'bg-cyan-500/20 text-cyan-400 shadow-sm border border-cyan-500/30'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
                         >
-                            <item.icon className="w-5 h-5 mr-3" />{item.label}
+                            <Icon className="w-4 h-4" />
+                            {item.label}
                         </button>
-                    ))}
-                </nav>
-                {/* Mobile Navigation Dropdown */}
-                <div className="md:hidden">
-                    <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-400 pointer-events-none" />
-                        <select
-                            value={view}
-                            onChange={(e) => setView(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-amber-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-amber-500/50 shadow-lg font-semibold"
-                        >
-                            {[
-                                { key: 'approvals', label: 'Student Approvals' },
-                                { key: 'student-list', label: 'Student Directory' },
-                                { key: 'faculty_mgmt', label: 'Faculty Allocations' },
-                                { key: 'hostel-config', label: 'Hostel Config' },
-                                { key: 'complaints-admin', label: 'Hostel Complaints' },
-                                { key: 'note-upload', label: 'Upload Study Material' },
-                                { key: 'library-upload', label: 'Book Upload' },
-                                { key: 'faculty-onboard', label: 'Add Faculty' },
-                                { key: 'catalogs', label: 'Degrees/Subjects' },
-                                { key: 'fees-admin', label: 'Manage Fees' },
-                            ].map(item => (
-                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
-                                    {item.label}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                    </div>
+                    );
+                })}
+            </div>
+
+            {/* Mobile Navigation Dropdown */}
+            <div className="md:hidden mb-8">
+                <div className="relative">
+                    <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                    <select
+                        value={view}
+                        onChange={(e) => setView(e.target.value)}
+                        className="w-full bg-slate-800/80 border border-cyan-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-cyan-500/50 shadow-lg font-semibold"
+                    >
+                        {[
+                            { key: 'approvals', label: 'Student Approvals' },
+                            { key: 'student-list', label: 'Student Directory' },
+                            { key: 'faculty_mgmt', label: 'Faculty Allocations' },
+                            { key: 'hostel-config', label: 'Hostel Config' },
+                            { key: 'complaints-admin', label: 'Hostel Complaints' },
+                            { key: 'note-upload', label: 'Upload Study Material' },
+                            { key: 'library-upload', label: 'Book Upload' },
+                            { key: 'faculty-onboard', label: 'Add Faculty' },
+                            { key: 'catalogs', label: 'Degrees/Subjects' },
+                            { key: 'fees-admin', label: 'Manage Fees' },
+                        ].map(item => (
+                            <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                {item.label}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
             </div>
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative">{renderView()}</div>
+
+            {/* Content Area */}
+            <div className="min-h-[400px]">
+                {renderView()}
+            </div>
         </div>
     );
 }
@@ -5492,33 +5480,6 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
         { key: 'chat', label: 'Orbit Bot', icon: Briefcase },
     ];
 
-    // GSAP Navigation Animation
-    const navRef = useRef(null);
-    const indicatorRef = useRef(null);
-    const contentRef = useRef(null);
-
-    useEffect(() => {
-        if (navRef.current && indicatorRef.current) {
-            const activeBtn = navRef.current.querySelector(`button[data-key="${view}"]`);
-            if (activeBtn) {
-                gsap.to(indicatorRef.current, {
-                    y: activeBtn.offsetTop,
-                    height: activeBtn.offsetHeight,
-                    opacity: 1,
-                    duration: 0.5,
-                    ease: "elastic.out(1, 0.6)"
-                });
-            }
-        }
-        // Animate Content (Subtle slide and fade)
-        if (contentRef.current) {
-            gsap.fromTo(contentRef.current,
-                { opacity: 0, x: 20 },
-                { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
-            );
-        }
-    }, [view]);
-
     // === FIX: Completed renderView function ===
     const renderView = () => {
         switch (view) {
@@ -5539,52 +5500,61 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
     // ===========================================
 
     return (
-        <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
-                <h5 className="text-lg font-bold text-blue-400 mb-4 ml-2">Student Hub</h5>
-                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
-                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-blue-600/20 border border-blue-500/30 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
-                    {navigation.map(item => (
+        <div className="min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header Area */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Student Hub</h1>
+                <p className="text-slate-400">Welcome, {user?.name || 'Student'}! Access your academic resources.</p>
+            </div>
+
+            {/* Desktop Navigation Tabs */}
+            <div className="hidden md:flex flex-wrap gap-2 mb-8 p-1 bg-slate-900/40 backdrop-blur-md rounded-xl border border-white/5 w-fit">
+                {navigation.map(item => {
+                    const Icon = item.icon;
+                    const isActive = view === item.key;
+                    return (
                         <button
                             key={item.key}
-                            data-key={item.key}
                             onClick={() => setView(item.key)}
-                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
-                                ? 'text-blue-300'
+                            className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${isActive
+                                ? 'bg-cyan-500/20 text-cyan-400 shadow-sm border border-cyan-500/30'
                                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
-                            <item.icon className="w-5 h-5 mr-3" />
+                            <Icon className="w-4 h-4" />
                             {item.label}
                         </button>
-                    ))}
-                </nav>
-                {/* Mobile Navigation Dropdown */}
-                <div className="md:hidden">
-                    <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
-                        <select
-                            value={view}
-                            onChange={(e) => setView(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-blue-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-blue-500/50 shadow-lg font-semibold"
-                        >
-                            {navigation.map(item => (
-                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
-                                    {item.label}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                    </div>
+                    );
+                })}
+            </div>
+
+            {/* Mobile Navigation Dropdown */}
+            <div className="md:hidden mb-8">
+                <div className="relative">
+                    <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                    <select
+                        value={view}
+                        onChange={(e) => setView(e.target.value)}
+                        className="w-full bg-slate-800/80 border border-cyan-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-cyan-500/50 shadow-lg font-semibold"
+                    >
+                        {navigation.map(item => (
+                            <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                {item.label}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
             </div>
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Content Area */}
+            <div className="min-h-[400px]">
                 {renderView()}
             </div>
         </div>
     );
 }
+
 
 // --- NEW COMPONENT: Parent Contact Faculty (Chat Style) ---
 function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonClass }) {
@@ -5837,32 +5807,6 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
         { key: 'insights', label: 'Academic Insights', icon: BrainCircuit },
     ];
 
-    // GSAP Navigation Animation
-    const navRef = useRef(null);
-    const indicatorRef = useRef(null);
-    const contentRef = useRef(null);
-
-    useEffect(() => {
-        if (navRef.current && indicatorRef.current) {
-            const activeBtn = navRef.current.querySelector(`button[data-key="${view}"]`);
-            if (activeBtn) {
-                gsap.to(indicatorRef.current, {
-                    y: activeBtn.offsetTop,
-                    height: activeBtn.offsetHeight,
-                    opacity: 1,
-                    duration: 0.5,
-                    ease: "elastic.out(1, 0.6)"
-                });
-            }
-        }
-        if (contentRef.current) {
-            gsap.fromTo(contentRef.current,
-                { opacity: 0, x: 20 },
-                { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
-            );
-        }
-    }, [view]);
-
     const renderView = () => {
         switch (view) {
             case 'attendance': return <StudentAttendanceCalendar showMessage={showMessage} primaryButtonClass={primaryButtonClass} buttonClass={buttonClass} />;
@@ -5877,56 +5821,61 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-64 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
-                <div className="mb-6 ml-2">
-                    <h5 className="text-lg font-bold text-rose-400">Parent Portal</h5>
-                    <p className="text-xs text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
-                </div>
+        <div className="min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header Area */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Parent Portal</h1>
+                <p className="text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
+            </div>
 
-                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
-                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-rose-600/20 border border-rose-500/30 rounded-xl shadow-[0_0_15px_rgba(225,29,72,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
-                    {navigation.map(item => (
+            {/* Desktop Navigation Tabs */}
+            <div className="hidden md:flex flex-wrap gap-2 mb-8 p-1 bg-slate-900/40 backdrop-blur-md rounded-xl border border-white/5 w-fit">
+                {navigation.map(item => {
+                    const Icon = item.icon;
+                    const isActive = view === item.key;
+                    return (
                         <button
                             key={item.key}
-                            data-key={item.key}
                             onClick={() => setView(item.key)}
-                            className={`w-full flex items-center p-3 rounded-xl font-semibold text-sm whitespace-nowrap transition-colors duration-200 relative z-10 ${view === item.key
-                                ? 'text-rose-300'
+                            className={`flex items-center gap-2 px-5 py-3 rounded-lg font-medium transition-all ${isActive
+                                ? 'bg-cyan-500/20 text-cyan-400 shadow-sm border border-cyan-500/30'
                                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
-                            <item.icon className="w-5 h-5 mr-3" />
+                            <Icon className="w-4 h-4" />
                             {item.label}
                         </button>
-                    ))}
-                </nav>
-                {/* Mobile Navigation Dropdown */}
-                <div className="md:hidden">
-                    <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-400 pointer-events-none" />
-                        <select
-                            value={view}
-                            onChange={(e) => setView(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-rose-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-rose-500/50 shadow-lg font-semibold"
-                        >
-                            {navigation.map(item => (
-                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
-                                    {item.label}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                    </div>
+                    );
+                })}
+            </div>
+
+            {/* Mobile Navigation Dropdown */}
+            <div className="md:hidden mb-8">
+                <div className="relative">
+                    <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                    <select
+                        value={view}
+                        onChange={(e) => setView(e.target.value)}
+                        className="w-full bg-slate-800/80 border border-cyan-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-cyan-500/50 shadow-lg font-semibold"
+                    >
+                        {navigation.map(item => (
+                            <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                {item.label}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
             </div>
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Content Area */}
+            <div className="min-h-[400px]">
                 {renderView()}
             </div>
         </div>
     );
 }
+
 
 // ----------------------------------------------
 // --- MAIN APPLICATION ---

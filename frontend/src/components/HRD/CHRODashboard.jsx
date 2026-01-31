@@ -1,6 +1,6 @@
-// CHRODashboard.jsx - CHRO Command Center (Student Portal Design Replica)
+// CHRODashboard.jsx - CHRO Command Center (Student Portal Design Replica with Mobile Support)
 import React, { useState } from 'react';
-import { Building2, Users, BookOpen, Briefcase, Award, BarChart2, MapPin, LogOut } from 'lucide-react';
+import { Building2, Users, BookOpen, Briefcase, Award, BarChart2, MapPin, LogOut, Menu, ChevronDown } from 'lucide-react';
 import CompanyManagement from './CompanyManagement';
 import DriveManagement from './DriveManagement';
 import OfferManagement from './OfferManagement';
@@ -64,8 +64,8 @@ const CHRODashboard = ({ token, setPage, setToken, catalogs }) => {
                 </button>
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="flex flex-wrap gap-2 mb-8 p-1 bg-slate-900/40 backdrop-blur-md rounded-xl border border-white/5 w-fit">
+            {/* Desktop Navigation Tabs */}
+            <div className="hidden md:flex flex-wrap gap-2 mb-8 p-1 bg-slate-900/40 backdrop-blur-md rounded-xl border border-white/5 w-fit">
                 {tabs.map(tab => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -83,6 +83,25 @@ const CHRODashboard = ({ token, setPage, setToken, catalogs }) => {
                         </button>
                     );
                 })}
+            </div>
+
+            {/* Mobile Navigation Dropdown */}
+            <div className="md:hidden mb-8">
+                <div className="relative">
+                    <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                    <select
+                        value={activeTab}
+                        onChange={(e) => setActiveTab(e.target.value)}
+                        className="w-full bg-slate-800/80 border border-cyan-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-cyan-500/50 shadow-lg font-semibold"
+                    >
+                        {tabs.map(tab => (
+                            <option key={tab.id} value={tab.id} className="bg-slate-900 text-white py-2">
+                                {tab.label}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
             </div>
 
             {/* Content Area */}
