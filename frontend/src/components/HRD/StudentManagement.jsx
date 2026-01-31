@@ -65,16 +65,19 @@ const StudentManagement = ({ token, allocation, catalogs }) => {
         setSearchQuery('');
     };
 
-    const filteredStudents = students.filter(s => {
-        const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const hasActiveFilters = filterDegree || filterSemester || filterSection || searchQuery;
+
+    // Only show students if at least one filter is active (for CHRO view)
+    const filteredStudents = hasActiveFilters ? students.filter(s => {
+        const matchesSearch = !searchQuery ||
+            s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             s.srn?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesDegree = !filterDegree || s.degree === filterDegree;
+        // Case-insensitive degree matching
+        const matchesDegree = !filterDegree || s.degree?.toLowerCase() === filterDegree.toLowerCase();
         const matchesSemester = !filterSemester || String(s.semester) === filterSemester;
         const matchesSection = !filterSection || s.section === filterSection;
         return matchesSearch && matchesDegree && matchesSemester && matchesSection;
-    });
-
-    const hasActiveFilters = filterDegree || filterSemester || filterSection || searchQuery;
+    }) : [];
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -215,7 +218,19 @@ const StudentManagement = ({ token, allocation, catalogs }) => {
                                 ))}
                             </tbody>
                         </table>
-                        {filteredStudents.length === 0 && <div className="p-12 text-center text-slate-500 font-medium">No students match the current filters.</div>}
+                        {filteredStudents.length === 0 && (
+                            <div className="p-16 text-center">
+                                {hasActiveFilters ? (
+                                    <p className="text-slate-500 font-medium">No students match the current filters.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <Filter className="w-10 h-10 mx-auto text-slate-600" />
+                                        <p className="text-slate-400 font-medium">Use the filters above</p>
+                                        <p className="text-slate-600 text-sm">Select a Degree, Semester, or Section to view students.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
