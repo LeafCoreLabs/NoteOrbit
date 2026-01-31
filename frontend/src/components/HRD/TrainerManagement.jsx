@@ -1,6 +1,6 @@
 // TrainerManagement.jsx - Trainer Onboarding & Management
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Loader2, Mail, UserPlus } from 'lucide-react';
+import { Users, Plus, Loader2, Mail, UserPlus, Trash2 } from 'lucide-react';
 import { api } from '../../api';
 
 const TrainerManagement = ({ token }) => {
@@ -9,6 +9,7 @@ const TrainerManagement = ({ token }) => {
     const [showForm, setShowForm] = useState(false);
     const [newTrainer, setNewTrainer] = useState({ name: '', email: '', password: '', emp_id: '' });
     const [saving, setSaving] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
 
     useEffect(() => { fetchTrainers(); }, []);
 
@@ -22,6 +23,21 @@ const TrainerManagement = ({ token }) => {
             }
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
+    };
+
+    const deleteTrainer = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this trainer? This will also remove all their workload allocations.")) return;
+        setDeletingId(id);
+        try {
+            const res = await api.delete('/hrd/chro/trainers', {
+                data: { trainer_id: id },
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchTrainers();
+            }
+        } catch (e) { console.error(e); }
+        finally { setDeletingId(null); }
     };
 
     const createTrainer = async () => {
@@ -109,7 +125,14 @@ const TrainerManagement = ({ token }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {trainers.map(t => (
-                    <div key={t.id} className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5">
+                    <div key={t.id} className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 relative group">
+                        <button
+                            onClick={() => deleteTrainer(t.id)}
+                            disabled={deletingId === t.id}
+                            className="absolute top-4 right-4 p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        >
+                            {deletingId === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        </button>
                         <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-3 text-purple-400 font-bold">
                             {t.name?.substring(0, 2).toUpperCase()}
                         </div>

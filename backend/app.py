@@ -3907,9 +3907,35 @@ def hrd_login():
 
 # --- CHRO ENDPOINTS ---
 
-@app.route("/hrd/chro/trainers", methods=["POST"])
+@app.route("/hrd/chro/trainers", methods=["GET", "POST", "DELETE"])
 @hrd_required()
-def create_trainer():
+def manage_trainers():
+    if request.method == "GET":
+        # List all trainers
+        trainers = User.query.filter(User.role.in_(['trainer', 'hrd_trainer'])).all()
+        return jsonify({"success": True, "trainers": [
+            {"id": t.id, "name": t.name, "email": t.email, "emp_id": getattr(t, 'emp_id', None)}
+            for t in trainers
+        ]})
+    
+    if request.method == "DELETE":
+        # Delete trainer
+        data = request.json or {}
+        trainer_id = data.get("trainer_id") or request.args.get("trainer_id")
+        if not trainer_id:
+            return jsonify({"success": False, "message": "trainer_id required"}), 400
+        
+        trainer = User.query.get(trainer_id)
+        if not trainer or trainer.role not in ['trainer', 'hrd_trainer']:
+            return jsonify({"success": False, "message": "Trainer not found"}), 404
+        
+        # Also delete any allocations for this trainer
+        TrainerAllocation.query.filter_by(trainer_id=trainer_id).delete()
+        db.session.delete(trainer)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Trainer deleted successfully"})
+    
+    # POST - Create new trainer
     data = request.json or {}
     name = data.get("name")
     email = data.get("email")
@@ -3922,7 +3948,7 @@ def create_trainer():
     new_trainer = User(
         name=name, email=email, 
         password_hash=hash_password(password),
-        role="trainer", # Using 'trainer' as the key role
+        role="trainer",
         emp_id=emp_id,
         status="APPROVED"
     )
@@ -3930,7 +3956,7 @@ def create_trainer():
     db.session.commit()
     return jsonify({"success": True, "message": "Trainer onboarded successfully"})
 
-@app.route("/hrd/chro/subjects", methods=["POST", "GET"])
+@app.route("/hrd/chro/subjects", methods=["POST", "GET", "DELETE"])
 @hrd_required()
 def manage_hrd_subjects():
     if request.method == "POST":
@@ -3943,6 +3969,21 @@ def manage_hrd_subjects():
         db.session.add(sub)
         db.session.commit()
         return jsonify({"success": True, "id": sub.id})
+    elif request.method == "DELETE":
+        data = request.json or {}
+        subject_id = data.get("subject_id") or request.args.get("subject_id")
+        if not subject_id:
+            return jsonify({"success": False, "message": "subject_id required"}), 400
+        
+        sub = HRDSubject.query.get(subject_id)
+        if not sub:
+            return jsonify({"success": False, "message": "Subject not found"}), 404
+        
+        # Delete any allocations for this subject
+        TrainerAllocation.query.filter_by(hrd_subject_id=subject_id).delete()
+        db.session.delete(sub)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Subject deleted successfully"})
     else:
         subs = HRDSubject.query.filter_by(is_active=True).all()
         return jsonify({"success": True, "subjects": [{"id": s.id, "name": s.name, "semester": s.semester} for s in subs]})
@@ -3964,6 +4005,27 @@ def allocate_trainer():
         return jsonify({"success": True, "message": "Allocation successful"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
+
+@app.route("/hrd/allocations", methods=["GET"])
+@hrd_required()
+def get_all_allocations():
+    """Get all trainer allocations"""
+    allocs = TrainerAllocation.query.all()
+    out = []
+    for a in allocs:
+        trainer = User.query.get(a.trainer_id)
+        sub = HRDSubject.query.get(a.hrd_subject_id)
+        out.append({
+            "id": a.id,
+            "trainer_id": a.trainer_id,
+            "trainer_name": trainer.name if trainer else "Unknown",
+            "subject_id": a.hrd_subject_id,
+            "subject_name": sub.name if sub else "Unknown",
+            "degree": a.degree,
+            "semester": a.semester,
+            "section": a.section
+        })
+    return jsonify({"success": True, "allocations": out})
 
 # --- TRAINER ENDPOINTS ---
 
