@@ -5,7 +5,7 @@ import gsap from 'gsap';
 import {
     LogIn, UserPlus, LogOut, ArrowLeft, ArrowRight, Loader2, CheckCircle, XCircle, ChevronDown,
     Book, Bell, Settings, Briefcase, User, Mail, Lock, GraduationCap, ClipboardList,
-    BriefcaseBusiness, DollarSign, Award, MessageSquare, Upload, RefreshCw,
+    BriefcaseBusiness, IndianRupee, Award, MessageSquare, Upload, RefreshCw,
     Trash2, Save, Home, Search, Download, Check, Atom, Star, Sparkles, Plus, Filter, Eye, EyeOff, Edit,
     BrainCircuit, AlertTriangle, Target, Lightbulb, Send as SendIcon, Paperclip, Menu, History, Bot, BarChart3
 } from 'lucide-react';
@@ -1181,7 +1181,7 @@ function StudentFees({ user, showMessage, primaryButtonClass, buttonClass }) {
 
     return (
         <div className="space-y-6">
-            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Fee Payment History</h4>
+            <h4 className="text-2xl font-bold text-blue-400 flex items-center"><IndianRupee className="w-6 h-6 mr-2" /> Fee Payment History</h4>
             {fees.length === 0 && <div className="p-4 bg-slate-900/40 border border-white/10 rounded-xl text-slate-500">No fee notifications found for your account.</div>}
 
             <div className="space-y-4">
@@ -3747,7 +3747,7 @@ function AdminFeeManagement({ showMessage, buttonClass, primaryButtonClass, cata
 
     return (
         <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-lg border border-yellow-500/20 space-y-4">
-            <h4 className="text-2xl font-bold mb-4 text-yellow-400 flex items-center"><DollarSign className="w-6 h-6 mr-2" /> Create New Fee Notification</h4>
+            <h4 className="text-2xl font-bold mb-4 text-yellow-400 flex items-center"><IndianRupee className="w-6 h-6 mr-2" /> Create New Fee Notification</h4>
 
             <Input placeholder="Fee Title (e.g., Tuition Fee Sem 4)" value={title} onChange={e => setTitle(e.target.value)} disabled={isLoading} />
             <Input
@@ -4851,7 +4851,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                     { key: 'library-upload', label: 'Book Upload', icon: Upload },
                     { key: 'faculty-onboard', label: 'Add Faculty', icon: UserPlus },
                     { key: 'catalogs', label: 'Degrees/Subjects', icon: Settings },
-                    { key: 'fees-admin', label: 'Manage Fees', icon: DollarSign },
+                    { key: 'fees-admin', label: 'Manage Fees', icon: IndianRupee },
                 ].map(item => {
                     const Icon = item.icon;
                     const isActive = view === item.key;
@@ -5496,7 +5496,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
         { key: 'notes', label: 'Notes & Notices', icon: Book },
         { key: 'books', label: 'Internal Library', icon: Search },
         { key: 'placement', label: 'Placement Assist', icon: Briefcase },
-        { key: 'fees', label: 'Fees & Payments', icon: DollarSign },
+        { key: 'fees', label: 'Fees & Payments', icon: IndianRupee },
         { key: 'marks', label: 'Marks & Grades', icon: Award },
         { key: 'feedback', label: 'Feedback', icon: MessageSquare },
         { key: 'attendance', label: 'Attendance', icon: ClipboardList },
@@ -5861,7 +5861,7 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
         { key: 'attendance', label: 'Ward Attendance', icon: ClipboardList },
         { key: 'contact', label: 'Contact Faculty', icon: Mail },
         { key: 'marks', label: 'Academic Performance', icon: Award },
-        { key: 'fees', label: 'Fee Payments', icon: DollarSign },
+        { key: 'fees', label: 'Fee Payments', icon: IndianRupee },
         { key: 'feedback', label: 'Feedback', icon: MessageSquare },
         { key: 'complaints', label: 'Hostel Complaints', icon: Home },
         { key: 'insights', label: 'Academic Insights', icon: BrainCircuit },

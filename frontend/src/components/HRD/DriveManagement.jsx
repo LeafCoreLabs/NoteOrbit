@@ -1,7 +1,7 @@
 // DriveManagement.jsx - Full Placement Drive Management
 import React, { useState, useEffect } from 'react';
 import {
-    Briefcase, Plus, Edit, Eye, Calendar, MapPin, DollarSign, Users,
+    Briefcase, Plus, Edit, Eye, Calendar, MapPin, IndianRupee, Users,
     Search, X, Save, Loader2, Filter, CheckCircle, XCircle, Tag
 } from 'lucide-react';
 import { api } from '../../api';
@@ -182,7 +182,7 @@ const DriveManagement = ({ token }) => {
                                     <span>{drive.role}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-slate-300">
-                                    <DollarSign className="w-4 h-4" />
+                                    <IndianRupee className="w-4 h-4" />
                                     <span>{drive.ctc_min} - {drive.ctc_max} LPA</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-slate-300">

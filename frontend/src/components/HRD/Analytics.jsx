@@ -1,7 +1,7 @@
 // Analytics.jsx - Placement Analytics and Statistics Dashboard
 import React, { useState, useEffect } from 'react';
 import {
-    BarChart3, TrendingUp, Users, Briefcase, Award, DollarSign,
+    BarChart3, TrendingUp, Users, Briefcase, Award, IndianRupee,
     Loader2, PieChart, Activity
 } from 'lucide-react';
 import { api } from '../../api';
@@ -141,7 +141,7 @@ const Analytics = ({ token }) => {
                                     {branch.avg_package && (
                                         <div className="mt-3 flex items-center gap-4 text-sm">
                                             <div className="flex items-center gap-2 text-emerald-400">
-                                                <DollarSign className="w-4 h-4" />
+                                                <IndianRupee className="w-4 h-4" />
                                                 <span>Avg: {branch.avg_package} LPA</span>
                                             </div>
                                             {branch.highest_package && (

@@ -1,7 +1,7 @@
 // OfferManagement.jsx - Create and manage placement offers
 import React, { useState, useEffect } from 'react';
 import {
-    FileText, Plus, DollarSign, MapPin, Calendar, User,
+    FileText, Plus, IndianRupee, MapPin, Calendar, User,
     CheckCircle, XCircle, Clock, Loader2, Eye, X
 } from 'lucide-react';
 import { api } from '../../api';
@@ -181,7 +181,7 @@ const OfferManagement = ({ token }) => {
                                             <span className="text-slate-300">{offer.role}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm">
-                                            <DollarSign className="w-4 h-4 text-emerald-400" />
+                                            <IndianRupee className="w-4 h-4 text-emerald-400" />
                                             <span className="text-slate-300">{offer.ctc} LPA</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm">

@@ -1,6 +1,6 @@
 // MyOffers.jsx - View and manage placement offers
 import React, { useState, useEffect } from 'react';
-import { Gift, DollarSign, Building2, Calendar, Loader2 } from 'lucide-react';
+import { Gift, IndianRupee, Building2, Calendar, Loader2 } from 'lucide-react';
 import { api } from '../../api';
 
 const MyOffers = ({ token }) => {
@@ -51,7 +51,7 @@ const MyOffers = ({ token }) => {
 
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div className="flex items-center gap-2 text-slate-300">
-                                    <DollarSign className="w-4 h-4 text-emerald-400" />
+                                    <IndianRupee className="w-4 h-4 text-emerald-400" />
                                     <span>{offer.ctc} LPA</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-slate-300">

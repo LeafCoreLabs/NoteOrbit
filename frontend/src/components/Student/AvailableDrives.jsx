@@ -1,6 +1,6 @@
 // AvailableDrives.jsx - Eligible Placement Drives with One-Click Apply
 import React, { useState, useEffect } from 'react';
-import { Briefcase, MapPin, DollarSign, Send, Check, Loader2, Search } from 'lucide-react';
+import { Briefcase, MapPin, IndianRupee, Send, Check, Loader2, Search } from 'lucide-react';
 import { api } from '../../api';
 
 const AvailableDrives = ({ token }) => {
@@ -87,7 +87,7 @@ const AvailableDrives = ({ token }) => {
                                     <Briefcase className="w-4 h-4" /> {drive.role || 'Multiple Roles'}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4" /> {drive.ctc}
+                                    <IndianRupee className="w-4 h-4" /> {drive.ctc}
                                 </div>
                                 {drive.location && (
                                     <div className="flex items-center gap-2">
