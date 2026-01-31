@@ -1,6 +1,6 @@
 // PlacementProfile.jsx - Smart Profile Engine V2 for Students
 import React, { useState, useEffect } from 'react';
-import { User, Upload, Plus, X, Save, Loader2, Sparkles, FileText, Clock, CheckCircle2 } from 'lucide-react';
+import { User, Upload, Plus, X, Save, Loader2, Sparkles, FileText, Clock, CheckCircle2, Trash2 } from 'lucide-react';
 import { api } from '../../api';
 
 const PlacementProfile = ({ token }) => {
@@ -121,6 +121,23 @@ const PlacementProfile = ({ token }) => {
         }, 1500);
     };
 
+    const deleteResume = async () => {
+        if (!window.confirm("Are you sure you want to remove your resume from your profile?")) return;
+        setSaving(true);
+        try {
+            await api.delete('/student/placement/resume', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setProfile(p => ({ ...p, resume_url: '' }));
+            fetchProfile();
+        } catch (e) {
+            console.error(e);
+            alert("Failed to delete resume.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     if (loading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-cyan-400" /></div>;
 
     return (
@@ -142,14 +159,24 @@ const PlacementProfile = ({ token }) => {
                                     {profile.resume_url}
                                 </a>
                             </div>
-                            <button
-                                onClick={parseResumeSkills}
-                                disabled={parsing}
-                                className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 transition flex items-center gap-2 text-sm"
-                            >
-                                {parsing ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                                AI Parse Skills
-                            </button>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <button
+                                    onClick={parseResumeSkills}
+                                    disabled={parsing}
+                                    className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 transition flex items-center gap-2 text-sm justify-center"
+                                >
+                                    {parsing ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                                    AI Parse Skills
+                                </button>
+                                <button
+                                    onClick={deleteResume}
+                                    disabled={saving}
+                                    className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/30 transition flex items-center gap-2 text-sm justify-center"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     )}
 

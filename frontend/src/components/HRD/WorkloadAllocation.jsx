@@ -4,7 +4,7 @@ import { MapPin, Plus, Loader2, Trash2 } from 'lucide-react';
 import { api } from '../../api';
 
 const WorkloadAllocation = ({ token, catalogs }) => {
-    const { degrees, sections, fetchSections } = catalogs;
+    const { degrees, fetchSections } = catalogs;
     const [allocations, setAllocations] = useState([]);
     const [trainers, setTrainers] = useState([]);
     const [subjects, setSubjects] = useState([]);
@@ -14,10 +14,10 @@ const WorkloadAllocation = ({ token, catalogs }) => {
         trainer_id: '',
         hrd_subject_id: '',
         degree: '',
-        semester: 1,
-        section: ''
+        semester: 1
     });
     const [availableSections, setAvailableSections] = useState([]);
+    const [selectedSections, setSelectedSections] = useState([]);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -32,11 +32,7 @@ const WorkloadAllocation = ({ token, catalogs }) => {
         if (form.degree && form.semester && fetchSections) {
             fetchSections(form.degree, form.semester).then(secs => {
                 setAvailableSections(secs || []);
-                if (secs && secs.length > 0) {
-                    setForm(p => ({ ...p, section: secs[0] }));
-                } else {
-                    setForm(p => ({ ...p, section: '' }));
-                }
+                setSelectedSections([]); // Reset on criteria change
             });
         }
     }, [form.degree, form.semester, fetchSections]);
@@ -55,20 +51,37 @@ const WorkloadAllocation = ({ token, catalogs }) => {
         finally { setLoading(false); }
     };
 
+    const toggleSection = (sec) => {
+        setSelectedSections(prev =>
+            prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
+        );
+    };
+
     const createAllocation = async () => {
-        if (!form.degree || !form.section) {
-            alert("Please ensure Degree and Section are selected.");
+        if (!form.degree || selectedSections.length === 0) {
+            alert("Please ensure Degree and at least one Section are selected.");
             return;
         }
         setSaving(true);
         try {
-            await api.post('/hrd/chro/allocate', form, {
+            await api.post('/hrd/chro/allocate', { ...form, sections: selectedSections }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchData();
             setShowForm(false);
+            setSelectedSections([]);
         } catch (e) { console.error(e); }
         finally { setSaving(false); }
+    };
+
+    const deleteAllocation = async (id) => {
+        if (!window.confirm("Are you sure you want to remove this allocation?")) return;
+        try {
+            await api.delete(`/hrd/chro/deallocate/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchData();
+        } catch (e) { console.error(e); }
     };
 
     if (loading) return <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-purple-400" /></div>;
@@ -90,7 +103,7 @@ const WorkloadAllocation = ({ token, catalogs }) => {
             {showForm && (
                 <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
                     <h3 className="text-lg font-bold text-white mb-4">Assign Trainer</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         <div>
                             <label className="text-sm text-slate-400 mb-2 block">Trainer</label>
                             <select
@@ -120,7 +133,6 @@ const WorkloadAllocation = ({ token, catalogs }) => {
                                 onChange={e => setForm(p => ({ ...p, degree: e.target.value }))}
                                 className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                             >
-                                <option value="">Select Degree...</option>
                                 {degrees.map(d => <option key={d} value={d}>{d}</option>)}
                             </select>
                         </div>
@@ -134,60 +146,82 @@ const WorkloadAllocation = ({ token, catalogs }) => {
                                 {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
-                        <div>
-                            <label className="text-sm text-slate-400 mb-2 block">Section</label>
-                            <select
-                                value={form.section}
-                                onChange={e => setForm(p => ({ ...p, section: e.target.value }))}
-                                className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                disabled={!availableSections.length}
-                            >
-                                <option value="">Select Section...</option>
-                                {availableSections.map(s => <option key={s} value={s}>Sec {s}</option>)}
-                            </select>
-                            {!availableSections.length && form.degree && (
-                                <p className="text-xs text-amber-400 mt-1">No sections found for this selection.</p>
-                            )}
-                        </div>
                     </div>
-                    <div className="flex gap-3 mt-4">
+
+                    <div className="mb-6">
+                        <label className="text-sm text-slate-400 mb-3 block">Select Sections</label>
+                        {availableSections.length > 0 ? (
+                            <div className="flex flex-wrap gap-3">
+                                {availableSections.map(sec => (
+                                    <button
+                                        key={sec}
+                                        onClick={() => toggleSection(sec)}
+                                        className={`px-4 py-2 rounded-xl border transition-all ${selectedSections.includes(sec)
+                                                ? 'bg-purple-500 text-white border-purple-500 shadow-lg shadow-purple-500/20'
+                                                : 'bg-slate-800/50 border-white/10 text-slate-400 hover:border-white/20'
+                                            }`}
+                                    >
+                                        Section {sec}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-amber-400 text-sm">No sections found for the selected Degree/Semester.</p>
+                        )}
+                    </div>
+
+                    <div className="flex gap-3">
                         <button
                             onClick={createAllocation}
-                            disabled={!form.trainer_id || !form.hrd_subject_id || !form.degree || !form.section || saving}
+                            disabled={!form.trainer_id || !form.hrd_subject_id || selectedSections.length === 0 || saving}
                             className="px-6 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition disabled:opacity-50"
                         >
-                            {saving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Assign'}
+                            {saving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Assign Capacity'}
                         </button>
                         <button onClick={() => setShowForm(false)} className="px-6 py-2 text-slate-400 hover:text-white">Cancel</button>
                     </div>
                 </div>
             ) || null}
 
-            <div className="bg-slate-900/40 border border-white/10 rounded-2xl overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-slate-900/80 text-slate-400 text-sm uppercase font-semibold">
+            <div className="bg-slate-900/40 border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider font-bold">
                         <tr>
-                            <th className="p-4">Trainer</th>
-                            <th className="p-4">Subject</th>
-                            <th className="p-4">Degree</th>
-                            <th className="p-4 text-center">Semester</th>
-                            <th className="p-4 text-center">Section</th>
+                            <th className="p-4 border-b border-white/5">Trainer</th>
+                            <th className="p-4 border-b border-white/5">Subject</th>
+                            <th className="p-4 border-b border-white/5 text-center">Batch Details</th>
+                            <th className="p-4 border-b border-white/5 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {allocations.map(a => (
-                            <tr key={a.id} className="hover:bg-white/5">
-                                <td className="p-4 text-white font-medium">{a.trainer_name}</td>
-                                <td className="p-4 text-slate-300">{a.subject_name}</td>
-                                <td className="p-4 text-slate-400">{a.degree}</td>
-                                <td className="p-4 text-center">{a.semester}</td>
-                                <td className="p-4 text-center">{a.section}</td>
+                            <tr key={a.id} className="hover:bg-white/5 transition-colors group">
+                                <td className="p-4">
+                                    <div className="text-white font-semibold">{a.trainer_name}</div>
+                                    <div className="text-[10px] text-slate-500 uppercase mt-0.5 tracking-tighter">Certified Professional</div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="text-slate-200">{a.subject_name}</div>
+                                </td>
+                                <td className="p-4 text-center">
+                                    <span className="px-2 py-1 bg-slate-800 rounded text-xs text-slate-400 border border-white/5">
+                                        {a.degree} • Sem {a.semester} • Sec {a.section}
+                                    </span>
+                                </td>
+                                <td className="p-4 text-right">
+                                    <button
+                                        onClick={() => deleteAllocation(a.id)}
+                                        className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
                 {allocations.length === 0 && (
-                    <div className="p-12 text-center text-slate-500">No allocations yet.</div>
+                    <div className="p-16 text-center text-slate-500 font-medium">No workload allocations found. Start by assigning a trainer.</div>
                 )}
             </div>
         </div>

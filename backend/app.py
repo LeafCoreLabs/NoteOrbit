@@ -46,6 +46,11 @@ except ImportError:
     A4 = None
     print("Warning: reportlab not installed. Receipts will be TXT only.")
 from sqlalchemy import func, or_
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
+    print("Warning: pypdf not installed. Resume parsing will be disabled.")
 from dotenv import load_dotenv
 
 # Load .env
@@ -4010,16 +4015,53 @@ def manage_hrd_subjects():
 def allocate_trainer():
     data = request.json or {}
     try:
-        alloc = TrainerAllocation(
-            trainer_id=data["trainer_id"],
-            hrd_subject_id=data["hrd_subject_id"],
-            degree=data["degree"],
-            semester=data["semester"],
-            section=data["section"]
-        )
-        db.session.add(alloc)
+        trainer_id = data["trainer_id"]
+        subject_id = data["hrd_subject_id"]
+        degree = data["degree"]
+        semester = data["semester"]
+        sections = data.get("sections", []) # Expecting a list of sections
+        
+        if not sections and "section" in data:
+            sections = [data["section"]] # Fallback for old single section format
+
+        created_count = 0
+        for sec in sections:
+            # Check if exists to avoid duplicates
+            existing = TrainerAllocation.query.filter_by(
+                trainer_id=trainer_id,
+                hrd_subject_id=subject_id,
+                degree=degree,
+                semester=semester,
+                section=sec
+            ).first()
+            
+            if not existing:
+                alloc = TrainerAllocation(
+                    trainer_id=trainer_id,
+                    hrd_subject_id=subject_id,
+                    degree=degree,
+                    semester=semester,
+                    section=sec
+                )
+                db.session.add(alloc)
+                created_count += 1
+        
         db.session.commit()
-        return jsonify({"success": True, "message": "Allocation successful"})
+        return jsonify({"success": True, "message": f"Successfully allocated {created_count} sections."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 400
+
+@app.route("/hrd/chro/deallocate/<int:allocation_id>", methods=["DELETE"])
+@hrd_required()
+def deallocate_trainer(allocation_id):
+    try:
+        alloc = TrainerAllocation.query.get(allocation_id)
+        if not alloc:
+            return jsonify({"success": False, "message": "Allocation not found"}), 404
+        
+        db.session.delete(alloc)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Deallocation successful"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
 
@@ -4469,8 +4511,21 @@ def upload_student_resume():
         prof.resume_url = presigned_url
         prof.profile_updated_at = datetime.utcnow()
         db.session.commit()
-        
-        return jsonify({"success": True, "url": presigned_url, "key": key})
+        return jsonify({"success": True, "url": presigned_url})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/student/placement/resume", methods=["DELETE"])
+@jwt_required()
+def student_delete_resume():
+    uid = get_jwt_identity()
+    try:
+        prof = StudentPlacementProfile.query.filter_by(student_id=uid).first()
+        if prof:
+            prof.resume_url = None
+            prof.profile_updated_at = datetime.utcnow()
+            db.session.commit()
+        return jsonify({"success": True, "message": "Resume removed from profile"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
@@ -4724,6 +4779,40 @@ app.register_blueprint(attendance_bp, url_prefix='/attendance')
 
 # --- NEURAL PROFILE (AI STUDENT OVERVIEW) ---
 
+def extract_resume_text(url):
+    """Downloads PDF from URL and extracts up to 3 pages of text."""
+    if not url or not PdfReader:
+        if not PdfReader:
+            print("Skipping extraction: pypdf not installed.")
+        return ""
+    try:
+        print(f"DEBUG: Downloading resume from {url}")
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        
+        pdf_file = io.BytesIO(response.content)
+        reader = PdfReader(pdf_file)
+        text = ""
+        page_count = len(reader.pages)
+        print(f"DEBUG: Found {page_count} pages in PDF")
+        
+        for i in range(min(page_count, 3)):
+            page_text = reader.pages[i].extract_text()
+            if page_text:
+                text += page_text + "\n"
+        
+        extracted_len = len(text.strip())
+        print(f"DEBUG: Extracted {extracted_len} characters from PDF")
+        
+        if extracted_len == 0:
+            return "ERROR: PDF is empty or purely image-based (No selectable text found)."
+            
+        return text.strip()
+    except Exception as e:
+        err_msg = f"ERROR: Extraction failed - {str(e)}"
+        print(err_msg)
+        return err_msg
+
 @app.route("/hrd/student/<int:student_id>/neural-profile", methods=["GET"])
 @jwt_required()
 def get_student_neural_profile(student_id):
@@ -4780,19 +4869,24 @@ def get_student_neural_profile(student_id):
         })
         
     # 4. Neural Insight (Groq AI Powered)
+    resume_text = extract_resume_text(resume_url) if resume_url else "No resume uploaded."
+    
     prompt = f"""
     Analyze student: {student.name}
     Attendance: {att_percentage}%
     Skills: {', '.join(skills)}
     Grades: {json.dumps(grade_sheet)}
     
-    Act as a recruitment AI. Evaluate readiness for corporate placement.
+    RESUME CONTENT (EXTRACTED):
+    {resume_text[:2000]} # Limit to first 2000 chars to save tokens
+    
+    Act as a recruitment AI. Evaluate readiness for corporate placement based on both metadata and RESUME content.
     Output EXCLUSIVELY as a JSON object:
     {{
       "readiness_score": (int 0-100),
-      "summary": (string, trendy/professional),
-      "tags": (list of 3 string tags e.g. "Problem Solver"),
-      "tech_focus": (string, primary tech stack identified)
+      "summary": (string, brief, mention specific resume highlights),
+      "tags": (list of 3 string tags),
+      "tech_focus": (string)
     }}
     """
     
@@ -4821,7 +4915,13 @@ def get_student_neural_profile(student_id):
             "skills_matrix": skills,
             "academic_performance": grade_sheet,
             "ai_insights": ai_insight,
-            "resume_url": resume_url
+            "resume_url": resume_url,
+            "debug_resume_extraction": {
+                "active": True if PdfReader else False,
+                "status": "Success" if "ERROR" not in resume_text else "Failed",
+                "length": len(resume_text) if "ERROR" not in resume_text else 0,
+                "raw_info": resume_text[:100] if "ERROR" in resume_text else "Text extracted successfully"
+            }
         }
     })
 
