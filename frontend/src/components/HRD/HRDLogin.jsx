@@ -53,7 +53,7 @@ const WelcomeLoader = ({ roleName }) => (
     </div>
 );
 
-const HRDLogin = ({ setToken, setPage, setUserRole }) => {
+const HRDLogin = ({ setToken, setPage, setUserRole, setUser }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [selectedRole, setSelectedRole] = useState('chro'); // 'chro' or 'trainer'
@@ -102,6 +102,7 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
 
                 setTimeout(() => {
                     setToken(token);
+                    setUser(user);
                     const appRole = (user.role === 'trainer' || user.role === 'hrd_trainer') ? 'Trainer' : 'HRD';
                     setUserRole(appRole);
                     setPage('hrd-dashboard');
@@ -146,8 +147,8 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
                                 <button
                                     onClick={() => setSelectedRole('chro')}
                                     className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border transition-all ${selectedRole === 'chro'
-                                            ? 'bg-purple-500/20 border-purple-500/50 text-purple-400'
-                                            : 'bg-slate-800/50 border-white/10 text-slate-400 hover:bg-slate-800'
+                                        ? 'bg-purple-500/20 border-purple-500/50 text-purple-400'
+                                        : 'bg-slate-800/50 border-white/10 text-slate-400 hover:bg-slate-800'
                                         }`}
                                 >
                                     <UserCog className="w-5 h-5" />
@@ -156,8 +157,8 @@ const HRDLogin = ({ setToken, setPage, setUserRole }) => {
                                 <button
                                     onClick={() => setSelectedRole('trainer')}
                                     className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border transition-all ${selectedRole === 'trainer'
-                                            ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                                            : 'bg-slate-800/50 border-white/10 text-slate-400 hover:bg-slate-800'
+                                        ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                                        : 'bg-slate-800/50 border-white/10 text-slate-400 hover:bg-slate-800'
                                         }`}
                                 >
                                     <Users className="w-5 h-5" />

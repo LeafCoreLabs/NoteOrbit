@@ -6107,7 +6107,7 @@ function App() {
                     </div>
                 );
             }
-            return <HRDLogin setToken={() => { }} setPage={setPage} setUserRole={setUserRole} />;
+            return <HRDLogin setToken={() => { }} setPage={setPage} setUserRole={setUserRole} setUser={setUser} />;
         }
 
         switch (page) {
