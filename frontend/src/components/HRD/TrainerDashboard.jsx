@@ -80,7 +80,60 @@ const TrainerDashboard = ({ token, setPage, setToken }) => {
                     </div>
                 );
             case 'students':
-                return <StudentManagement token={token} allocation={selectedClass} />;
+                if (!selectedClass) {
+                    return (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div>
+                                <h2 className="text-2xl font-bold text-white mb-2">Student Directory</h2>
+                                <p className="text-slate-400">Select a class to view its students.</p>
+                            </div>
+                            {loading ? (
+                                <div className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-cyan-400" /></div>
+                            ) : classes.length === 0 ? (
+                                <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-12 text-center">
+                                    <Users className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                                    <h3 className="text-xl font-bold text-white">No Classes Allocated</h3>
+                                    <p className="text-slate-400">You have not been assigned any classes yet.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {classes.map(c => (
+                                        <div
+                                            key={c.id}
+                                            className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-cyan-500/30 transition-colors group cursor-pointer"
+                                            onClick={() => setSelectedClass(c)}
+                                        >
+                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-500/20 flex items-center justify-center mb-4">
+                                                <Users className="w-6 h-6 text-cyan-400" />
+                                            </div>
+                                            <h3 className="text-lg font-bold text-white mb-1">{c.subject_name}</h3>
+                                            <p className="text-cyan-400 text-sm font-medium">{c.degree} Sem {c.semester}</p>
+                                            <p className="text-slate-400 text-sm">Section {c.section}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
+                return (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setSelectedClass(null)}
+                                className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-700/50 rounded-xl transition"
+                            >
+                                ← Back to Classes
+                            </button>
+                            <div>
+                                <h2 className="text-xl font-bold text-white">
+                                    {selectedClass.subject_name} - {selectedClass.degree} Sem {selectedClass.semester}, Section {selectedClass.section}
+                                </h2>
+                            </div>
+                        </div>
+                        <StudentManagement token={token} allocation={selectedClass} />
+                    </div>
+                );
             case 'attendance':
                 return <BulkAttendance token={token} classes={classes} />;
             case 'upload':
