@@ -68,8 +68,10 @@ const StudentManagement = ({ token, allocation, catalogs }) => {
 
     const hasActiveFilters = filterDegree || filterSemester || filterSection || searchQuery;
 
-    // Only show students if at least one filter is active (for CHRO view)
-    const filteredStudents = hasActiveFilters ? students.filter(s => {
+    // Show students when: allocation is provided (trainer view) OR filters are active (CHRO view)
+    const shouldShowStudents = allocation || hasActiveFilters;
+
+    const filteredStudents = shouldShowStudents ? students.filter(s => {
         const matchesSearch = !searchQuery ||
             s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             s.srn?.toLowerCase().includes(searchQuery.toLowerCase());
