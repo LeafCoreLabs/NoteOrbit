@@ -3,7 +3,7 @@ import React from 'react';
 import CHRODashboard from './CHRODashboard';
 import TrainerDashboard from './TrainerDashboard';
 
-const HRDDashboard = ({ userRole, token, setPage, setToken }) => {
+const HRDDashboard = ({ userRole, token, setPage, setToken, catalogs }) => {
     // If userRole not passed, fallback to localStorage user
     let role = userRole;
     if (!role) {
@@ -21,7 +21,7 @@ const HRDDashboard = ({ userRole, token, setPage, setToken }) => {
     }
 
     // Default to CHRO
-    return <CHRODashboard token={token} setPage={setPage} setToken={setToken} />;
+    return <CHRODashboard token={token} setPage={setPage} setToken={setToken} catalogs={catalogs} />;
 };
 
 export default HRDDashboard;

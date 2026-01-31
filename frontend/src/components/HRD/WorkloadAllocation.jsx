@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, Loader2, Trash2 } from 'lucide-react';
 import { api } from '../../api';
 
-const WorkloadAllocation = ({ token }) => {
+const WorkloadAllocation = ({ token, catalogs }) => {
+    const { degrees, sections, fetchSections } = catalogs;
     const [allocations, setAllocations] = useState([]);
     const [trainers, setTrainers] = useState([]);
     const [subjects, setSubjects] = useState([]);
@@ -12,13 +13,33 @@ const WorkloadAllocation = ({ token }) => {
     const [form, setForm] = useState({
         trainer_id: '',
         hrd_subject_id: '',
-        degree: 'B.Tech',
-        semester: 5,
-        section: 'A'
+        degree: '',
+        semester: 1,
+        section: ''
     });
+    const [availableSections, setAvailableSections] = useState([]);
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+        if (degrees && degrees.length > 0 && !form.degree) {
+            setForm(p => ({ ...p, degree: degrees[0] }));
+        }
+    }, [degrees]);
+
+    // Fetch sections when degree or semester changes
+    useEffect(() => {
+        if (form.degree && form.semester && fetchSections) {
+            fetchSections(form.degree, form.semester).then(secs => {
+                setAvailableSections(secs || []);
+                if (secs && secs.length > 0) {
+                    setForm(p => ({ ...p, section: secs[0] }));
+                } else {
+                    setForm(p => ({ ...p, section: '' }));
+                }
+            });
+        }
+    }, [form.degree, form.semester, fetchSections]);
 
     const fetchData = async () => {
         try {
@@ -35,6 +56,10 @@ const WorkloadAllocation = ({ token }) => {
     };
 
     const createAllocation = async () => {
+        if (!form.degree || !form.section) {
+            alert("Please ensure Degree and Section are selected.");
+            return;
+        }
         setSaving(true);
         try {
             await api.post('/hrd/chro/allocate', form, {
@@ -93,11 +118,10 @@ const WorkloadAllocation = ({ token }) => {
                             <select
                                 value={form.degree}
                                 onChange={e => setForm(p => ({ ...p, degree: e.target.value }))}
-                                className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white"
+                                className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                             >
-                                <option value="B.Tech">B.Tech</option>
-                                <option value="M.Tech">M.Tech</option>
-                                <option value="MBA">MBA</option>
+                                <option value="">Select Degree...</option>
+                                {degrees.map(d => <option key={d} value={d}>{d}</option>)}
                             </select>
                         </div>
                         <div>
@@ -105,7 +129,7 @@ const WorkloadAllocation = ({ token }) => {
                             <select
                                 value={form.semester}
                                 onChange={e => setForm(p => ({ ...p, semester: parseInt(e.target.value) }))}
-                                className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white"
+                                className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                             >
                                 {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -115,16 +139,21 @@ const WorkloadAllocation = ({ token }) => {
                             <select
                                 value={form.section}
                                 onChange={e => setForm(p => ({ ...p, section: e.target.value }))}
-                                className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white"
+                                className="w-full bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                disabled={!availableSections.length}
                             >
-                                {['A', 'B', 'C', 'D', 'E', 'F'].map(s => <option key={s} value={s}>{s}</option>)}
+                                <option value="">Select Section...</option>
+                                {availableSections.map(s => <option key={s} value={s}>Sec {s}</option>)}
                             </select>
+                            {!availableSections.length && form.degree && (
+                                <p className="text-xs text-amber-400 mt-1">No sections found for this selection.</p>
+                            )}
                         </div>
                     </div>
                     <div className="flex gap-3 mt-4">
                         <button
                             onClick={createAllocation}
-                            disabled={!form.trainer_id || !form.hrd_subject_id || saving}
+                            disabled={!form.trainer_id || !form.hrd_subject_id || !form.degree || !form.section || saving}
                             className="px-6 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition disabled:opacity-50"
                         >
                             {saving ? <Loader2 className="animate-spin w-4 h-4" /> : 'Assign'}
@@ -132,7 +161,7 @@ const WorkloadAllocation = ({ token }) => {
                         <button onClick={() => setShowForm(false)} className="px-6 py-2 text-slate-400 hover:text-white">Cancel</button>
                     </div>
                 </div>
-            )}
+            ) || null}
 
             <div className="bg-slate-900/40 border border-white/10 rounded-2xl overflow-hidden">
                 <table className="w-full text-left">

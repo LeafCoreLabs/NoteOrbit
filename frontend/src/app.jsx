@@ -6105,7 +6105,7 @@ function App() {
             if (page === 'hrd-dashboard' && hrdToken) {
                 return (
                     <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-700">
-                        <HRDDashboard token={hrdToken} setPage={setPage} setToken={() => { }} />
+                        <HRDDashboard token={hrdToken} setPage={setPage} setToken={() => { }} catalogs={catalogs} />
                     </div>
                 );
             }

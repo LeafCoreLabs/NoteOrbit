@@ -11,7 +11,7 @@ import WorkloadAllocation from './WorkloadAllocation';
 import RoundManagement from './RoundManagement';
 import GlobalAnalytics from './GlobalAnalytics';
 
-const CHRODashboard = ({ token, setPage, setToken }) => {
+const CHRODashboard = ({ token, setPage, setToken, catalogs }) => {
     const [activeView, setActiveView] = useState('analytics');
     const [selectedDriveId, setSelectedDriveId] = useState(null);
 
@@ -63,7 +63,7 @@ const CHRODashboard = ({ token, setPage, setToken }) => {
             case 'offers': return <OfferManagement token={token} />;
             case 'subjects': return <SubjectManagement token={token} />;
             case 'trainers': return <TrainerManagement token={token} />;
-            case 'allocations': return <WorkloadAllocation token={token} />;
+            case 'allocations': return <WorkloadAllocation token={token} catalogs={catalogs} />;
             case 'students': return <StudentManagement token={token} />;
             default: return null;
         }
