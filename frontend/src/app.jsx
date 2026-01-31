@@ -2371,7 +2371,7 @@ function ProfessorMessages({ showMessage }) {
 }
 
 // Professor Panel (Updated for separated Degree/Semester controls + Strict Allocation Filtering)
-function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButtonClass, dangerButtonClass }) {
+function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButtonClass, dangerButtonClass, onLogout }) {
     const [view, setView] = useState('notes');
 
     // Allocations State
@@ -2641,48 +2641,65 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
     ];
 
     return (
-        <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
-                <h5 className="text-lg font-bold text-emerald-400 mb-4 ml-2">Faculty Tools</h5>
-                <nav className="space-y-1 relative hidden md:block" ref={navRef}>
-                    <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-emerald-600/20 border border-emerald-500/30 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
-                    {navigation.map(item => (
-                        <button
-                            key={item.key}
-                            data-key={item.key}
-                            onClick={() => setView(item.key)}
-                            className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
-                                ? 'text-emerald-300'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                }`}
-                        >
-                            <item.icon className="w-5 h-5 mr-3" />
-                            {item.label}
-                        </button>
-                    ))}
-                </nav>
-                {/* Mobile Navigation Dropdown */}
-                <div className="md:hidden">
-                    <div className="relative">
-                        <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400 pointer-events-none" />
-                        <select
-                            value={view}
-                            onChange={(e) => setView(e.target.value)}
-                            className="w-full bg-slate-800/80 border border-emerald-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-lg font-semibold"
-                        >
-                            {navigation.map(item => (
-                                <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
-                                    {item.label}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        <div className="min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header Area */}
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">Faculty Portal</h1>
+                    <p className="text-slate-400">Welcome, {user?.name || 'Professor'}! Manage your academic duties.</p>
+                </div>
+                {/* Mobile-Only Logout Button (Sync with HRD) */}
+                <button
+                    onClick={onLogout}
+                    className="md:hidden flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                >
+                    <LogOut className="w-4 h-4" /> Logout
+                </button>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-6">
+                <div className="w-full md:w-56 bg-slate-900/60 backdrop-blur-xl p-4 rounded-xl shadow-lg border border-white/10 flex-shrink-0 animate-in slide-in-from-left-4 duration-500">
+                    <h5 className="text-lg font-bold text-emerald-400 mb-4 ml-2 hidden md:block">Faculty Tools</h5>
+                    <nav className="space-y-1 relative hidden md:block" ref={navRef}>
+                        <div ref={indicatorRef} className="absolute left-0 top-0 w-full bg-emerald-600/20 border border-emerald-500/30 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] pointer-events-none opacity-0 z-0" style={{ height: 0 }} />
+                        {navigation.map(item => (
+                            <button
+                                key={item.key}
+                                data-key={item.key}
+                                onClick={() => setView(item.key)}
+                                className={`w-full flex items-center p-3 rounded-xl font-semibold transition-colors duration-200 relative z-10 ${view === item.key
+                                    ? 'text-emerald-300'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                            >
+                                <item.icon className="w-5 h-5 mr-3" />
+                                {item.label}
+                            </button>
+                        ))}
+                    </nav>
+                    {/* Mobile Navigation Dropdown (HRD Style) */}
+                    <div className="md:hidden">
+                        <div className="relative">
+                            <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400 pointer-events-none" />
+                            <select
+                                value={view}
+                                onChange={(e) => setView(e.target.value)}
+                                className="w-full bg-slate-800/80 border border-emerald-500/30 rounded-xl py-3 pl-10 pr-4 text-white appearance-none outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-lg font-semibold"
+                            >
+                                {navigation.map(item => (
+                                    <option key={item.key} value={item.key} className="bg-slate-900 text-white py-2">
+                                        {item.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-                {renderView()}
+                <div ref={contentRef} className="flex-1 min-h-[600px] bg-slate-900/60 backdrop-blur-xl p-6 rounded-xl shadow-2xl border border-white/10 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+                    {renderView()}
+                </div>
             </div>
         </div>
     );
@@ -4279,7 +4296,7 @@ function AdminFacultyManagement({ showMessage, catalogs, buttonClass, primaryBut
 }
 
 
-function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, dangerButtonClass, user }) { // 🛑 ADDED user PROP
+function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, dangerButtonClass, user, onLogout }) { // 🛑 ADDED user PROP + onLogout
     const { degrees, sections, loaded, fetchBasics, fetchSections, fetchSubjects } = catalogs;
 
     const [pending, setPending] = useState([]);
@@ -4808,9 +4825,18 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
     return (
         <div className="min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Area */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">Admin Tools</h1>
-                <p className="text-slate-400">Manage students, faculty, courses and institutional settings.</p>
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">Admin Tools</h1>
+                    <p className="text-slate-400">Manage students, faculty, courses and institutional settings.</p>
+                </div>
+                {/* Mobile-Only Logout Button (Sync with HRD) */}
+                <button
+                    onClick={onLogout}
+                    className="md:hidden flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                >
+                    <LogOut className="w-4 h-4" /> Logout
+                </button>
             </div>
 
             {/* Desktop Navigation Tabs */}
@@ -4845,7 +4871,7 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                 })}
             </div>
 
-            {/* Mobile Navigation Dropdown */}
+            {/* Mobile Navigation Dropdown (HRD Style) */}
             <div className="md:hidden mb-8">
                 <div className="relative">
                     <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
@@ -5463,7 +5489,7 @@ function AcademicInsights({ user, showMessage }) {
 }
 
 // Student Panel (Updated with Books and Hostel)
-function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass }) {
+function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass, onLogout }) {
     const [view, setView] = useState('notes');
 
     const navigation = [
@@ -5502,9 +5528,18 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
     return (
         <div className="min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Area */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">Student Hub</h1>
-                <p className="text-slate-400">Welcome, {user?.name || 'Student'}! Access your academic resources.</p>
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">Student Hub</h1>
+                    <p className="text-slate-400">Welcome, {user?.name || 'Student'}! Access your academic resources.</p>
+                </div>
+                {/* Mobile-Only Logout Button (Sync with HRD) */}
+                <button
+                    onClick={onLogout}
+                    className="md:hidden flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                >
+                    <LogOut className="w-4 h-4" /> Logout
+                </button>
             </div>
 
             {/* Desktop Navigation Tabs */}
@@ -5528,7 +5563,7 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
                 })}
             </div>
 
-            {/* Mobile Navigation Dropdown */}
+            {/* Mobile Navigation Dropdown (HRD Style) */}
             <div className="md:hidden mb-8">
                 <div className="relative">
                     <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
@@ -5794,7 +5829,7 @@ function ParentContactFaculty({ user, showMessage, primaryButtonClass, buttonCla
 }
 
 // Parent Panel (Reusing Student Components)
-function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass }) {
+function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonClass, onLogout }) {
     const [view, setView] = useState('attendance');
 
     const navigation = [
@@ -5823,9 +5858,18 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
     return (
         <div className="min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Area */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">Parent Portal</h1>
-                <p className="text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">Parent Portal</h1>
+                    <p className="text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
+                </div>
+                {/* Mobile-Only Logout Button (Sync with HRD) */}
+                <button
+                    onClick={onLogout}
+                    className="md:hidden flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl border border-transparent hover:border-red-500/20 transition"
+                >
+                    <LogOut className="w-4 h-4" /> Logout
+                </button>
             </div>
 
             {/* Desktop Navigation Tabs */}
@@ -5849,7 +5893,7 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
                 })}
             </div>
 
-            {/* Mobile Navigation Dropdown */}
+            {/* Mobile Navigation Dropdown (HRD Style) */}
             <div className="md:hidden mb-8">
                 <div className="relative">
                     <Menu className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
@@ -5894,8 +5938,9 @@ function App() {
                 // Check if this is an HRD user (chro/trainer)
                 const userRoleFromStorage = user.role;
                 if (userRoleFromStorage === 'chro' || userRoleFromStorage === 'trainer' || userRoleFromStorage === 'hrd_trainer' || userRoleFromStorage === 'hrd') {
-                    // Set userRole for HRD routing
-                    setUserRole('HRD');
+                    // Set userRole based on actual role from storage
+                    const appRole = (userRoleFromStorage === 'trainer' || userRoleFromStorage === 'hrd_trainer') ? 'Trainer' : 'HRD';
+                    setUserRole(appRole);
                     setPage('hrd-dashboard');
                 } else {
                     setPage("dashboard");
@@ -6073,10 +6118,10 @@ function App() {
             case "dashboard":
                 return (
                     <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-700">
-                        {user.role === "admin" ? <AdminPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} dangerButtonClass={dangerButtonClass} /> :
-                            user.role === "professor" ? <ProfessorPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} successButtonClass={successButtonClass} dangerButtonClass={dangerButtonClass} /> :
-                                user.role === "student" ? <StudentPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} /> :
-                                    user.role === "parent" ? <ParentPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} /> :
+                        {user.role === "admin" ? <AdminPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} dangerButtonClass={dangerButtonClass} onLogout={doLogout} /> :
+                            user.role === "professor" ? <ProfessorPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} successButtonClass={successButtonClass} dangerButtonClass={dangerButtonClass} onLogout={doLogout} /> :
+                                user.role === "student" ? <StudentPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} onLogout={doLogout} /> :
+                                    user.role === "parent" ? <ParentPanel user={user} showMessage={showMessage} catalogs={catalogs} buttonClass={buttonClass} primaryButtonClass={primaryButtonClass} onLogout={doLogout} /> :
                                         <div className="card">Unknown role</div>}
                     </div>
                 );
