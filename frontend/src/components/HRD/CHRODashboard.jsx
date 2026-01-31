@@ -64,7 +64,7 @@ const CHRODashboard = ({ token, setPage, setToken, catalogs }) => {
             case 'subjects': return <SubjectManagement token={token} />;
             case 'trainers': return <TrainerManagement token={token} />;
             case 'allocations': return <WorkloadAllocation token={token} catalogs={catalogs} />;
-            case 'students': return <StudentManagement token={token} />;
+            case 'students': return <StudentManagement token={token} catalogs={catalogs} />;
             default: return null;
         }
     };
