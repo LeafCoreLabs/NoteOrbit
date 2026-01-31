@@ -362,7 +362,7 @@ function UserTypeSelection({ setUserRole, setPage }) {
             {/* Centered Hero Header */}
             <div className="text-center space-y-4 mb-2 md:mb-12 z-10 animate-in fade-in slide-in-from-top-4 duration-700 px-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2">
-                    <Sparkles className="w-3 h-3" /> NoteOrbit rev2.2.1_beta
+                    <Sparkles className="w-3 h-3" /> NoteOrbit v2.3 Pre_Release
                 </div>
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight">
                     Academic <br className="hidden md:block" />
@@ -458,7 +458,7 @@ function UserTypeSelection({ setUserRole, setPage }) {
             </div>
 
             <div className="mt-auto pt-8 pb-4 text-center z-10">
-                <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">v2.2.1 Beta • LeafCore Labs</p>
+                <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">v2.3 Pre_Release • LeafCore Labs</p>
             </div>
         </div>
     );
