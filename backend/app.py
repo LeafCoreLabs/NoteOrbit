@@ -4804,8 +4804,8 @@ def extract_resume_text(url):
         extracted_len = len(text.strip())
         print(f"DEBUG: Extracted {extracted_len} characters from PDF")
         
-        if extracted_len == 0:
-            return "ERROR: PDF is empty or purely image-based (No selectable text found)."
+        if extracted_len < 20: # Arbitrary threshold for "practically empty"
+            return "NOTICE: This PDF appears to be a scanned image or uses non-standard encoding. No selectable text was found. Advice: Re-upload a text-based PDF (exported from Word/Canva) for better AI analysis."
             
         return text.strip()
     except Exception as e:
@@ -4878,9 +4878,11 @@ def get_student_neural_profile(student_id):
     Grades: {json.dumps(grade_sheet)}
     
     RESUME CONTENT (EXTRACTED):
-    {resume_text[:2000]} # Limit to first 2000 chars to save tokens
+    {resume_text[:2000]}
     
-    Act as a recruitment AI. Evaluate readiness for corporate placement based on both metadata and RESUME content.
+    Act as a recruitment AI. Evaluate readiness for corporate placement.
+    CRITICAL: If the RESUME CONTENT contains a 'NOTICE' about scanned images, mention this in your 'summary' and tell the student to upload a text-based PDF for better insights.
+    
     Output EXCLUSIVELY as a JSON object:
     {{
       "readiness_score": (int 0-100),
@@ -4918,9 +4920,9 @@ def get_student_neural_profile(student_id):
             "resume_url": resume_url,
             "debug_resume_extraction": {
                 "active": True if PdfReader else False,
-                "status": "Success" if "ERROR" not in resume_text else "Failed",
-                "length": len(resume_text) if "ERROR" not in resume_text else 0,
-                "raw_info": resume_text[:100] if "ERROR" in resume_text else "Text extracted successfully"
+                "status": "Success" if "NOTICE" not in resume_text and "ERROR" not in resume_text else "Partial/Issue",
+                "length": len(resume_text) if "NOTICE" not in resume_text and "ERROR" not in resume_text else 0,
+                "note": resume_text if ("NOTICE" in resume_text or "ERROR" in resume_text) else "Read successfully"
             }
         }
     })

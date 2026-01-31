@@ -153,28 +153,36 @@ const PlacementProfile = ({ token }) => {
                     {profile.resume_url && (
                         <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
                             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                            <div className="flex-1">
-                                <p className="text-white font-medium">Current Resume</p>
-                                <a href={profile.resume_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 text-sm hover:underline truncate block">
-                                    {profile.resume_url}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-white font-medium">Applied Resume</p>
+                                <a
+                                    href={profile.resume_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 transition text-xs font-semibold"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    View Resume
                                 </a>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <button
                                     onClick={parseResumeSkills}
                                     disabled={parsing}
-                                    className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg border border-purple-500/30 hover:bg-purple-500/30 transition flex items-center gap-2 text-sm justify-center"
+                                    className="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20 hover:bg-purple-500/20 transition-all flex items-center gap-2 text-sm"
+                                    title="AI Parse Skills"
                                 >
                                     {parsing ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                                    AI Parse Skills
+                                    <span className="hidden sm:inline">AI Analysis</span>
                                 </button>
                                 <button
                                     onClick={deleteResume}
                                     disabled={saving}
-                                    className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 hover:bg-red-500/30 transition flex items-center gap-2 text-sm justify-center"
+                                    className="p-2.5 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-2 text-sm"
+                                    title="Delete Resume"
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                    Delete
+                                    <span className="hidden sm:inline">Remove</span>
                                 </button>
                             </div>
                         </div>
