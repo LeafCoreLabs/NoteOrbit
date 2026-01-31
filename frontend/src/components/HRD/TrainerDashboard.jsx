@@ -148,17 +148,9 @@ const TrainerDashboard = ({ token, setPage, setToken }) => {
     return (
         <div className="min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Area */}
-            <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Trainer Portal</h1>
-                    <p className="text-slate-400">Manage your classes, attendance & student performance.</p>
-                </div>
-                <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
-                >
-                    <LogOut className="w-4 h-4" /> Logout
-                </button>
+            <div className="mb-8 p-1">
+                <h2 className="text-3xl font-bold text-white mb-2">Trainer Portal</h2>
+                <p className="text-slate-400">Welcome, Training Expert! Access your classes and manage students.</p>
             </div>
 
             {/* Desktop Navigation Tabs */}

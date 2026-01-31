@@ -458,7 +458,7 @@ function UserTypeSelection({ setUserRole, setPage }) {
             </div>
 
             <div className="mt-auto pt-8 pb-4 text-center z-10">
-                <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">v2.3 Pre_Release • LeafCore Labs</p>
+                <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">v2.3 Pre_Release • © 2026 | LeafCore Labs</p>
             </div>
         </div>
     );
@@ -2648,13 +2648,6 @@ function ProfessorPanel({ user, showMessage, catalogs, buttonClass, successButto
                     <h1 className="text-3xl font-bold text-white mb-2">Faculty Portal</h1>
                     <p className="text-slate-400">Welcome, {user?.name || 'Professor'}! Manage your academic duties.</p>
                 </div>
-                {/* Aesthetic Logout Button */}
-                <button
-                    onClick={onLogout}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
-                >
-                    <LogOut className="w-4 h-4" /> Logout
-                </button>
             </div>
 
             <div className="flex flex-col md:flex-row gap-6">
@@ -4830,13 +4823,6 @@ function AdminPanel({ showMessage, catalogs, buttonClass, primaryButtonClass, da
                     <h1 className="text-3xl font-bold text-white mb-2">Admin Tools</h1>
                     <p className="text-slate-400">Manage students, faculty, courses and institutional settings.</p>
                 </div>
-                {/* Aesthetic Logout Button */}
-                <button
-                    onClick={onLogout}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
-                >
-                    <LogOut className="w-4 h-4" /> Logout
-                </button>
             </div>
 
             {/* Desktop Navigation Tabs */}
@@ -5533,13 +5519,6 @@ function StudentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonC
                     <h1 className="text-3xl font-bold text-white mb-2">Student Hub</h1>
                     <p className="text-slate-400">Welcome, {user?.name || 'Student'}! Access your academic resources.</p>
                 </div>
-                {/* Aesthetic Logout Button */}
-                <button
-                    onClick={onLogout}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
-                >
-                    <LogOut className="w-4 h-4" /> Logout
-                </button>
             </div>
 
             {/* Desktop Navigation Tabs */}
@@ -6173,7 +6152,15 @@ function App() {
                     </div>
                     <div className="flex items-center space-x-3">
                         {user ? (
-                            <span className="text-sm font-medium text-slate-300 mr-4 hidden sm:inline">{user.name} <span className="text-blue-400 uppercase">({user.role})</span></span>
+                            <>
+                                <span className="text-sm font-medium text-slate-300 mr-4 hidden sm:inline">{user.name} <span className="text-blue-400 uppercase">({user.role})</span></span>
+                                <button
+                                    className="flex items-center gap-2 px-2 py-1 text-slate-400 hover:text-red-400 transition-colors font-medium text-sm"
+                                    onClick={doLogout}
+                                >
+                                    <LogOut className="w-4 h-4" /> Logout
+                                </button>
+                            </>
                         ) : null}
                     </div>
                 </div>
