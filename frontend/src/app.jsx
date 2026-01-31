@@ -6101,11 +6101,11 @@ function App() {
 
         // HRD Portal Routing
         const hrdToken = localStorage.getItem('noteorbit_token');
-        if ((userRole && userRole.ui === 'HRD') || userRole === 'HRD') {
+        if ((userRole && (userRole === 'HRD' || userRole === 'Trainer')) || (userRole && userRole.ui === 'HRD')) {
             if (page === 'hrd-dashboard' && hrdToken) {
                 return (
                     <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-700">
-                        <HRDDashboard token={hrdToken} setPage={setPage} setToken={() => { }} catalogs={catalogs} />
+                        <HRDDashboard userRole={userRole} token={hrdToken} setPage={setPage} setToken={() => { }} catalogs={catalogs} />
                     </div>
                 );
             }
