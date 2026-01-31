@@ -6155,7 +6155,7 @@ function App() {
                             <>
                                 <span className="text-sm font-medium text-slate-300 mr-4 hidden sm:inline">{user.name} <span className="text-blue-400 uppercase">({user.role})</span></span>
                                 <button
-                                    className="flex items-center gap-2 px-2 py-1 text-slate-400 hover:text-red-400 transition-colors font-medium text-sm"
+                                    className="flex items-center gap-2 px-2 py-1 text-red-400 hover:text-red-300 transition-colors font-medium text-sm"
                                     onClick={doLogout}
                                 >
                                     <LogOut className="w-4 h-4" /> Logout
