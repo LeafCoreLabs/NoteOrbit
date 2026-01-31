@@ -5867,13 +5867,7 @@ function ParentPanel({ user, showMessage, catalogs, buttonClass, primaryButtonCl
                     <h1 className="text-3xl font-bold text-white mb-2">Parent Portal</h1>
                     <p className="text-slate-400">Viewing data for: <span className="text-white font-medium">{user.name.replace("'s Parent", "")}</span></p>
                 </div>
-                {/* Aesthetic Logout Button */}
-                <button
-                    onClick={onLogout}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all font-medium shadow-sm"
-                >
-                    <LogOut className="w-4 h-4" /> Logout
-                </button>
+
             </div>
 
             {/* Desktop Navigation Tabs */}
