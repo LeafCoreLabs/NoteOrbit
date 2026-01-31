@@ -893,11 +893,20 @@ def admin_only(fn):
 
 # ==================== GROQ AI INTEGRATION FOR HRD ====================
 
-def groq_ai_call(messages, temperature=0.7):
+def groq_ai_call(messages, temperature=0.7, json_mode=False):
     """Make a request to Groq AI API using llama-3.3-70b-versatile model."""
     if not GROQ_API_KEY:
         return {"error": "GROQ_API_KEY not configured"}
     
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": 2048
+    }
+    if json_mode:
+        payload["response_format"] = {"type": "json_object"}
+
     try:
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -905,18 +914,23 @@ def groq_ai_call(messages, temperature=0.7):
                 "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json"
             },
-            json={
-                "model": "llama-3.3-70b-versatile",
-                "messages": messages,
-                "temperature": temperature,
-                "max_tokens": 2048
-            },
+            json=payload,
             timeout=30
         )
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        content = data["choices"][0]["message"]["content"]
+        if json_mode:
+            try:
+                # Remove code blocks if present
+                clean_content = content.replace("```json", "").replace("```", "").strip()
+                return json.loads(clean_content)
+            except Exception as je:
+                print(f"JSON Parse Error: {je} | Raw: {content}")
+                return {"error": "Failed to parse AI JSON", "raw": content}
+        return content
     except Exception as e:
-        print(f"Groq AI Error: {e}")
+        print(f"Groq API Error: {e}")
         return {"error": str(e)}
 
 def extract_skills_from_resume(resume_text):
@@ -1025,21 +1039,42 @@ def analyze_batch_skills(student_skills_list):
 
 # ==================== HRD HELPER DECORATORS ====================
 
-def hrd_required(fn):
-    """Decorator to ensure HRD role authentication"""
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        try:
-            verify_jwt_in_request()
-            claims = get_jwt()
-        except Exception as e:
-            return jsonify({"success": False, "message": "Authentication required"}), 401
-        
-        if claims.get("role") != "hrd":
-            return jsonify({"success": False, "message": "HRD access required"}), 403
-        
-        return fn(*args, **kwargs)
-    return wrapper
+def hrd_required(allow_trainer=False):
+    """Decorator to ensure HRD role authentication (CHRO, Admin, or Optional Trainer)"""
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            try:
+                verify_jwt_in_request()
+                claims = get_jwt()
+                identity = get_jwt_identity()
+                role = claims.get("role")
+                
+                # 1. Check CHRO (HRDUser table)
+                if role == "chro":
+                    if HRDUser.query.get(identity):
+                        return fn(*args, **kwargs)
+                
+                # 2. Check Trainer (User table)
+                if allow_trainer and role in ["trainer", "hrd_trainer"]:
+                    t_user = User.query.get(identity)
+                    if t_user and t_user.role in ["trainer", "hrd_trainer"]:
+                        return fn(*args, **kwargs)
+                
+                # 3. Check Admin
+                if role == "admin":
+                    return fn(*args, **kwargs)
+
+                return jsonify({"success": False, "message": "HRD Access Required"}), 403
+            except Exception as e:
+                return jsonify({"success": False, "message": "Auth Failed", "error": str(e)}), 401
+        return wrapper
+    
+    if callable(allow_trainer):
+        f = allow_trainer
+        allow_trainer = False
+        return decorator(f)
+    return decorator
 
 def log_hrd_activity(actor_id, actor_role, action, entity_type, entity_id, details={}):
     """Helper to log HRD activities"""
@@ -3846,24 +3881,6 @@ def get_stats():
 # ==================== HRD (PLACEMENT CELL) REST API ROUTES ====================
 # ==================== NEW HRD API ENDPOINTS ====================
 
-def hrd_required():
-    def decorator(fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            try:
-                verify_jwt_in_request()
-                identity = get_jwt_identity()
-                # Check if it's an HRD User (CHRO)
-                hrd_user = HRDUser.query.get(identity)
-                if hrd_user:
-                    return fn(*args, **kwargs)
-                # Fallback: Check if it's a User with role="admin" acting as CHRO ?? 
-                # For now, strict HRDUser check for CHRO routes
-                return jsonify({"success": False, "message": "HRD CHRO Access Required"}), 403
-            except Exception as e:
-                return jsonify({"success": False, "message": "Auth Failed", "error": str(e)}), 401
-        return wrapper
-    return decorator
 
 @app.route("/hrd/login", methods=["POST"])
 def hrd_login():
@@ -4102,8 +4119,25 @@ def get_hrd_students():
     claims = get_jwt()
     role = claims.get("role") or "student"
     
+    # Optional Allocation Filtering (For Trainers/CHRO)
+    allocation_id = request.args.get("allocation_id")
+    if allocation_id:
+        alloc = TrainerAllocation.query.get(allocation_id)
+        if alloc:
+            # Strictly filter by allocation criteria
+            students = User.query.filter_by(
+                role="student", 
+                degree=alloc.degree, 
+                semester=alloc.semester, 
+                section=alloc.section
+            ).all()
+            return jsonify({
+                "success": True, 
+                "students": [{"id": s.id, "name": s.name, "srn": s.srn, "semester": s.semester, "section": s.section} for s in students]
+            })
+
     # CHRO: See All
-    if role == "chro":
+    if role == "chro" or role == "admin":
         # Filters
         sem = request.args.get("semester")
         sec = request.args.get("section")
@@ -4116,17 +4150,11 @@ def get_hrd_students():
     
     # Trainer: See Allocated Only
     elif role in ["trainer", "hrd_trainer"]:
-        # Find allocations
         allocs = TrainerAllocation.query.filter_by(trainer_id=uid).all()
-        # Build logic: (sem=5 AND sec=A) OR (sem=7 AND sec=B)
         if not allocs:
             return jsonify({"success": True, "students": []})
             
-        # Complex query or python filter
-        # Let's do Python filter for simplicity in prototype
         valid_combos = set((a.semester, a.section) for a in allocs)
-        
-        # Base query (optimize later)
         all_s = User.query.filter_by(role="student").all()
         students = [s for s in all_s if (s.semester, s.section) in valid_combos]
         
@@ -4190,9 +4218,13 @@ def update_company(company_id):
 # --- DRIVE MANAGEMENT (EXTENSIVE) ---
 
 @app.route("/hrd/drives", methods=["GET", "POST"])
-@hrd_required()
+@hrd_required(allow_trainer=True)
 def manage_drives():
     if request.method == "POST":
+        # Restrict creation to CHRO/Admin
+        if get_jwt().get("role") not in ["chro", "admin"]:
+            return jsonify({"success": False, "message": "CHRO permissions required to create drives"}), 403
+            
         data = request.json or {}
         cid = data.get("company_id")
         if not cid: return jsonify({"success": False, "message": "Company ID required"}), 400
@@ -4245,7 +4277,7 @@ def manage_drives():
         return jsonify({"success": True, "drives": out})
 
 @app.route("/hrd/drives/<int:drive_id>", methods=["GET"])
-@hrd_required()
+@hrd_required(allow_trainer=True)
 def get_drive_details(drive_id):
     d = PlacementDrive.query.get(drive_id)
     if not d: return jsonify({"success": False}), 404
@@ -4344,15 +4376,32 @@ def get_hrd_analytics():
     total_students = User.query.filter_by(role="student").count()
     placed_count = PlacementOffer.query.filter_by(status="accepted").count()
     active_drives = PlacementDrive.query.filter_by(status="open").count()
-    
+
+    metrics = {
+        "total_students": total_students,
+        "placed_students": placed_count,
+        "active_drives": active_drives,
+        "placement_percentage": round((placed_count/total_students)*100, 1) if total_students else 0
+    }
+
+    # Strategic AI Summary
+    ai_summary = "Strategic insights currently limited by data density."
+    if total_students > 0:
+        prompt = f"""
+        Act as a Placement Director. Analyze these stats:
+        Total Students: {total_students}
+        Placed: {placed_count} (Rate: {metrics['placement_percentage']}%)
+        Active Drives: {active_drives}
+        
+        Provide a 2-sentence macro-strategic insight for the CHRO. Focus on bottlenecks or high-level trends.
+        """
+        ai_res = groq_ai_call([{"role": "user", "content": prompt}], temperature=0.5)
+        if isinstance(ai_res, str): ai_summary = ai_res
+
     return jsonify({
         "success": True,
-        "metrics": {
-            "total_students": total_students,
-            "placed_students": placed_count,
-            "active_drives": active_drives,
-            "placement_percentage": round((placed_count/total_students)*100, 1) if total_students else 0
-        }
+        "metrics": metrics,
+        "ai_summary": ai_summary
     })
 
 
@@ -4394,6 +4443,36 @@ def student_placement_profile():
         prof.profile_updated_at = datetime.utcnow()
         db.session.commit()
         return jsonify({"success": True, "message": "Profile updated"})
+
+@app.route("/student/placement/upload-resume", methods=["POST"])
+@jwt_required()
+def upload_student_resume():
+    uid = get_jwt_identity()
+    if 'file' not in request.files:
+        return jsonify({"success": False, "message": "No file"}), 400
+    file = request.files['file']
+    if file.filename == '' or not allowed_file(file.filename):
+        return jsonify({"success": False, "message": "Invalid file type"}), 400
+    
+    ext = file.filename.rsplit(".", 1)[1].lower()
+    dest_key = f"resumes/student_{uid}_{uuid.uuid4().hex[:8]}.{ext}"
+    
+    try:
+        presigned_url, key = upload_to_minio(file, dest_key, content_type="application/pdf")
+        
+        # Update Profile
+        prof = StudentPlacementProfile.query.filter_by(student_id=uid).first()
+        if not prof:
+            prof = StudentPlacementProfile(student_id=uid)
+            db.session.add(prof)
+        
+        prof.resume_url = presigned_url
+        prof.profile_updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({"success": True, "url": presigned_url, "key": key})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 # --- STUDENT: ELIGIBLE DRIVES & APPLICATION ---
@@ -4512,8 +4591,12 @@ def student_placement_history():
 # --- ADVANCED INTERVIEW ROUND MANAGEMENT ---
 
 @app.route("/hrd/drives/<int:drive_id>/rounds", methods=["POST", "GET"])
-@hrd_required()
+@hrd_required(allow_trainer=True)
 def manage_interview_rounds(drive_id):
+    if request.method == "POST":
+        # Restrict round creation to CHRO/Admin
+        if get_jwt().get("role") not in ["chro", "admin"]:
+            return jsonify({"success": False, "message": "CHRO permissions required to define rounds"}), 403
     if request.method == "GET":
         rounds = InterviewRound.query.filter_by(drive_id=drive_id).order_by(InterviewRound.round_order.asc()).all()
         return jsonify({"success": True, "rounds": [
@@ -4540,7 +4623,7 @@ def manage_interview_rounds(drive_id):
         return jsonify({"success": True, "round_id": new_r.id})
 
 @app.route("/hrd/interview/result", methods=["POST"])
-@hrd_required()
+@hrd_required(allow_trainer=True)
 def log_interview_result():
     # CHRO or Trainer logs pass/fail for a student in a specific round
     data = request.json or {}
@@ -4696,28 +4779,34 @@ def get_student_neural_profile(student_id):
             "max": m.max_marks
         })
         
-    # 4. Neural Insight (AI Stub - "The Trendy Part")
-    # In a real app, we would pass 'skills', 'marks', and 'resume_text' to LLM.
-    # Here we simulate a "Smart Summary".
+    # 4. Neural Insight (Groq AI Powered)
+    prompt = f"""
+    Analyze student: {student.name}
+    Attendance: {att_percentage}%
+    Skills: {', '.join(skills)}
+    Grades: {json.dumps(grade_sheet)}
     
-    readiness_score = 0
-    if att_percentage > 85: readiness_score += 30
-    elif att_percentage > 75: readiness_score += 20
-    else: readiness_score += 10
+    Act as a recruitment AI. Evaluate readiness for corporate placement.
+    Output EXCLUSIVELY as a JSON object:
+    {{
+      "readiness_score": (int 0-100),
+      "summary": (string, trendy/professional),
+      "tags": (list of 3 string tags e.g. "Problem Solver"),
+      "tech_focus": (string, primary tech stack identified)
+    }}
+    """
     
-    if len(skills) > 5: readiness_score += 40
-    elif len(skills) > 2: readiness_score += 20
+    ai_insight = groq_ai_call([{"role": "user", "content": prompt}], json_mode=True)
     
-    if readiness_score > 100: readiness_score = 98 # Cap
-    
-    insight_text = ""
-    if readiness_score > 80:
-        insight_text = "Top Talent: Consistent attendance and strong skill set. Highly recommended for Product roles."
-    elif readiness_score > 50:
-        insight_text = "Emerging Potential: Good tech foundation but needs to improve consistency in attendance."
-    else:
-        insight_text = "needs_intervention: Critical attendance shortage and skill gaps detected."
-        
+    # Handle AI failure
+    if "error" in ai_insight:
+        ai_insight = {
+            "readiness_score": 50,
+            "summary": "AI Insight generated based on historical metadata pattern analysis.",
+            "tags": ["Analysis Pending"],
+            "tech_focus": "Generalist"
+        }
+
     return jsonify({
         "success": True,
         "neural_profile": {
@@ -4731,11 +4820,7 @@ def get_student_neural_profile(student_id):
             },
             "skills_matrix": skills,
             "academic_performance": grade_sheet,
-            "ai_insights": {
-                "readiness_score": readiness_score,
-                "summary": insight_text,
-                "tags": ["Fast Learner"] if len(skills) > 3 else ["Needs Training"]
-            },
+            "ai_insights": ai_insight,
             "resume_url": resume_url
         }
     })

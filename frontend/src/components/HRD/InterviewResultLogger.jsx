@@ -11,6 +11,7 @@ const InterviewResultLogger = ({ token }) => {
     const [applicants, setApplicants] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(null);
+    const [feedbacks, setFeedbacks] = useState({});
 
     useEffect(() => { fetchDrives(); }, []);
 
@@ -59,8 +60,9 @@ const InterviewResultLogger = ({ token }) => {
         }
     };
 
-    const submitResult = async (studentId, result, feedback = '') => {
+    const submitResult = async (studentId, result) => {
         if (!selectedRound) return;
+        const feedback = feedbacks[studentId] || '';
         setSubmitting(studentId);
         try {
             await api.post('/hrd/interview/result', {
@@ -129,6 +131,7 @@ const InterviewResultLogger = ({ token }) => {
                                 <th className="p-4">Student</th>
                                 <th className="p-4">SRN</th>
                                 <th className="p-4 text-center">Status</th>
+                                <th className="p-4">Feedback</th>
                                 <th className="p-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -139,9 +142,17 @@ const InterviewResultLogger = ({ token }) => {
                                     <td className="p-4 text-slate-400 font-mono text-xs">{a.srn}</td>
                                     <td className="p-4 text-center">
                                         <span className={`px-2 py-1 rounded-full text-xs ${a.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
-                                                a.status === 'offered' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                    'bg-blue-500/20 text-blue-400'
+                                            a.status === 'offered' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                'bg-blue-500/20 text-blue-400'
                                             }`}>{a.status}</span>
+                                    </td>
+                                    <td className="p-4">
+                                        <input
+                                            placeholder="Feedback..."
+                                            value={feedbacks[a.id] || ''}
+                                            onChange={e => setFeedbacks(p => ({ ...p, [a.id]: e.target.value }))}
+                                            className="w-full bg-slate-800/20 border border-white/10 rounded-lg p-2 text-xs text-white outline-none"
+                                        />
                                     </td>
                                     <td className="p-4 text-right space-x-2">
                                         <button

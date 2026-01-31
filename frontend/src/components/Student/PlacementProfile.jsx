@@ -153,21 +153,52 @@ const PlacementProfile = ({ token }) => {
                         </div>
                     )}
 
-                    {/* Add New Version */}
-                    <div className="flex gap-2">
+                    {/* Add New Version (Real Upload) */}
+                    <div className="relative">
                         <input
-                            placeholder="Paste new resume URL (Google Drive, Dropbox, etc.)"
-                            value={newResumeUrl}
-                            onChange={e => setNewResumeUrl(e.target.value)}
-                            className="flex-1 bg-slate-800/50 border border-white/10 rounded-xl p-3 text-white placeholder-slate-600"
+                            type="file"
+                            id="resume-upload"
+                            className="hidden"
+                            accept=".pdf"
+                            onChange={async (e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+
+                                const formData = new FormData();
+                                formData.append('file', file);
+
+                                setParsing(true);
+                                try {
+                                    const res = await api.post('/student/placement/upload-resume', formData, {
+                                        headers: {
+                                            Authorization: `Bearer ${token}`,
+                                            'Content-Type': 'multipart/form-data'
+                                        }
+                                    });
+                                    if (res.data.success) {
+                                        setProfile(p => ({ ...p, resume_url: res.data.url }));
+                                        fetchProfile(); // Refresh history
+                                    }
+                                } catch (e) {
+                                    console.error(e);
+                                    alert("Upload failed. Please check file type and size.");
+                                } finally {
+                                    setParsing(false);
+                                }
+                            }}
                         />
-                        <button
-                            onClick={addResumeVersion}
-                            disabled={!newResumeUrl.trim()}
-                            className="px-4 bg-cyan-500/20 text-cyan-400 rounded-xl hover:bg-cyan-500/30 transition disabled:opacity-50"
+                        <label
+                            htmlFor="resume-upload"
+                            className="w-full h-32 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-cyan-500/50 hover:bg-cyan-500/5 transition group"
                         >
-                            <Upload className="w-5 h-5" />
-                        </button>
+                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:scale-110 transition">
+                                <Upload className="w-6 h-6 text-cyan-400" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-white font-medium">Click to upload Resume</p>
+                                <p className="text-slate-500 text-xs mt-1">PDF format (Max 10MB)</p>
+                            </div>
+                        </label>
                     </div>
 
                     {/* Version History */}
@@ -252,8 +283,8 @@ const PlacementProfile = ({ token }) => {
                                 key={role.id}
                                 onClick={() => toggleRole(role.id)}
                                 className={`p-3 rounded-xl border text-left transition ${isSelected
-                                        ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                                        : 'bg-slate-800/30 border-white/10 text-slate-400 hover:border-white/20 hover:text-white'
+                                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                                    : 'bg-slate-800/30 border-white/10 text-slate-400 hover:border-white/20 hover:text-white'
                                     }`}
                             >
                                 <span className="text-lg">{role.icon}</span>

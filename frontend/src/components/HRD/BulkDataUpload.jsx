@@ -45,9 +45,10 @@ const BulkDataUpload = ({ token }) => {
                         <FileSpreadsheet className="w-10 h-10 text-indigo-400" />
                     </div>
 
-                    <h3 className="text-xl font-bold text-white mb-2">Upload Student Data CSV</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">Update Master Database</h3>
                     <p className="text-slate-400 text-sm mb-6">
-                        CSV should contain columns: SRN, GPA, Backlogs (optional)
+                        Upload CSV to batch-update student Grade Points and Projects.
+                        Recognized columns: <span className="text-indigo-400">SRN, GPA, Backlogs</span>
                     </p>
 
                     <div className="max-w-md mx-auto">

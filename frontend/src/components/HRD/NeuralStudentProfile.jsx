@@ -72,8 +72,18 @@ const NeuralStudentProfile = ({ token, studentId, onClose }) => {
                                     <div className="text-4xl font-bold text-white">
                                         {profile.ai_insights?.readiness_score || 0}%
                                     </div>
+                                    {profile.ai_insights?.readiness_score >= 80 && (
+                                        <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold animate-pulse">
+                                            Placement Ready
+                                        </div>
+                                    )}
                                     <p className="text-slate-300 text-sm flex-1">
                                         {profile.ai_insights?.summary || 'No insights available'}
+                                        {profile.ai_insights?.tech_focus && (
+                                            <span className="block mt-2 text-indigo-400 font-semibold">
+                                                Primary Focus: {profile.ai_insights.tech_focus}
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
                                 {profile.ai_insights?.tags?.length > 0 && (

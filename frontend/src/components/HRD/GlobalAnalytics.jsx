@@ -1,6 +1,6 @@
 // GlobalAnalytics.jsx - CHRO Dashboard Analytics Widgets
 import React, { useState, useEffect } from 'react';
-import { BarChart2, Users, Briefcase, Award, TrendingUp, Loader2 } from 'lucide-react';
+import { BarChart2, Users, Briefcase, Award, TrendingUp, Loader2, Sparkles } from 'lucide-react';
 import { api } from '../../api';
 
 const GlobalAnalytics = ({ token }) => {
@@ -62,6 +62,28 @@ const GlobalAnalytics = ({ token }) => {
                 </h2>
                 <p className="text-slate-400 mt-1">Real-time placement and training metrics</p>
             </div>
+
+            {/* Strategic AI Highlight */}
+            {metrics?.ai_summary && (
+                <div className="relative overflow-hidden bg-slate-900/40 border border-purple-500/30 rounded-3xl p-6 md:p-8 animate-in zoom-in-95 duration-700">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[100px] pointer-events-none" />
+                    <div className="relative flex flex-col md:flex-row gap-6 items-start">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/20">
+                            <Sparkles className="w-7 h-7 text-white" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-[10px] font-bold uppercase tracking-wider border border-purple-500/30">
+                                    Groq AI Strategic Insight
+                                </span>
+                            </div>
+                            <p className="text-xl md:text-2xl font-medium text-white leading-relaxed">
+                                "{metrics.ai_summary}"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Metric Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

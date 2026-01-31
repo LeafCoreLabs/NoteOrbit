@@ -36,7 +36,7 @@ const StudentManagement = ({ token, allocation }) => {
 
     const filteredStudents = students.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.usn?.toLowerCase().includes(searchQuery.toLowerCase())
+        s.srn?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -70,7 +70,6 @@ const StudentManagement = ({ token, allocation }) => {
                             <thead className="bg-slate-900/80 text-slate-400 text-sm uppercase font-semibold sticky top-0 backdrop-blur-md">
                                 <tr>
                                     <th className="p-4">Student</th>
-                                    <th className="p-4">USN</th>
                                     <th className="p-4 text-center">Semester</th>
                                     {!allocation && <th className="p-4 text-center">Section</th>}
                                     <th className="p-4 text-right">Actions</th>
@@ -85,7 +84,7 @@ const StudentManagement = ({ token, allocation }) => {
                                             </div>
                                             {s.name}
                                         </td>
-                                        <td className="p-4 text-slate-300 font-mono text-xs">{s.usn}</td>
+                                        <td className="p-4 text-slate-300 font-mono text-xs">{s.srn}</td>
                                         <td className="p-4 text-center">{s.semester}</td>
                                         {!allocation && <td className="p-4 text-center">{s.section}</td>}
                                         <td className="p-4 text-right">
