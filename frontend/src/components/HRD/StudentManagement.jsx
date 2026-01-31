@@ -36,7 +36,8 @@ const StudentManagement = ({ token, allocation, catalogs }) => {
             setAvailableSections([]);
             setFilterSection('');
         }
-    }, [filterDegree, filterSemester, catalogs]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterDegree, filterSemester]); // Removed catalogs from deps to prevent loop
 
     const fetchStudents = async () => {
         setLoading(true);

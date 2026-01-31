@@ -4175,7 +4175,7 @@ def get_hrd_students():
             ).all()
             return jsonify({
                 "success": True, 
-                "students": [{"id": s.id, "name": s.name, "srn": s.srn, "semester": s.semester, "section": s.section} for s in students]
+                "students": [{"id": s.id, "name": s.name, "srn": s.srn, "degree": s.degree, "semester": s.semester, "section": s.section} for s in students]
             })
 
     # CHRO: See All
@@ -4205,7 +4205,7 @@ def get_hrd_students():
         
     return jsonify({
         "success": True, 
-        "students": [{"id": s.id, "name": s.name, "srn": s.srn, "semester": s.semester, "section": s.section} for s in students]
+        "students": [{"id": s.id, "name": s.name, "srn": s.srn, "degree": s.degree, "semester": s.semester, "section": s.section} for s in students]
     })
 
 
