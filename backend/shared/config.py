@@ -25,9 +25,10 @@ class Settings(BaseSettings):
     s3_region: str = "auto"
     r2_public_url: str | None = None
 
-    redis_url: str = "redis://redis:6379/0"
-    celery_broker_url: str = "redis://redis:6379/0"
-    celery_result_backend: str = "redis://redis:6379/1"
+    render_external_url: str | None = "https://noteorbit-backend.onrender.com"
+    redis_url: str = "rediss://red-d8fr8kek1jcs73csgr0g:yGSeyU3g9oL4LcBlmj8aMFeBZ1EuYxGi@oregon-keyvalue.render.com:6379/1"
+    celery_broker_url: str = "rediss://red-d8fr8kek1jcs73csgr0g:yGSeyU3g9oL4LcBlmj8aMFeBZ1EuYxGi@oregon-keyvalue.render.com:6379/1"
+    celery_result_backend: str = "rediss://red-d8fr8kek1jcs73csgr0g:yGSeyU3g9oL4LcBlmj8aMFeBZ1EuYxGi@oregon-keyvalue.render.com:6379/2"
 
     groq_api_key: str | None = None
     groq_model: str = "llama-3.3-70b-versatile"
