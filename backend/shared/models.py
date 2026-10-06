@@ -10,6 +10,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -123,6 +124,13 @@ class User(Base):
     parent_email: Mapped[str | None] = mapped_column(String(200))
     parent_password_hash: Mapped[str | None] = mapped_column(String(256))
 
+    __table_args__ = (
+        Index("idx_user_email_role", "email", "role"),
+        Index("idx_user_role_status", "role", "status"),
+        Index("idx_user_degree_sem_sec", "degree", "semester", "section"),
+        Index("idx_user_parent_email", "parent_email"),
+    )
+
 
 class Note(Base):
     __tablename__ = "note"
@@ -137,6 +145,12 @@ class Note(Base):
     file_path: Mapped[str | None] = mapped_column(String(500))
     uploaded_by: Mapped[int | None] = mapped_column(Integer, ForeignKey("user.id"))
     timestamp: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        Index("idx_note_degree_sem_sec", "degree", "semester", "section"),
+        Index("idx_note_subject", "subject"),
+        Index("idx_note_uploaded_by", "uploaded_by"),
+    )
 
 
 class Notice(Base):
@@ -154,6 +168,11 @@ class Notice(Base):
     professor_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("user.id"))
     professor_name: Mapped[str | None] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        Index("idx_notice_degree_sem", "degree", "semester"),
+        Index("idx_notice_created_at", "created_at"),
+    )
 
 
 class Book(Base):
@@ -209,6 +228,10 @@ class FeeTarget(Base):
     paid_at: Mapped[datetime | None] = mapped_column(DateTime)
     order_id: Mapped[str | None] = mapped_column(String(64))
 
+    __table_args__ = (
+        Index("idx_fee_targets_student_status", "student_id", "status"),
+    )
+
 
 class Order(Base):
     __tablename__ = "orders"
@@ -256,6 +279,10 @@ class Mark(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     uploaded_by: Mapped[int | None] = mapped_column(Integer, ForeignKey("user.id"))
 
+    __table_args__ = (
+        Index("idx_marks_student_subject", "student_id", "subject"),
+    )
+
 
 class Feedback(Base):
     __tablename__ = "feedback"
@@ -299,6 +326,8 @@ class Attendance(Base):
 
     __table_args__ = (
         UniqueConstraint("student_id", "subject", "date", name="_student_subject_date_uc"),
+        Index("idx_attendance_student_date", "student_id", "date"),
+        Index("idx_attendance_degree_sem_sec", "degree", "semester", "section"),
     )
 
 
@@ -339,6 +368,11 @@ class Message(Base):
     body: Mapped[str | None] = mapped_column(Text)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        Index("idx_msg_student_faculty", "student_id", "faculty_id"),
+        Index("idx_msg_created_at", "created_at"),
+    )
 
 
 class FileObject(Base):
