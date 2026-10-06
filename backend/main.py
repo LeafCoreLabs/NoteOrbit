@@ -10,8 +10,9 @@ if str(backend_dir) not in sys.path:
 from dotenv import load_dotenv
 load_dotenv(backend_dir / ".env")
 
-# Set sensible defaults for local development
-os.environ.setdefault("DATABASE_URL", f"sqlite:///{backend_dir / 'noteorbit.db'}")
+# Set sensible defaults for local development only if not set in environment
+if not os.environ.get("DATABASE_URL") and not os.environ.get("POSTGRES_URL"):
+    os.environ["DATABASE_URL"] = f"sqlite:///{backend_dir / 'noteorbit.db'}"
 os.environ.setdefault("JWT_SECRET_KEY", "noteorbit-local-dev-secret-key-123456")
 os.environ.setdefault("PASSWORD_SALT", "noteorbit_salt_v1")
 
