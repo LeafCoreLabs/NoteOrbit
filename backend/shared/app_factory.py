@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from shared.config import settings
 from shared.redis_client import check_redis
+from shared.rate_limiter import RateLimitMiddleware
 
 logger = logging.getLogger("noteorbit.keepalive")
 _START_TIME = time.time()
@@ -51,6 +52,7 @@ def create_service_app(service_name: str, routers: list) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(RateLimitMiddleware)
 
     @app.get("/healthz")
     @app.get("/ping")
