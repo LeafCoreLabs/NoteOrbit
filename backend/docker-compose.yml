@@ -1,0 +1,231 @@
+x-api-common: &api-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: noteorbit-backend:latest
+  env_file:
+    - .env
+  environment:
+    DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-noteorbit}:${POSTGRES_PASSWORD:-noteorbit123}@pgbouncer:5432/${POSTGRES_DB:-noteorbit}
+    GROQ_API_KEY: ${GROQ_API_KEY:-}
+    GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+    SMTP_HOST: ${SMTP_HOST:-}
+    SMTP_PORT: ${SMTP_PORT:-587}
+    SMTP_USER: ${SMTP_USER:-}
+    SMTP_PASS: ${SMTP_PASS:-}
+    SMTP_FROM: ${SMTP_FROM:-}
+    SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+    SMTP_USE_SSL: ${SMTP_USE_SSL:-false}
+  depends_on:
+    db-init:
+      condition: service_completed_successfully
+    pgbouncer:
+      condition: service_healthy
+    redis:
+      condition: service_started
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+    interval: 15s
+    timeout: 5s
+    retries: 5
+    start_period: 30s
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: noteorbit-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-noteorbit}
+      POSTGRES_USER: ${POSTGRES_USER:-noteorbit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-noteorbit123}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-noteorbit} -d ${POSTGRES_DB:-noteorbit}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.22.1-p0
+    container_name: noteorbit-pgbouncer
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-noteorbit}:${POSTGRES_PASSWORD:-noteorbit123}@postgres:5432/${POSTGRES_DB:-noteorbit}
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 25
+    ports:
+      - "6432:5432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-noteorbit}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  db-init:
+    image: noteorbit-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: noteorbit-db-init
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-noteorbit}:${POSTGRES_PASSWORD:-noteorbit123}@pgbouncer:5432/${POSTGRES_DB:-noteorbit}
+    command: python scripts/bootstrap_db.py
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    container_name: noteorbit-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    container_name: noteorbit-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - miniodata:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: noteorbit-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until /usr/bin/mc alias set local http://minio:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY:-minioadmin}; do sleep 2; done;
+      /usr/bin/mc mb --ignore-existing local/${MINIO_DEFAULT_BUCKET:-noteorbit};
+      /usr/bin/mc anonymous set private local/${MINIO_DEFAULT_BUCKET:-noteorbit};
+      echo MinIO ready;
+      "
+
+  celery-worker:
+    <<: *api-common
+    container_name: noteorbit-celery-worker
+    command: celery -A shared.celery_app.celery_app worker --loglevel=info
+    healthcheck:
+      disable: true
+
+  auth-api:
+    <<: *api-common
+    container_name: noteorbit-auth-api
+    command: gunicorn services.auth_service.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000
+    expose:
+      - "8000"
+
+  admin-api:
+    <<: *api-common
+    container_name: noteorbit-admin-api
+    command: gunicorn services.admin_service.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000
+    expose:
+      - "8000"
+
+  academics-api:
+    <<: *api-common
+    container_name: noteorbit-academics-api
+    command: gunicorn services.academics_service.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000
+    expose:
+      - "8000"
+
+  campus-api:
+    <<: *api-common
+    container_name: noteorbit-campus-api
+    command: gunicorn services.campus_service.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000
+    expose:
+      - "8000"
+
+  attendance-api:
+    <<: *api-common
+    container_name: noteorbit-attendance-api
+    command: gunicorn services.attendance_service.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000
+    expose:
+      - "8000"
+
+  comms-api:
+    <<: *api-common
+    container_name: noteorbit-comms-api
+    command: gunicorn services.comms_service.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000
+    expose:
+      - "8000"
+
+  ai-api:
+    <<: *api-common
+    container_name: noteorbit-ai-api
+    command: gunicorn services.ai_service.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000
+    expose:
+      - "8000"
+
+  storage-api:
+    <<: *api-common
+    container_name: noteorbit-storage-api
+    command: gunicorn services.storage_service.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: noteorbit-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx/noteorbit.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - auth-api
+      - admin-api
+      - academics-api
+      - campus-api
+      - attendance-api
+      - comms-api
+      - ai-api
+      - storage-api
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost}
+    image: noteorbit-frontend:latest
+    container_name: noteorbit-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - nginx
+
+volumes:
+  pgdata:
+  miniodata:

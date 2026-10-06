@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: noteorbit-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: PASSWORD_SALT
+        value: noteorbit_salt_v1
+      - key: S3_ENDPOINT
+        value: https://870124513608cc25c2c6c85c38078b79.r2.cloudflarestorage.com
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: MINIO_DEFAULT_BUCKET
+        value: noteorbit
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: CORS_ORIGINS
+        value: "*"

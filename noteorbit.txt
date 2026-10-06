@@ -1,0 +1,29 @@
+NoteOrbit/
+│
+├── frontend/
+│   └── src/
+│       ├── App.js             # All routes + components here
+│       ├── index.js
+│       ├── styles.css
+│       └── api.js             # All frontend API calls
+│
+├── backend/
+│   ├── app.py                 # Flask routes + models + DB + Gemini in one file
+│   └── uploads/               # Uploaded notes
+│
+├── database.sql               # Table creation script
+├── .env                       # DB + Gemini key
+└── README.md
+
+final folder structure :::: NoteOrbit by LeafCore Labs
+
+
+
+
+git add .
+git commit -m "Fixed student panel crashing bug and improved loading stability"
+git push origin main
+
+
+gemini build link: https://gemini.google.com/app/d66104806643d267
+chatgpt initial build: https://chatgpt.com/c/68fd14fa-3c2c-8321-b912-b67ebe25c1b9

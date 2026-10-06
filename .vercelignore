@@ -1,0 +1,12 @@
+backend/
+backend.new/
+.freebuff/
+*.db
+*.sqlite3
+node_modules/
+dist/
+.git/
+.env*
+uploads/
+tmp/
+*.log

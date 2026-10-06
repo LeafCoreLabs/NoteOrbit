@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+.env*.local
+!.env.example
+*.pem
+*.key
+*.cert
+
+# Database
+*.db
+*.db.bak
+*.sqlite
+*.sqlite3
+
+# Node & Frontend
+node_modules/
+dist/
+frontend/dist/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vercel & Tooling
+.vercel/
+.freebuff/
+scratch/
+*.log
+
+# MinIO & Uploads
+minio-data/
+uploads/
+backend/uploads/
+backend/tmp/
+tmp/
+**/*.meta
+
+# Mobile
+mobile/
+flutter/
